@@ -1,0 +1,47 @@
+{
+    "manifest_version": 3,
+    "name": "Ani-extension",
+    "description": "Ani-bankai extension, to track your anime and manga",
+    "version": "0.0.1",
+    "icons": {
+        "16": "logo/logo-16.png",
+        "48": "logo/logo-48.png",
+        "128": "logo/logo-128.png"
+    },
+    "options_page": "settings/settings.html",
+    "action": {
+        "default_title": "Ani-extension",
+        "default_popup": "popup/popup.html"
+    },
+    "permissions": [
+    "tabs",
+    "activeTab",
+    "scripting",
+    "storage"
+],
+    "host_permissions": [
+        "*://*/*"
+    ],
+    "background": {
+        "service_worker": "service-worker.js"
+    },
+    "content_scripts": [{
+        "run_at": "document_idle",
+        "js": ["foreground.js"],
+        "matches": [
+  "https://v6.voiranime.com/*",
+  "https://*.crunchyroll.com/*",
+  "https://vidmoly.to/*",
+  "*://*.6v254h9v.xyz/*",
+  "*://*.voe.sx/*",
+  "https://sandratableother.com/*",
+  "https://my.mail.ru/*",
+  "https://streamtape.com/*"
+],
+        "type": "module",
+        "all_frames": true
+    }],
+    "externally_connectable": {
+        "matches": ["*://*/*"]
+    }
+}
