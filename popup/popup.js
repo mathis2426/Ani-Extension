@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     animeList.forEach((anime, index) => {
       const container = document.createElement("div");
       container.className = "content-list";
+      container.setAttribute("data-link", anime.link);
 
       container.innerHTML = `
           <div class="top-bar">
@@ -29,7 +30,6 @@ document.addEventListener("DOMContentLoaded", () => {
               <h3>Ep ${anime.episode} - ${anime.title}</h3>
             </div>
             <div class="load">
-              <button class="goto-btn" data-link="${anime.link}"></button>
               <progress value="0" max="100" id="bar-${index}">0%</progress>
               <p id="timecode-${index}">00:00</p>
             </div>
@@ -39,9 +39,13 @@ document.addEventListener("DOMContentLoaded", () => {
       listAnime.appendChild(container);
 
       // Bouton de redirection
-      container.querySelector(".goto-btn").addEventListener("click", (e) => {
+      container.addEventListener("click", (e) => {
         const url = e.target.getAttribute("data-link");
-        if (url) chrome.tabs.create({ url });
+        console.log(url);
+        console.log(window.location.href);
+        if (url && url !== window.location) {
+          chrome.tabs.create({ url });
+        }
       });
 
       // Progression et timecode
@@ -66,28 +70,47 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  
 
-  // Thème
-  const theme = document.getElementById('combox-back');
-  theme.addEventListener("change", () => {
-    const gradients = {
-      "1": "#FFED68, #38D4F8",
-      "2": "#FF93F8, #52BDFF",
-      "3": "#FF4A4A, #0CFE71",
-      "4": "#36E43C, #E2FF3E",
-      "5": "#294DFF, #FE951E"
-    };
-    const selected = gradients[theme.value] || gradients["1"];
-    document.body.style.background = `linear-gradient(to bottom right, ${selected})`;
+  const buttons = ["home", "calendar", "suggestion", "option"];
+
+  buttons.forEach((btn) => {
+    const buttonElement = document.getElementById(btn);
+    const container = buttonElement.parentElement; // le parent direct du bouton
+
+    buttonElement.addEventListener("click", () => {
+      buttons.forEach((otherBtn) => {
+        // Changement d'image
+        const suffix = otherBtn === btn ? "-activate" : "";
+        document.getElementById(
+          otherBtn
+        ).style.backgroundImage = `url("../images-extension/${otherBtn}${suffix}.png")`;
+
+        // Gestion des .selected
+        const selectedEl = document
+          .getElementById(otherBtn)
+          .parentElement.querySelector(".selected");
+        if (selectedEl) {
+          selectedEl.classList.remove("active");
+        }
+      });
+
+      // Activer le bon .selected
+      const selected = container.querySelector(".selected");
+      if (selected) {
+        selected.classList.add("active");
+      }
+    });
   });
+  document.getElementById("home").click();
 });
 
 // Utils
 function secondsToms(d) {
   d = Number(d);
-  let m = Math.floor(d % 3600 / 60);
-  let s = Math.floor(d % 3600 % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
+  let m = Math.floor((d % 3600) / 60);
+  let s = Math.floor((d % 3600) % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 function updateTime(current, total, index) {

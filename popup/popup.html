@@ -10,26 +10,29 @@
 
 <body>
     <div class="global" id="base">
-        <select id="combox-back" class="combox-back">
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-        </select>
-        <div class="button-part">
-            <div id="profile_picture">
-                <img src="/images-extension/test1.png"
-                    alt="profile_picture" class="profile-picture">
-            </div>
-            <section class="left-col">
-                <div class="column-button">
-                    <button class="button">
-                        <div class="calendrier"></div>
-                    </button>
+        <div class="left-part">
+            <div class="left-col">
+                <div class="profile-picture"></div>
+                <div class="menu">
+                    <div class="home-container">
+                        <div class="selected"></div><button class="home" id="home"></button>
+                    </div>
+                    
+                    <div class="calendar-container">
+                        <div class="selected"></div><button class="calendar" id="calendar"></button>
+                    </div>
+                    <div class="suggestion-container">
+                        <div class="selected"></div><button class="suggestion" id="suggestion"></button>
+                    </div>
                 </div>
-            </section>
+                <div class="menu-opt">
+                    <div class="option-container">
+                        <div class="selected"></div><button class="option" id="option"></button>
+                    </div>
+                </div>
+            </div>
         </div>
+
 
         <div id="content" class="content">
             <div class="combo">
@@ -40,7 +43,7 @@
             </div>
 
             <div id="content_list" class="content_liste"></div>
-                
+
 </body>
 
 </html>
