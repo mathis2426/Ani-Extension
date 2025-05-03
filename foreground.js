@@ -17,12 +17,17 @@ let animeCarac = new anime();
 switch (location.hostname) {
   case "v6.voiranime.com":
   case "vidmoly.to":
-  case "6v254h9v.xyz":
+  case "w9gw7oou.com":
   case "voe.sx":
   case "sandratableother.com":
   case "my.mail.ru":
-    console.log("URL case iframe : ", location.hostname, location.href);
-    voiranime(animeCarac);
+    //console.log("URL case iframe : ", location.hostname, location.href);
+    voiranime(animeCarac, () => {
+      console.log("Anime data : ", animeCarac);
+      if (chrome.runtime?.id) { // Check if the extension is connected
+        chrome.runtime.sendMessage({ type: "animeData", data: animeCarac });
+      }
+    });
     break;
 
   case "www.crunchyroll.com":
@@ -109,32 +114,94 @@ function crunchyroll(animeClass, location, callback) {
   }
 }
 
-function voiranime(animeClass) {
+async function voiranime(animeClass, callback) {
+  window.addEventListener("message", (event) => {
+    if (!event.data) return;
+
+    if (event.data.type === "Duration") {
+      animeCarac.duration = event.data.data;
+    }
+
+    if (event.data.type === "Time") {
+      animeCarac.currentTime = event.data.data;
+    }
+    if (true) {
+      callback();
+    }
+  });
+
   if (location.hostname == "v6.voiranime.com") {
     console.log("URL case iframe : ", location.hostname, location.href);
 
     let link = location.href;
-    let title = link.split("/")[4].split("-").join(" ");
+    let titleAnime = link.split("/")[4].split("-").join(" ");
+    titleAnime = titleAnime.charAt(0).toUpperCase() + titleAnime.slice(1);
     let episodeLink = link.split("/")[5];
-    let episode = episodeLink.split("-")[4];
-    let traduction = episodeLink.split("-")[5];
+    let episode = episodeLink.substring(0, episodeLink.lastIndexOf("-")).split("-").pop();
 
-    animeCarac.title = title;
+    animeClass.name = titleAnime;
+    animeClass.episode = episode;
+    animeClass.link = link;
+    animeClass.notif = true;
 
     console.log(
-      "Traduction : ",
-      traduction,
-      "Episode split : ",
-      episodeLink.split("-"),
+      "Episode : ",
+      episode,
+
       "Title : ",
-      title,
+      titleAnime,
+
       "Link split : ",
       link.split("/"),
+
       "Link : ",
       link,
+
       "URL : ",
       location.hostname,
       location.href
     );
+    //callback(); // amettre si on veut afficher les infos de la video, sans qu'elle soit lancé.
   }
+  if (location.hostname == "vidmoly.to" || location.hostname == "w9gw7oou.com" || location.hostname == "voe.sx" || location.hostname == "sandratableother.com" || location.hostname == "my.mail.ru") {
+    console.log("URL case iframe new : ", location.hostname, location.href);
+
+    let video = document.querySelector("video");
+    if (!video) 
+      video = await waitVideoElement();
+
+    if (video) {
+      video.addEventListener("loadedmetadata", () => {
+        window.top.postMessage(
+          { type: "Duration", data: video.duration },
+          "*"
+        );
+      });
+
+      video.addEventListener("timeupdate", () => {
+        console.log("time : ", video.duration, video.currentTime);
+        window.top.postMessage(
+          { type: "Time", data: Math.floor(video.currentTime) },
+          "*"
+        );
+      });
+    }
+
+  }
+}
+
+async function waitVideoElement() {
+  return new Promise((resolve) => {
+    let observer = new MutationObserver(function () {
+      const video = document.getElementsByTagName("video")[0];
+      if (video) {
+        resolve(video);
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  });
 }

@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
   const listAnime = document.getElementById("content_list");
-
   chrome.storage.local.get("popupDataList", (result) => {
     const animeList = result.popupDataList || [];
 
@@ -100,3 +99,23 @@ function updateTime(current, total, index) {
   if (bar) bar.value = progress;
   if (timecode) timecode.textContent = secondsToms(current);
 }
+
+// Écouteur d'événements pour les changements de données dans le stockage local
+// Mise à jour le timecode dans la popup
+document.addEventListener("DOMContentLoaded", () => {
+
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === "local" && changes.popupDataList) {
+      const newList = changes.popupDataList.newValue || [];
+      newList.forEach((anime, index) => {
+        // Vérifiez si les éléments existent avant de les mettre à jour
+        const progressBar = document.getElementById(`bar-${index}`);
+        const timecode = document.getElementById(`timecode-${index}`);
+        
+        if (progressBar && timecode) {
+          updateTime(anime.currentTime, anime.duration, index);
+        }
+      });
+    }
+  });
+});
