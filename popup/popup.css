@@ -219,6 +219,7 @@ progress::-webkit-progress-value {
     margin-right: 15px;
     margin-left: 20px;
     margin-top: 10px;
+    transition: box-shadow 0.5s;
 
     h1 {
         margin: 0;
@@ -341,10 +342,10 @@ progress::-webkit-progress-value {
     width: 50px;
 }
 
-.bell-solid,
 .bell-regular {
   display: none;
 }
+
 
 input[type="checkbox"]:checked ~ .bell-solid {
   display: inline;
@@ -353,6 +354,8 @@ input[type="checkbox"]:checked ~ .bell-solid {
 input[type="checkbox"]:not(:checked) ~ .bell-regular {
   display: inline;
 }
+
+
 
 
 /*------ Settings ------*/
@@ -367,6 +370,11 @@ input[type="checkbox"]:not(:checked) ~ .bell-regular {
     font-size: var(--size);
     user-select: none;
     fill: var(--color);
+    transition: filter 0.3s ease-in-out, transform 0.3s ease;
+}
+.container:hover {
+    filter: brightness(1.2);
+    transform: scale(1.05);
 }
 
 .container .bell-regular {
