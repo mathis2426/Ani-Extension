@@ -23,7 +23,6 @@ switch (location.hostname) {
   case "my.mail.ru":
     //console.log("URL case iframe : ", location.hostname, location.href);
     voiranime(animeCarac, () => {
-      console.log("Anime data : ", animeCarac);
       if (chrome.runtime?.id) { // Check if the extension is connected
         chrome.runtime.sendMessage({ type: "animeData", data: animeCarac });
       }
@@ -33,9 +32,10 @@ switch (location.hostname) {
   case "www.crunchyroll.com":
   case "static.crunchyroll.com":
     crunchyroll(animeCarac, location, () => {
-      chrome.runtime.sendMessage({ type: "animeData", data: animeCarac });
+      if (chrome.runtime?.id) { // Check if the extension is connected
+        chrome.runtime.sendMessage({ type: "animeData", data: animeCarac });
+      }
     });
-
     break;
 
   default:
@@ -142,26 +142,7 @@ async function voiranime(animeClass, callback) {
     animeClass.name = titleAnime;
     animeClass.episode = episode;
     animeClass.link = link;
-    animeClass.notif = true;
-
-    console.log(
-      "Episode : ",
-      episode,
-
-      "Title : ",
-      titleAnime,
-
-      "Link split : ",
-      link.split("/"),
-
-      "Link : ",
-      link,
-
-      "URL : ",
-      location.hostname,
-      location.href
-    );
-    //callback(); // amettre si on veut afficher les infos de la video, sans qu'elle soit lancé.
+    //animeClass.notif = true;
   }
   if (location.hostname == "vidmoly.to" || location.hostname == "w9gw7oou.com" || location.hostname == "voe.sx" || location.hostname == "sandratableother.com" || location.hostname == "my.mail.ru") {
     console.log("URL case iframe new : ", location.hostname, location.href);
@@ -186,7 +167,6 @@ async function voiranime(animeClass, callback) {
         );
       });
     }
-
   }
 }
 
