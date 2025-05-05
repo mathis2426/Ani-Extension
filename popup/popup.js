@@ -60,6 +60,13 @@ document.addEventListener("DOMContentLoaded", () => {
       // Notifications toggle
       const notifContainer = container.querySelector(".notif");
       const checkbox = container.querySelector(`#notif-${index}`);
+      checkbox.addEventListener("click", (event) => {
+        event.stopPropagation();
+      });
+      notifContainer.addEventListener("click", (event) => {
+        event.stopPropagation();
+      });
+      
 
       checkbox.checked = anime.notif;
 
@@ -75,6 +82,12 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   });
+
+
+
+  /*
+  Gestions des boutons de la barre de navigation
+  */
 
   const buttons = ["home", "calendar", "suggestion", "option"];
 
@@ -107,6 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
   document.getElementById("home").click();
+
 });
 
 // Utils

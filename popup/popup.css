@@ -228,7 +228,7 @@ progress::-webkit-progress-value {
         color: #ffffff;
         font-size: 18px;
         font-family: "Inter", sans-serif;
-        width: 271px;
+        width: 280px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -245,7 +245,6 @@ progress::-webkit-progress-value {
 }
 
 .content-list:hover {
-    cursor: pointer;
     box-shadow: 0 0 7px 3px #A48EE5;
     transition: 0.5s;
 }
@@ -336,10 +335,9 @@ progress::-webkit-progress-value {
 .top-bar .notif {
     display: flex;
     justify-content: flex-end;
-    margin-right: 13px;
-    margin-top: 4px;
+    margin-top: 5px;
+    margin-left: 15px;
     height: 100%;
-    width: 50px;
 }
 
 .bell-regular {
@@ -370,11 +368,12 @@ input[type="checkbox"]:not(:checked) ~ .bell-regular {
     font-size: var(--size);
     user-select: none;
     fill: var(--color);
-    transition: filter 0.3s ease-in-out, transform 0.3s ease;
+    transition: filter 0.3s ease-in-out, transform 0.3s ease;   
+    will-change: transform;
 }
 .container:hover {
     filter: brightness(1.2);
-    transform: scale(1.05);
+    transform: scale(1.06);
 }
 
 .container .bell-regular {
