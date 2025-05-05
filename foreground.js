@@ -21,7 +21,6 @@ switch (location.hostname) {
   case "voe.sx":
   case "sandratableother.com":
   case "my.mail.ru":
-    //console.log("URL case iframe : ", location.hostname, location.href);
     voiranime(animeCarac, () => {
       if (chrome.runtime?.id) { // Check if the extension is connected
         chrome.runtime.sendMessage({ type: "animeData", data: animeCarac });
@@ -142,7 +141,7 @@ async function voiranime(animeClass, callback) {
     animeClass.name = titleAnime;
     animeClass.episode = episode;
     animeClass.link = link;
-    //animeClass.notif = true;
+    animeClass.notif = false;
   }
   if (location.hostname == "vidmoly.to" || location.hostname == "w9gw7oou.com" || location.hostname == "voe.sx" || location.hostname == "sandratableother.com" || location.hostname == "my.mail.ru") {
     console.log("URL case iframe new : ", location.hostname, location.href);
