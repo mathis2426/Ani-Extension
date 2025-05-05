@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     buttonElement.addEventListener("click", () => {
       buttons.forEach((otherBtn) => {
-        // image changment 
+        // image change 
         const suffix = otherBtn === btn ? "-activate" : "";
         document.getElementById(
           otherBtn
