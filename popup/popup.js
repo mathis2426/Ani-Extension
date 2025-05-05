@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       
 
-      // Bouton de redirection
+      // Anime link 
       container.addEventListener("click", () => {
         const url = container.getAttribute("data-link");
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -54,10 +54,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       });
 
-      // Progression et timecode
+      // update the timecode and progress bar 
       updateTime(anime.currentTime, anime.duration, index);
 
-      // Notifications toggle
+      // Notification toggle
       const notifContainer = container.querySelector(".notif");
       const checkbox = container.querySelector(`#notif-${index}`);
       checkbox.addEventListener("click", (event) => {
@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
       checkbox.addEventListener("change", () => {
         const isChecked = checkbox.checked;
 
-        // Mettre à jour dans la popupDataList
+        // Update the notification status in the storage
         chrome.storage.local.get("popupDataList", (result) => {
           let dataList = result.popupDataList || [];
           dataList[index].notif = isChecked;
@@ -85,25 +85,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-  /*
-  Gestions des boutons de la barre de navigation
-  */
 
+  // Manage the buttons
   const buttons = ["home", "calendar", "suggestion", "option"];
 
   buttons.forEach((btn) => {
     const buttonElement = document.getElementById(btn);
-    const container = buttonElement.parentElement; // le parent direct du bouton
+    const container = buttonElement.parentElement; // the parent div of the button
 
     buttonElement.addEventListener("click", () => {
       buttons.forEach((otherBtn) => {
-        // Changement d'image
+        // image changment 
         const suffix = otherBtn === btn ? "-activate" : "";
         document.getElementById(
           otherBtn
         ).style.backgroundImage = `url("../images-extension/${otherBtn}${suffix}.png")`;
 
-        // Gestion des .selected
+        // .selected class removal
         const selectedEl = document
           .getElementById(otherBtn)
           .parentElement.querySelector(".selected");
@@ -112,7 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
 
-      // Activer le bon .selected
+      // Select the current button
       const selected = container.querySelector(".selected");
       if (selected) {
         selected.classList.add("active");

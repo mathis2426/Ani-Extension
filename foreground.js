@@ -43,27 +43,41 @@ function getAnimeCarac() {
   let link = location.href;
 }
 
+/**
+ * crunchyroll
+ * Description :
+ *  - Get information about the anime currently playing on Crunchyroll
+ * @param {animeCarac} animeClass 
+ * @param {string} location 
+ * @param {function} callback 
+ */
 function crunchyroll(animeClass, location, callback) {
+  
+  // Listener for messages from the iframe
   window.addEventListener("message", (event) => {
     if (!event.data) return;
 
+    // Duration is the total duration of the video
     if (event.data.type === "Duration") {
       animeCarac.duration = event.data.data;
     }
 
+    // Time is the current time of the video
     if (event.data.type === "Time") {
       animeCarac.currentTime = event.data.data;
     }
 
     if (animeCarac.title) {
-      callback();
+      callback(); // Send the data to the background script
     }
   });
 
+  // Check if the current page is a Crunchyroll page
   if (location.hostname === "www.crunchyroll.com") {
     let targetNode = document.getElementById("content");
     let config = { childList: true, subtree: true };
 
+    // Observer to watch for changes in the DOM
     let observerCallback = function (mutationsList, observer) {
       for (let mutation of mutationsList) {
         if (mutation.type === "childList") {
@@ -71,12 +85,12 @@ function crunchyroll(animeClass, location, callback) {
           let animenode = document.querySelector("a.show-title-link");
           if (titleNode) {
             const h1 = titleNode.textContent.split(" - ");
-            animeClass.episode = h1[0].substring(1);
-            animeClass.title = h1[1];
-            animeClass.link = location.href;
+            animeClass.episode = h1[0].substring(1); // Episode number
+            animeClass.title = h1[1]; // Title of the anime
+            animeClass.link = location.href; // Link to the anime
           }
           if (animenode) {
-            animeClass.name = animenode.querySelector("h4").textContent;
+            animeClass.name = animenode.querySelector("h4").textContent; // Name of the anime
           }
           if (titleNode && animenode) {
             callback();
@@ -89,18 +103,18 @@ function crunchyroll(animeClass, location, callback) {
 
     let observer = new MutationObserver(observerCallback);
     observer.observe(targetNode, config);
-  } else if (location.hostname == "static.crunchyroll.com") {
+  } else if (location.hostname == "static.crunchyroll.com") { // If the page is an iframe
     let video = document.querySelector("video");
     video.addEventListener("loadedmetadata", () => {
       window.parent.postMessage(
-        { type: "Duration", data: video.duration },
+        { type: "Duration", data: video.duration }, // Total duration of the video
         "*"
       );
     });
 
     video.addEventListener("timeupdate", () => {
       window.parent.postMessage(
-        { type: "Time", data: Math.floor(video.currentTime) },
+        { type: "Time", data: Math.floor(video.currentTime) }, // Current time of the video
         "*"
       );
     });
