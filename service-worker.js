@@ -10,6 +10,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       );
 
       if (existingIndex !== -1) {
+        animeCarac.notif = dataList[existingIndex].notif;
         dataList.splice(existingIndex, 1);
       }
 
