@@ -38,8 +38,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       listAnime.appendChild(container);
 
-      
-
       // Anime link 
       container.addEventListener("click", () => {
         const url = container.getAttribute("data-link");
@@ -67,7 +65,6 @@ document.addEventListener("DOMContentLoaded", () => {
         event.stopPropagation();
       });
       
-
       checkbox.checked = anime.notif;
 
       checkbox.addEventListener("change", () => {
@@ -82,9 +79,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   });
-
-
-
 
   // Manage the buttons
   const buttons = ["home", "calendar", "suggestion", "option"];
