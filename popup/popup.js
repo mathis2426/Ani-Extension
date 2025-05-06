@@ -100,15 +100,15 @@ function updateTime(current, total, index) {
   if (timecode) timecode.textContent = secondsToms(current);
 }
 
-// Écouteur d'événements pour les changements de données dans le stockage local
-// Mise à jour le timecode dans la popup
+// Event Listeners for the popup
+// Update of the timecode on the popup
 document.addEventListener("DOMContentLoaded", () => {
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === "local" && changes.popupDataList) {
       const newList = changes.popupDataList.newValue || [];
       newList.forEach((anime, index) => {
-        // Vérifiez si les éléments existent avant de les mettre à jour
+        // Verified if the element exist and update
         const progressBar = document.getElementById(`bar-${index}`);
         const timecode = document.getElementById(`timecode-${index}`);
         

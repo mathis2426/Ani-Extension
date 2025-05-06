@@ -113,6 +113,13 @@ function crunchyroll(animeClass, location, callback) {
   }
 }
 
+/**
+ * waitVideoElement
+ * Description: - Get information about the anime currently playing on Voiranime
+ * @param animeClass
+ * @param callback
+ * @return void
+ */
 async function voiranime(animeClass, callback) {
   window.addEventListener("message", (event) => {
     if (!event.data) return;
@@ -124,13 +131,12 @@ async function voiranime(animeClass, callback) {
     if (event.data.type === "Time") {
       animeCarac.currentTime = event.data.data;
     }
-    if (true) {
+    if (event.data.type === "Duration" || event.data.type === "Time") {
       callback();
     }
   });
 
   if (location.hostname == "v6.voiranime.com") {
-    console.log("URL case iframe : ", location.hostname, location.href);
 
     let link = location.href;
     let titleAnime = link.split("/")[4].split("-").join(" ");
@@ -144,7 +150,6 @@ async function voiranime(animeClass, callback) {
     animeClass.notif = false;
   }
   if (location.hostname == "vidmoly.to" || location.hostname == "w9gw7oou.com" || location.hostname == "voe.sx" || location.hostname == "sandratableother.com" || location.hostname == "my.mail.ru") {
-    console.log("URL case iframe new : ", location.hostname, location.href);
 
     let video = document.querySelector("video");
     if (!video) 
@@ -159,7 +164,6 @@ async function voiranime(animeClass, callback) {
       });
 
       video.addEventListener("timeupdate", () => {
-        console.log("time : ", video.duration, video.currentTime);
         window.top.postMessage(
           { type: "Time", data: Math.floor(video.currentTime) },
           "*"
@@ -169,6 +173,11 @@ async function voiranime(animeClass, callback) {
   }
 }
 
+/**
+ * waitVideoElement
+ * Description: - Wait for the video element to be loaded in the DOM
+ * @return Promise
+ */
 async function waitVideoElement() {
   return new Promise((resolve) => {
     let observer = new MutationObserver(function () {
