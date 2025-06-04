@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <progress value="0" max="100" id="bar-${index}">0%</progress>
               <p id="timecode-${index}">00:00</p>
             </div>
-            <div class="in-proress" id="in-progress-${index}">Lecture en cours</div>
+            <div class="in-progress" id="in-progress-${index}">Lecture en cours</div>
           </div>
         `;
 

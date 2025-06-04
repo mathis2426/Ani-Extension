@@ -364,7 +364,7 @@ input[type="checkbox"]:not(:checked) ~ .bell-regular {
 }
 
 
-.in-proress{
+.in-progress{
     display: flex;
     justify-content: center;
     align-items: center;
@@ -375,7 +375,7 @@ input[type="checkbox"]:not(:checked) ~ .bell-regular {
     opacity: 0;
     transition: all 0.5s ease;
 }
-.in-proress.active{
+.in-progress.active{
     opacity: 1;
     animation: breathing 2s ease-in-out infinite;
 }
