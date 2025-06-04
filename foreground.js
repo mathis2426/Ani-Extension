@@ -5,10 +5,12 @@ class anime {
     this.name = "";
     this.title = "";
     this.episode = "";
+    this.saison = 0;
     this.link = "";
     this.duration = 0;
     this.currentTime = 0;
     this.notif = false;
+    this.lastUpdate = 0;
   }
 }
 
@@ -30,21 +32,17 @@ switch (location.hostname) {
 
   case "www.crunchyroll.com":
   case "static.crunchyroll.com":
-    crunchyroll(animeCarac, location, () => {
-      if (chrome.runtime?.id) { // Check if the extension is connected
-        chrome.runtime.sendMessage({ type: "animeData", data: animeCarac });
-      }
+    SPADetectChange(() => {
+      crunchyroll(animeCarac, location, () => {
+        if (chrome.runtime?.id) { 
+          chrome.runtime.sendMessage({ type: "animeData", data: animeCarac });
+        }
+      });
     });
     break;
 
   default:
     break;
-}
-
-function getAnimeCarac() {
-  console.log("getAnimeCarac");
-
-  let link = location.href;
 }
 
 /**
@@ -56,7 +54,7 @@ function getAnimeCarac() {
  * @param {function} callback 
  */
 function crunchyroll(animeClass, location, callback) {
-  
+
   // Listener for messages from the iframe
   window.addEventListener("message", (event) => {
     if (!event.data) return;
@@ -69,6 +67,7 @@ function crunchyroll(animeClass, location, callback) {
     // Time is the current time of the video
     if (event.data.type === "Time") {
       animeCarac.currentTime = event.data.data;
+      animeCarac.lastUpdate = Date.now(); // Update the last update time
     }
 
     if (animeCarac.title) {
@@ -128,6 +127,44 @@ function crunchyroll(animeClass, location, callback) {
 }
 
 /**
+ * SPADetectChange
+ * Description: - Detects changes in the URL and calls the callback function for Single Page Applications (SPA)
+ * @param {void} callback 
+ */
+function SPADetectChange(callback) {
+  callback();
+  let currentUrl = location.href;
+
+  function handleEpisodeChange() {
+    if (location.href !== currentUrl && location.href.includes('/watch/')) {
+      currentUrl = location.href;
+      callback();
+
+    }
+  }
+
+  const originalPushState = history.pushState;
+  const originalReplaceState = history.replaceState;
+
+  history.pushState = function (...args) {
+    originalPushState.apply(this, args);
+    setTimeout(handleEpisodeChange, 100);
+  };
+
+  history.replaceState = function (...args) {
+    originalReplaceState.apply(this, args);
+    setTimeout(handleEpisodeChange, 100);
+  };
+
+  const observer = new MutationObserver(() => {
+    handleEpisodeChange();
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  handleEpisodeChange();
+};
+
+/**
  * waitVideoElement
  * Description: - Get information about the anime currently playing on Voiranime
  * @param animeClass
@@ -166,7 +203,7 @@ async function voiranime(animeClass, callback) {
   if (location.hostname == "vidmoly.to" || location.hostname == "w9gw7oou.com" || location.hostname == "voe.sx" || location.hostname == "sandratableother.com" || location.hostname == "my.mail.ru") {
 
     let video = document.querySelector("video");
-    if (!video) 
+    if (!video)
       video = await waitVideoElement();
 
     if (video) {
