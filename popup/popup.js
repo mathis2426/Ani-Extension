@@ -2,7 +2,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const listAnime = document.getElementById("content_list");
   chrome.storage.local.get("popupDataList", (result) => {
     const animeList = result.popupDataList || [];
-
+    console.log("Anime List:", animeList);
+    console.log("Number of Animes:", animeList.length);
+    if (animeList.length === 0) {
+      const emptyMessage = document.createElement("div");
+      emptyMessage.className = "empty-message";
+      emptyMessage.textContent = "Aucun anime detecté. Veuillez lancer un anime pour le voir ici.";
+      listAnime.appendChild(emptyMessage);
+      return;
+    }
     animeList.forEach((anime, index) => {
       const container = document.createElement("div");
       container.className = "content-list";
@@ -32,6 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
               <progress value="0" max="100" id="bar-${index}">0%</progress>
               <p id="timecode-${index}">00:00</p>
             </div>
+            <div class="in-progress" id="in-progress-${index}">Lecture en cours</div>
           </div>
         `;
 
@@ -63,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
       notifContainer.addEventListener("click", (event) => {
         event.stopPropagation();
       });
-      
+
       checkbox.checked = anime.notif;
 
       checkbox.addEventListener("change", () => {
@@ -86,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const buttonElement = document.getElementById(btn);
     const container = buttonElement.parentElement; // the parent div of the button
 
-    buttonElement.addEventListener("click", () => {
+    buttonElement.addEventListener("click", (btn) => {
       buttons.forEach((otherBtn) => {
         // image change 
         const suffix = otherBtn === btn ? "-activate" : "";
@@ -102,6 +111,21 @@ document.addEventListener("DOMContentLoaded", () => {
           selectedEl.classList.remove("active");
         }
       });
+      if (btn.target.id === "option") {
+        chrome.tabs.query({}, (tabs) => {
+          const alreadyOpen = tabs.find((tab) =>
+            tab.url && tab.url.includes("settings/settings.html")
+          );
+
+          if (alreadyOpen) {
+            chrome.tabs.update(alreadyOpen.id, { active: true });
+          } else {
+            chrome.tabs.create({
+              url: chrome.runtime.getURL("settings/settings.html"),
+            });
+          }
+        });
+      }
 
       // Select the current button
       const selected = container.querySelector(".selected");
@@ -139,13 +163,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === "local" && changes.popupDataList) {
+      const oldList = changes.popupDataList.oldValue || [];
       const newList = changes.popupDataList.newValue || [];
+      let count = 0;
+      let animeCurentlyWatching = document.querySelectorAll(".in-progress");
+      animeCurentlyWatching.forEach(element => {
+        if (element.style.display == "flex") count++;
+      });
+
+      const listanime = document.getElementById(`content_list`);
+      let delimiter = document.createElement("div");
+      delimiter.innerHTML = '<div class="delimiter-container"><div class="delimiter" id="delimiter"></div></div>';
+      const refernode = listanime.children[count + 1];
+
+      if (!document.getElementById("delimiter")) {
+        listanime.insertBefore(delimiter, refernode);
+      }
+
       newList.forEach((anime, index) => {
-        // Verified if the element exist and update
-        const progressBar = document.getElementById(`bar-${index}`);
-        const timecode = document.getElementById(`timecode-${index}`);
-        
-        if (progressBar && timecode) {
+        const oldAnime = oldList[index];
+        if (!oldAnime) return; // nouvel élément ? ignore
+
+        // Ne continue que si quelque chose a changé (temps, lecture, etc.)
+        const hasChanged = anime.currentTime !== oldAnime.currentTime ||
+          anime.duration !== oldAnime.duration;
+
+        if (hasChanged) {
+          const inprogress = document.getElementById(`in-progress-${index}`);
+          if (anime.lastUpdate == Date.now() || anime.lastUpdate > Date.now() - 1100) {
+            inprogress.classList.add("active");
+          }
           updateTime(anime.currentTime, anime.duration, index);
         }
       });

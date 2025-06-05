@@ -1,12 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <link rel="stylesheet" href="settings.css">
-    <title>Chrome Addon v3: Settings</title>
+    <script src="settings.js"></script>
+    <title>AniExtension: Settings</title>
 </head>
+
 <body>
-    This is the <span class="special-text">settings</span> page for the addon.
+    <div class="nav-bar">
+        <div class="logo">Ani-Extension</div>
+        <div class="menu">
+            <div class="title">Menu</div>
+            <div class="buttons">
+                <button class="button" id="home">
+                    <div class="selector"></div>
+                    <div class="icon"></div>
+                    <div class="name">Home</div>
+                </button>
+                <button class="button" id="generalSettings">
+                    <div class="selector"></div>
+                    <div class="icon"></div>
+                    <div class="name">General Settings</div>
+                </button>
+                <button class="button" id="crunchyroll">
+                    <div class="selector"></div>
+                    <div class="icon"></div>
+                    <div class="name">Crunchyroll</div>
+                </button>
+                <button class="button" id="voiranime">
+                    <div class="selector"></div>
+                    <div class="icon"></div>
+                    <div class="name">VoirAnime</div>
+                </button>
+                <button class="button" id="calendar">
+                    <div class="selector"></div>
+                    <div class="icon"></div>
+                    <div class="name">Calendar</div>
+                </button>
+
+
+            </div>
+        </div>
+    </div>
+    <div class="content" id="content">
+        <div id="section-home" class="section">
+            <h1>Welcome to Ani-Extension Settings</h1>
+            <p>Select a category from the menu to begin configuring your extension.</p>
+        </div>
+        <!-- GENERAL SETTINGS -->
+        <div id="section-generalSettings" class="section">
+            <div class="section-title">Global Settings</div>
+            <label>
+                <input type="checkbox" id="darkMode">
+                Enable white theme <div class="tooltip-not-implemented">Feature not implemented yet</div>
+            </label><br>
+            <label>
+                <input type="checkbox" id="notifications-extension">
+                Enable extension notifications <div class="tooltip-not-implemented">Feature not implemented yet</div>
+            </label><br>
+            <label>
+                <input type="checkbox" id="notifications-mail">
+                Enable mail notifications for future releases <div class="tooltip-not-implemented">Feature not implemented yet</div>
+            </label>
+        </div>
+
+        <!-- CRUNCHYROLL -->
+        <div id="section-crunchyroll" class="section">
+            <div class="section-title">Crunchyroll Settings</div>
+            <label>
+                <input type="checkbox" id="skipIntroOutro">
+                Auto-skip intro/outro <div class="tooltip-not-implemented">Feature not implemented yet</div>
+            </label><br>
+            <label>
+                <input type="checkbox" id="autoNext">
+                Auto next episode <div class="tooltip-not-implemented">Feature not implemented yet</div>
+            </label>
+        </div>
+
+        <!-- VOIRANIME -->
+        <div id="section-voiranime" class="section">
+            <div class="section-title">VoirAnime Settings</div>
+            <label>
+                <input type="checkbox" id="voiranimeSkipIntro">
+                Auto-skip intro/outro <div class="tooltip-not-implemented">Feature not implemented yet</div>
+            </label><br>
+            <label>
+                <input type="checkbox" id="voiranimeAutoNext">
+                Auto next episode <div class="tooltip-not-implemented">Feature not implemented yet</div>
+            </label>
+        </div>
+
+        <!-- CALENDAR -->
+        <div id="section-calendar" class="section">
+            <div class="section-title">Planning Integration</div>
+            <label>
+                <input type="checkbox" id="syncGoogleCalendar">
+                Sync planning with Google Calendar <div class="tooltip-not-implemented">Feature not implemented yet</div>
+            </label><br>
+            <label>
+                <input type="text" placeholder="Google Calendar API Key" id="calendarApiKey"> <div class="tooltip-not-implemented">Feature not implemented yet</div>
+            </label>
+        </div>
+
+    </div>
+    </div>
 </body>
+
 </html>
