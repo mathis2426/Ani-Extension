@@ -34,7 +34,7 @@ switch (location.hostname) {
   case "static.crunchyroll.com":
     SPADetectChange(() => {
       crunchyroll(animeCarac, location, () => {
-        if (chrome.runtime?.id) { 
+        if (chrome.runtime?.id) {
           chrome.runtime.sendMessage({ type: "animeData", data: animeCarac });
         }
       });
@@ -54,7 +54,6 @@ switch (location.hostname) {
  * @param {function} callback 
  */
 function crunchyroll(animeClass, location, callback) {
-
   // Listener for messages from the iframe
   window.addEventListener("message", (event) => {
     if (!event.data) return;
@@ -86,6 +85,7 @@ function crunchyroll(animeClass, location, callback) {
         if (mutation.type === "childList") {
           let titleNode = document.querySelector("h1");
           let animenode = document.querySelector("a.show-title-link");
+          let toolbar = document.getElementsByClassName("current-media-header");
           if (titleNode) {
             const h1 = titleNode.textContent.split(" - ");
             animeClass.episode = h1[0].substring(1); // Episode number
@@ -97,6 +97,9 @@ function crunchyroll(animeClass, location, callback) {
           }
           if (titleNode && animenode) {
             callback();
+            if (toolbar && toolbar.length > 0 && toolbar[0].children.length > 1) {
+              addShortcut(toolbar);
+            }
             observer.disconnect();
             break;
           }
@@ -244,3 +247,69 @@ async function waitVideoElement() {
     });
   });
 }
+
+
+// Shortcut for Crunchyroll
+function addShortcut(toolbar) {
+
+  if (!document.getElementById('aniExtensionShortcut')) {
+    const imageUrl = chrome.runtime.getURL('images-extension/a-nobg-white.png');
+    const style = document.createElement('style');
+    style.id = 'aniExtensionShortcut';
+    style.textContent = `
+      .aniExtensionShortcut {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        background:rgba(255, 153, 0, 0);
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        cursor: pointer;
+        transition: background 0.5s;
+        margin: 0 8px;
+      }
+      .aniExtensionShortcut:hover {
+        background: #ff640a;
+  
+      }
+      .aniExtensionShortcut:hover img {
+        filter: brightness(10) invert(1);
+      }
+
+      .aniExtensionShortcut img {
+        width: 28px;
+        height: 28px;
+        filter: invert(50%) sepia(99%) saturate(3680%) hue-rotate(0deg) brightness(101%);
+        object-fit: contain;
+        user-select: none;
+        pointer-events: none;
+        transition: filter 0.3s ease;
+      }`;
+    document.head.appendChild(style);
+
+    let anishortcut = `<div class="aniExtensionShortcut">
+      <img src="${imageUrl}" alt="Ani Icon" style="width: 40px; height: 40px;">
+      </div>`;
+    toolbar[0].children[0].insertAdjacentHTML('afterend', anishortcut);
+    toolbar[0].children[1].addEventListener("click", () => {
+      ShortcutMenu();
+    });
+  }
+}
+function ShortcutMenu() {
+  let menu = document.createElement("div");
+  menu.innerHTML = `
+    <div class="aniExtensionMenu">
+      <div class="aniExtensionMenuItem" id="aniExtensionMenuItem1"></div>
+      <div class="aniExtensionMenuItem" id="aniExtensionMenuItem2"></div>
+      <div class="aniExtensionMenuItem" id="aniExtensionMenuItem3"></div>
+      <div class="aniExtensionMenuItem" id="aniExtensionMenuItem4"></div>
+    </div>`;
+
+  
+  
+
+}
+
