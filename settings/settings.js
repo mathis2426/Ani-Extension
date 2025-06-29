@@ -1,4 +1,10 @@
+import { getOrCreateSettings, saveSettings } from "../interfaces/Settings.js";
 document.addEventListener("DOMContentLoaded", () => {
+
+    getOrCreateSettings((settings) => {
+        updateSettingsUI(settings);
+        setupEventListeners(settings);
+    });
     const buttons = document.querySelectorAll(".button");
     const sections = document.querySelectorAll(".section");
 
@@ -45,4 +51,91 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Initialisation : active "home" au chargement
     setActiveButton("home");
+
 });
+function applyTheme(theme) {
+    if (theme === "light") {
+        document.documentElement.classList.add("light-theme");
+        document.body.classList.add("light-theme");
+    } else {
+        document.documentElement.classList.remove("light-theme");
+        document.body.classList.remove("light-theme");
+
+    }
+}
+function asknotificationPermission() {
+    if (Notification.permission === "denied") {
+        alert("Vous avez refusé les notifications pour cette extension. Veuillez modifier vos paramètres de navigateur pour les activer.");
+        return;
+    }
+    else if (Notification.permission === "granted") {
+        const notif = new Notification("Notifications déjà activées", {
+            body: "Vous avez déjà activé les notifications pour l'extension Ani-Extension.",
+            icon: "../logo/logo-128.png",
+            vibrate: [200, 100, 200],
+
+        });
+
+        return;
+    }
+    else {
+        Notification.requestPermission().then(function (permission) {
+            const notif = new Notification("Activation des notifications", {
+                body: "Vous venez d'activer les notifications pour l'extension Ani-Extension.",
+                icon: "../logo/logo-128.png",
+                vibrate: [200, 100, 200]
+            });
+        });
+
+    }
+}
+
+function updateSettingsUI(settings) {
+    applyTheme(settings.theme);
+    // Général
+    document.getElementById("darkMode").checked = settings.theme === "light"; // Ton label dit "white"
+    document.getElementById("notifications-mail").checked = settings.mailnotificationEnabled;
+
+    // Crunchyroll
+    document.getElementById("skipIntroOutro").checked = settings.crunchyrollSettings.autoSkip;
+    document.getElementById("autoNext").checked = settings.crunchyrollSettings.autoPlayNext;
+
+    // Voiranime
+    document.getElementById("voiranimeSkipIntro").checked = settings.voiranimeSettings.autoSkip;
+    document.getElementById("voiranimeAutoNext").checked = settings.voiranimeSettings.autoPlayNext;
+
+}
+
+function setupEventListeners(settings) {
+    document.getElementById("darkMode").addEventListener("change", (e) => {
+        settings.theme = e.target.checked ? "light" : "dark";
+        applyTheme(settings.theme);
+        saveSettings(settings);
+    });
+    document.getElementById("notifications-extension").addEventListener("click", () => {
+        asknotificationPermission();
+        saveSettings(settings);
+    });
+    document.getElementById("notifications-mail").addEventListener("change", (e) => {
+        settings.mailnotificationEnabled = e.target.checked;
+        saveSettings(settings);
+    });
+
+    document.getElementById("skipIntroOutro").addEventListener("change", (e) => {
+        settings.crunchyrollSettings.autoSkip = e.target.checked;
+        saveSettings(settings);
+    });
+    document.getElementById("autoNext").addEventListener("change", (e) => {
+        settings.crunchyrollSettings.autoPlayNext = e.target.checked;
+        saveSettings(settings);
+    });
+
+    document.getElementById("voiranimeSkipIntro").addEventListener("change", (e) => {
+        settings.voiranimeSettings.autoSkip = e.target.checked;
+        saveSettings(settings);
+    });
+    document.getElementById("voiranimeAutoNext").addEventListener("change", (e) => {
+        settings.voiranimeSettings.autoPlayNext = e.target.checked;
+        saveSettings(settings);
+    });
+}

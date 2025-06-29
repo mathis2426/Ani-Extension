@@ -2,19 +2,18 @@
 
 body,
 html {
-    display: flex;
     background-color: #2a2a2a;
     color: #eee;
     font-family: var(--font-main);
-    height: 100%;
+    min-height: 100vh;
+    width: 100%;
     margin: 0;
     scroll-behavior: smooth;
 
 }
 .content{
     flex: 1;
-    height: 100%;
-    margin-left: 210px;
+    margin-left: 260px;
 
 }
 .section {
@@ -122,4 +121,93 @@ input[type="text"] {
             }
         }
     }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #2a2a2a;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #555;
+    border-radius: 10px;
+    border: 2px solid #2a2a2a;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #888;
+}
+
+
+
+/* Thème clair */
+body.light-theme,
+html.light-theme {
+    background-color: #f0f0f0;
+    color: #222;
+    scrollbar-color: #A48EE5 #f0f0f0;
+}
+
+/* Sections */
+.light-theme .section {
+    color: #222;
+}
+.light-theme .section-title {
+    color: #333;
+}
+.light-theme .section-title::after {
+    background-color: #ccc;
+}
+.light-theme .section h2 {
+    color: #111;
+}
+
+/* Tooltips */
+.light-theme .tooltip-not-implemented {
+    color: #d00;
+}
+
+/* Inputs */
+.light-theme input[type="text"] {
+    background-color: #fff;
+    color: #000;
+}
+
+/* Navigation */
+.light-theme .nav-bar {
+    background-color: #e0e0e0;
+}
+.light-theme .nav-bar .button {
+    background-color: #e0e0e0;  
+    color: #000;
+}
+.light-theme .nav-bar .buttons .button {
+    background-color: #e0e0e0;
+    color: #000;
+}
+.light-theme .nav-bar .button:hover{
+    background-color: #A48EE5;
+}
+.light-theme .nav-bar .button.active {
+    background-color: #A48EE5;
+    color: #fff;
+}
+/* Scrollbar */
+
+/* Scrollbar en thème clair */
+.light-theme ::-webkit-scrollbar-track {
+    background: #ffffff;
+}
+    
+.light-theme ::-webkit-scrollbar-thumb {
+    background-color: #bbb;
+    border: 2px solid #ffffff;
+}
+
+.light-theme ::-webkit-scrollbar-thumb:hover {
+    background-color: #999;
 }

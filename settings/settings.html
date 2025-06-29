@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <link rel="stylesheet" href="settings.css">
-    <script src="settings.js"></script>
+    <script type="module" src="settings.js"></script>
     <title>AniExtension: Settings</title>
 </head>
 
@@ -55,11 +55,11 @@
             <div class="section-title">Global Settings</div>
             <label>
                 <input type="checkbox" id="darkMode">
-                Enable white theme <div class="tooltip-not-implemented">Feature not implemented yet</div>
+                Enable white theme
             </label><br>
             <label>
-                <input type="checkbox" id="notifications-extension">
-                Enable extension notifications <div class="tooltip-not-implemented">Feature not implemented yet</div>
+                <button id="notifications-extension">
+                Enable chrome notifications </button>
             </label><br>
             <label>
                 <input type="checkbox" id="notifications-mail">
