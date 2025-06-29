@@ -1,3 +1,5 @@
+let token = null;
+
 document.addEventListener("DOMContentLoaded", () => {
   const listAnime = document.getElementById("content_list");
   chrome.storage.local.get("popupDataList", (result) => {
@@ -63,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
       notifContainer.addEventListener("click", (event) => {
         event.stopPropagation();
       });
-      
+
       checkbox.checked = anime.notif;
 
       checkbox.addEventListener("change", () => {
@@ -144,7 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Verified if the element exist and update
         const progressBar = document.getElementById(`bar-${index}`);
         const timecode = document.getElementById(`timecode-${index}`);
-        
+
         if (progressBar && timecode) {
           updateTime(anime.currentTime, anime.duration, index);
         }
@@ -152,3 +154,179 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+
+// Popup connexion with API
+
+// chrome.storage.local.get("token", (result) => {
+//   const token = result.token;
+//   const status = document.getElementById("status");
+
+//   if (token) {
+//     status.textContent = "Connecté ✅";
+//     // Exemple d'appel API :
+//     fetch("https://ton-api.com/data", { // a modifier avec la vrai URL
+//       headers: { Authorization: `Bearer ${token}` }
+//     })
+//       .then(res => res.json())
+//       .then(data => {
+//         console.log("Données de l'API:", data);
+//         // Affiche les données dans le popup
+//       });
+//   } else {
+//     status.textContent = "Non connecté ❌";
+//   }
+// });
+
+//function updateTokenUI(token) {
+//  const mailTest = document.getElementById("mailTest");
+//  mailTest.style.color = "#ffffff";
+//
+//  if (token) {
+//    mailTest.textContent = `Connecté en tant que ${token} ✅`;
+//    console.log("Token actuel:", token);
+//  } else {
+//    mailTest.textContent = "Non connecté ❌";
+//  }
+//}
+//
+//// Chargement initial
+//chrome.storage.local.get("token", (result) => {
+//  token = result.token;
+//  updateTokenUI(token);
+//});
+//
+//// Mise à jour en temps réel
+//chrome.storage.onChanged.addListener((changes, area) => {
+//  if (area === "local" && changes.token) {
+//    token = changes.token.newValue;
+//    updateTokenUI(token);
+//  }
+//});
+
+
+// CLick sur le bouton de connexion
+document.addEventListener("click", (event) => {
+  const target = event.target;
+
+  // Vérifie si l'élément cliqué est #connexion
+  if (target.id === "connexion") {
+    chrome.tabs.create({ url: chrome.runtime.getURL("login.html") });
+  }
+});
+
+// Déconnexion
+document.addEventListener("click", (event) => {
+  const target = event.target;
+
+  if (target.id === "deconnexion") {
+    chrome.storage.local.remove("token", () => {
+      token = null;
+      //updateTokenUI(token);
+      alert("Déconnexion réussie !");
+    });
+  }
+});
+
+async function getPopupUserInformation(token) {
+  try {
+    const response = await fetch("http://localhost/Ani-Api/api/userInformations/simpleInformation", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const data = await response.json();
+    if (data.id_users) { // Renvoie si l'utilisateur à un token invalide et doit l'actualiser
+      await reloadToken(data.id_users);
+      let newToken = await getToken();
+      return await getPopupUserInformation(newToken);
+    }
+    return data[0]; // retourne l'objet { uid, username, mail }
+  } catch (err) {
+    console.error("Erreur lors de la récupération des données utilisateur:", err);
+    return null;
+  }
+}
+
+// Profile design
+const profilePicture = document.getElementById("profile-picture");
+profilePicture.addEventListener("click", async () => {
+  if (document.querySelector('.profile-container')) return;
+
+  let token = await getToken();
+
+  const base = document.getElementById("base");
+  const containerProfile = document.createElement("div");
+  containerProfile.className = "profile-container";
+
+  if (token) {
+    const userData = await getPopupUserInformation(token);
+
+    if (!userData) {
+      alert("Impossible de récupérer les infos utilisateur");
+      return;
+    }
+
+    containerProfile.innerHTML = `
+        <div class="user-infos">
+          <div class="user-infos-item">
+            <span class="dash"></span>
+            <span>Username : ${userData.username}</span>
+          </div>
+          <div class="user-infos-item">
+            <span class="dash"></span>
+            <span>UID : ${userData.uid}</span>
+          </div>
+          <button class="button-profile">voir le profil</button>
+          <button class="button-profile" id="deconnexion">Déconnexion</button>
+        </div>
+      `;
+  } else {
+    containerProfile.innerHTML = `
+        <div class="user-infos">
+          <button class="button-profile" id="connexion">Se connecter</button>
+        </div>
+      `;
+  }
+
+  base.appendChild(containerProfile);
+});
+
+
+
+// Token reconnection
+async function reloadToken(id_users) {
+
+  try {
+    const response = await fetch("http://localhost/Ani-Api/api/connexion", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id_users
+      })
+    });
+
+    if (!response.ok) throw new Error("Échec de connexion");
+
+    const tokenJwt = await response.json();
+
+    await chrome.storage.local.set({ "token": tokenJwt });
+
+    alert("nouveau token JWT stocké : " + tokenJwt);
+    alert("Reconnexion reussie !");
+  } catch (err) {
+    alert("Erreur : " + err.message);
+  }
+};
+
+
+function getToken() {
+  return new Promise((resolve, reject) => {
+    chrome.storage.local.get("token", (result) => {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+      } else {
+        resolve(result.token);
+      }
+    });
+  });
+}
