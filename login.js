@@ -20,10 +20,10 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
     if (!response.ok) throw new Error("Échec de connexion");
 
     const tokenJwt = await response.json();
-    await chrome.storage.local.set({ "token": tokenJwt });
-    alert("token JWT stocké : " + tokenJwt);
+    await chrome.storage.local.set({ "token": tokenJwt.token });
+    alert("token JWT stocké : " + tokenJwt.token);
     alert("Connexion reussie !");
-    //window.close(); // Ferme la fenêtre de connexion après succès
+    window.close(); // Ferme la fenêtre de connexion après succès
   } catch (err) {
     alert("Erreur : " + err.message);
   }

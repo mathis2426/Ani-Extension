@@ -283,11 +283,14 @@ async function getPopupUserInformation(token) {
     });
 
     const data = await response.json();
-    //if (data.id_users) { // Renvoie si l'utilisateur à un token invalide et doit l'actualiser
-    //  await reloadToken(data.id_users);
-    //  let newToken = await getToken();
-    //  return await getPopupUserInformation(newToken);
-    //}
+    alert(data);
+    console.log("data id users : ", data.id_users);
+    if ((data.status === "expired" || data.message === "Token expiré, renouvellement possible") && data.id_users) {
+      await reloadToken(data.id_users);
+      let newToken = await getToken();
+      
+      return await getPopupUserInformation(newToken); // récursion uniquement si besoin
+    }
     return data[0]; // retourne l'objet { uid, username, mail }
   } catch (err) {
     console.error("Erreur lors de la récupération des données utilisateur:", err);
@@ -343,7 +346,6 @@ profilePicture.addEventListener("click", async () => {
 
 // Token reconnection
 async function reloadToken(id_users) {
-
   try {
     const response = await fetch("http://localhost/Ani-Api/api/connexion", {
       method: "POST",
@@ -354,12 +356,12 @@ async function reloadToken(id_users) {
     });
 
     if (!response.ok) throw new Error("Échec de connexion");
+    alert("response : ", )
+    const tokenJwt = await response.json(); // error
+    alert("nouveau token JWT stocké : " + tokenJwt.token);
 
-    const tokenJwt = await response.json();
+    await chrome.storage.local.set({ "token": tokenJwt.token });
 
-    await chrome.storage.local.set({ "token": tokenJwt });
-
-    alert("nouveau token JWT stocké : " + tokenJwt);
     alert("Reconnexion reussie !");
   } catch (err) {
     alert("Erreur : " + err.message);
