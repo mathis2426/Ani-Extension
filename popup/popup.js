@@ -283,11 +283,11 @@ async function getPopupUserInformation(token) {
     });
 
     const data = await response.json();
-    if (data.id_users) { // Renvoie si l'utilisateur à un token invalide et doit l'actualiser
-      await reloadToken(data.id_users);
-      let newToken = await getToken();
-      return await getPopupUserInformation(newToken);
-    }
+    //if (data.id_users) { // Renvoie si l'utilisateur à un token invalide et doit l'actualiser
+    //  await reloadToken(data.id_users);
+    //  let newToken = await getToken();
+    //  return await getPopupUserInformation(newToken);
+    //}
     return data[0]; // retourne l'objet { uid, username, mail }
   } catch (err) {
     console.error("Erreur lors de la récupération des données utilisateur:", err);
