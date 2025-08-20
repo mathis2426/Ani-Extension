@@ -56,7 +56,7 @@ function getAnimeCarac() {
  * @param {function} callback 
  */
 function crunchyroll(animeClass, location, callback) {
-  
+
   // Listener for messages from the iframe
   window.addEventListener("message", (event) => {
     if (!event.data) return;
@@ -145,6 +145,7 @@ async function voiranime(animeClass, callback) {
     if (event.data.type === "Time") {
       animeCarac.currentTime = event.data.data;
     }
+
     if (event.data.type === "Duration" || event.data.type === "Time") {
       callback();
     }
@@ -163,10 +164,16 @@ async function voiranime(animeClass, callback) {
     animeClass.link = link;
     animeClass.notif = false;
   }
-  if (location.hostname == "vidmoly.to" || location.hostname == "w9gw7oou.com" || location.hostname == "voe.sx" || location.hostname == "sandratableother.com" || location.hostname == "my.mail.ru") {
+  if (
+    location.hostname == "vidmoly.to" || 
+    location.hostname == "w9gw7oou.com" || 
+    location.hostname == "voe.sx" || 
+    location.hostname == "sandratableother.com" || 
+    location.hostname == "my.mail.ru"
+  ) {
 
     let video = document.querySelector("video");
-    if (!video) 
+    if (!video)
       video = await waitVideoElement();
 
     if (video) {
@@ -177,11 +184,20 @@ async function voiranime(animeClass, callback) {
         );
       });
 
+      let hasTriggered = false;
       video.addEventListener("timeupdate", () => {
+        let currentTime = Math.floor(video.currentTime);
+        console.log("Current time:", currentTime);
         window.top.postMessage(
-          { type: "Time", data: Math.floor(video.currentTime) },
+          { type: "Time", data: currentTime },
           "*"
         );
+        if (!hasTriggered && currentTime >= 180) {
+          hasTriggered = true; 
+
+          console.log("animetitle : ", animeClass.name);
+          fetchAllAnimes(animeClass.name); 
+        }
       });
     }
   }
@@ -207,3 +223,61 @@ async function waitVideoElement() {
     });
   });
 }
+
+
+
+
+
+//---------------------------------------- test Anilist-API filter ----------------------------------------//
+
+async function fetchAllAnimes(animeTitle) {
+  const query = `
+    query ($search: String) {
+      Page(page: 1, perPage: 10) {
+        media(search: $search, type: ANIME) {
+          id
+          title {
+            romaji
+            english
+            native
+          }
+          coverImage {
+            large
+          }
+          status
+          startDate {
+            year
+            month
+            day
+          }
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    search: animeTitle
+  };
+
+  try {
+    const response = await fetch("https://graphql.anilist.co", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ query, variables }), // ← ici `variables` doit être défini juste avant
+    });
+
+    const result = await response.json();
+    const animes = result.data.Page.media;
+
+    console.log("Animes fetched from Anilist:", animes);
+    return animes;
+
+  } catch (error) {
+    console.error("Erreur lors de la requête Anilist :", error);
+    return [];
+  }
+}
+
