@@ -18,11 +18,11 @@ let animeCarac = new anime();
 
 switch (location.hostname) {
   case "v6.voiranime.com":
-  case "vidmoly.to":
-  case "w9gw7oou.com":
-  case "voe.sx":
-  case "sandratableother.com":
-  case "my.mail.ru":
+  case "vidmoly.net": // lecteur myTV
+  //case "w9gw7oou.com": // lecteur MOON
+  case "voe.sx": // lecteur voe
+  //case "sandratableother.com": // lecteur MOON
+  case "my.mail.ru": // lecteur FHD1
     voiranime(animeCarac, () => {
       if (chrome.runtime?.id) { // Check if the extension is connected
         chrome.runtime.sendMessage({ type: "animeData", data: animeCarac });
@@ -94,7 +94,9 @@ function crunchyroll(animeClass, location, callback) {
           }
           if (animenode) {
             animeClass.name = animenode.querySelector("h4").textContent; // Name of the anime
+            sendAnimeNameToIframe(animeClass.name);
           }
+
           if (titleNode && animenode) {
             callback();
             observer.disconnect();
@@ -107,20 +109,8 @@ function crunchyroll(animeClass, location, callback) {
     let observer = new MutationObserver(observerCallback);
     observer.observe(targetNode, config);
   } else if (location.hostname == "static.crunchyroll.com") { // If the page is an iframe
-    let video = document.querySelector("video");
-    video.addEventListener("loadedmetadata", () => {
-      window.parent.postMessage(
-        { type: "Duration", data: video.duration }, // Total duration of the video
-        "*"
-      );
-    });
 
-    video.addEventListener("timeupdate", () => {
-      window.parent.postMessage(
-        { type: "Time", data: Math.floor(video.currentTime) }, // Current time of the video
-        "*"
-      );
-    });
+    sendRequestFindAnime();
   } else {
     console.log("Host not supported");
   }
@@ -200,45 +190,116 @@ async function voiranime(animeClass, callback) {
     animeClass.episode = episode;
     animeClass.link = link;
     animeClass.notif = false;
+
+    sendAnimeNameToIframe(animeClass.name);
   }
+
   if (
-    location.hostname == "vidmoly.to" || 
-    location.hostname == "w9gw7oou.com" || 
-    location.hostname == "voe.sx" || 
-    location.hostname == "sandratableother.com" || 
-    location.hostname == "my.mail.ru"
+    location.hostname == "vidmoly.net" || // lecteur myTV
+    //location.hostname == "w9gw7oou.com" || // lecteur MOON
+    //location.hostname == "sandratableother.com" || // lecteur MOON
+    location.hostname == "voe.sx" || // lecteur voe
+    location.hostname == "my.mail.ru" // lecteur FHD1
   ) {
-
-    let video = document.querySelector("video");
-    if (!video)
-      video = await waitVideoElement();
-
-    if (video) {
-      video.addEventListener("loadedmetadata", () => {
-        window.top.postMessage(
-          { type: "Duration", data: video.duration },
-          "*"
-        );
-      });
-
-      let hasTriggered = false;
-      video.addEventListener("timeupdate", () => {
-        let currentTime = Math.floor(video.currentTime);
-        console.log("Current time:", currentTime);
-        window.top.postMessage(
-          { type: "Time", data: currentTime },
-          "*"
-        );
-        if (!hasTriggered && currentTime >= 180) {
-          hasTriggered = true; 
-
-          console.log("animetitle : ", animeClass.name);
-          fetchAllAnimes(animeClass.name); 
-        }
-      });
-    }
+    sendRequestFindAnime(); // test
   }
 }
+
+//
+
+function sendAnimeNameToIframe(animeName) {
+
+  // 2) Handshake : répondre à l'iframe quand elle est prête,
+  //    même si elle arrive après (ou avant) nous.
+  const waitingChildren = new Set(); // garde les fenêtres en attente si nom pas prêt
+
+  function sendAnimeNameTo(targetWin) {
+    try {
+      targetWin.postMessage({ type: "AnimeName", data: animeName }, "*");
+    } catch (e) {
+      console.warn("postMessage vers l'iframe a échoué :", e);
+    }
+  }
+
+  // Si plus tard on met à jour le nom, on peut relivrer à tous en attente
+  function flushWaiting() {
+    waitingChildren.forEach((w) => sendAnimeNameTo(w));
+    waitingChildren.clear();
+  }
+
+  // Le parent écoute les signaux de l'iframe
+  window.addEventListener("message", (event) => {
+    const msg = event.data;
+    if (!msg || (msg.type !== "ChildReady" && msg.type !== "RequestAnimeName")) return;
+
+    // Répond directement à l'iframe source
+    if (animeName) {
+      sendAnimeNameTo(event.source);
+    } else {
+      waitingChildren.add(event.source);
+    }
+  });
+
+  flushWaiting();
+}
+
+
+//---------------------------------------- Gestion des envois de requetes ----------------------------------------//
+
+async function sendRequestFindAnime() {
+  let animeNameFromParent = null;
+
+  // 1) Dès le départ : annoncer qu'on est prêt
+  //    + redemander toutes les 1s jusqu'à réception.
+  window.top.postMessage({ type: "ChildReady" }, "*");
+  let askInterval = setInterval(() => {
+    if (!animeNameFromParent) {
+      window.top.postMessage({ type: "RequestAnimeName" }, "*");
+    } else {
+      clearInterval(askInterval);
+    }
+  }, 1000);
+
+  // 2) Recevoir le nom
+  window.addEventListener("message", (event) => {
+    if (event.data?.type === "AnimeName" && event.data.data) {
+      animeNameFromParent = event.data.data;
+      console.log("Nom anime reçu du parent :", animeNameFromParent);
+    }
+  });
+
+  // 3) Gestion de la vidéo + déclenchement à 180s
+  let video = document.querySelector("video");
+  if (!video)
+    video = await waitVideoElement();
+
+  if (video) {
+    video.addEventListener("loadedmetadata", () => {
+      window.top.postMessage(
+        { type: "Duration", data: video.duration },
+        "*"
+      );
+    });
+
+    let hasTriggered = false;
+    video.addEventListener("timeupdate", () => {
+      let currentTime = Math.floor(video.currentTime);
+      console.log("Current time:", currentTime);
+      window.top.postMessage(
+        { type: "Time", data: currentTime },
+        "*"
+      );
+      console.log("animeNameFromParent : ", animeNameFromParent);
+      if (!hasTriggered && currentTime >= 180 && animeNameFromParent) {
+        hasTriggered = true;
+
+        console.log("animetitle : ", animeNameFromParent);
+        fetchAllAnimes(animeNameFromParent);
+      }
+    });
+  }
+}
+
 
 /**
  * waitVideoElement
@@ -247,20 +308,22 @@ async function voiranime(animeClass, callback) {
  */
 async function waitVideoElement() {
   return new Promise((resolve) => {
-    let observer = new MutationObserver(function () {
+    // 1) Vérifier si la vidéo existe déjà
+    const existing = document.getElementsByTagName("video")[0];
+    if (existing) return resolve(existing);
+
+    // 2) Observer les changements
+    let observer = new MutationObserver(() => {
       const video = document.getElementsByTagName("video")[0];
       if (video) {
         resolve(video);
         observer.disconnect();
       }
     });
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
   });
 }
-
 
 
 

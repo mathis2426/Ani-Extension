@@ -356,7 +356,6 @@ async function reloadToken(id_users) {
     });
 
     if (!response.ok) throw new Error("Échec de connexion");
-    alert("response : ", )
     const tokenJwt = await response.json(); // error
     alert("nouveau token JWT stocké : " + tokenJwt.token);
 
