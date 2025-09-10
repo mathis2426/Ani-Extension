@@ -1,5 +1,16 @@
 let editorExtensionId = "olggkeglcmmolkpmnpffffcpcpdlonpk";
 
+// Loader paresseux pour le module de filtre
+let _AnimeFilter;
+
+async function useAnimeFilter() {
+  if (!_AnimeFilter) {
+    const mod = await import(chrome.runtime.getURL("assets/AnimeFilter.js"));
+    _AnimeFilter = mod.AnimeFilter;
+  }
+  return _AnimeFilter();
+}
+
 class anime {
   constructor() {
     this.name = "";
@@ -257,6 +268,10 @@ async function sendRequestFindAnime() {
         hasTriggered = true;
 
         console.log("animetitle : ", animeNameFromParent);
+
+        // Appel du filtre juste avant la requête
+        useAnimeFilter().catch(console.error);
+
         fetchAllAnimes(animeNameFromParent);
       }
     });
@@ -343,4 +358,3 @@ async function fetchAllAnimes(animeTitle) {
     return [];
   }
 }
-
