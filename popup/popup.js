@@ -126,6 +126,22 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         });
       }
+      else if (btn.target.id === "calendar") {
+        chrome.tabs.query({}, (tabs) => {
+          const alreadyOpen = tabs.find((tab) =>
+            tab.url && tab.url.includes("calendar/calendar.html")
+          );
+
+          if (alreadyOpen) {
+            chrome.tabs.update(alreadyOpen.id, { active: true });
+            window.close();
+          } else {
+            chrome.tabs.create({
+              url: chrome.runtime.getURL("calendar/calendar.html"),
+            });
+          }
+        });
+      }
 
       // Select the current button
       const selected = container.querySelector(".selected");
@@ -162,9 +178,25 @@ function updateTime(current, total, index) {
 document.addEventListener("DOMContentLoaded", () => {
 
   chrome.storage.onChanged.addListener((changes, area) => {
+    console.log("Storage changes detected:", changes, area);
     if (area === "local" && changes.popupDataList) {
       const oldList = changes.popupDataList.oldValue || [];
       const newList = changes.popupDataList.newValue || [];
+      const isOnlyNotifChange = oldList.length === newList.length && oldList.every((oldAnime, i) => {
+        const newAnime = newList[i];
+        if (!newAnime) return false;
+
+        const { notif: _, ...oldRest } = oldAnime;
+        const { notif: __, ...newRest } = newAnime;
+
+        return JSON.stringify(oldRest) === JSON.stringify(newRest);
+      });
+
+    if (isOnlyNotifChange) {
+      console.log("Only notif changed, skipping update.");
+      return;
+    }
+        
       let count = 0;
       let animeCurentlyWatching = document.querySelectorAll(".in-progress");
       animeCurentlyWatching.forEach(element => {

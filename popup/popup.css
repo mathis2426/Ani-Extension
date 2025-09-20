@@ -269,10 +269,13 @@ progress::-webkit-progress-value {
     width: 100%;
 }
 
+
 .combo-box-select {
     color: #ffffff;
     border: none;
-    background-color: transparent;
+    background-color: #2c2c2c;
+    padding: 5px;
+    border-radius: 10px;
     font-family: var(--font-main);
     font-size: 14px;
     font-weight: 700;
@@ -281,9 +284,13 @@ progress::-webkit-progress-value {
     scrollbar-color: #D9D9D9 #FFF8EA;
 
 }
+.combo-box-select:hover {
+    cursor: pointer;
+}
 
 .combo-box-select:focus {
     outline: none;
+    border: none;
 }
 
 .combo-box-select option {}
