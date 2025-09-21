@@ -1,9 +1,15 @@
 import { getOrCreateSettings, saveSettings } from "../interfaces/Settings.js";
+
+let settings;
+
+
 document.addEventListener("DOMContentLoaded", () => {
 
-    getOrCreateSettings((settings) => {
+    getOrCreateSettings((settings_data) => {
+        settings = settings_data;
         updateSettingsUI(settings);
         setupEventListeners(settings);
+        
     });
     const buttons = document.querySelectorAll(".button");
     const sections = document.querySelectorAll(".section");
@@ -85,7 +91,11 @@ function asknotificationPermission() {
                 icon: "../logo/logo-128.png",
                 vibrate: [200, 100, 200]
             });
+                settings.notificationsEnabled = true;
+                saveSettings(settings);
+                updateSettingsUI(settings);
         });
+        
 
     }
 }
@@ -93,8 +103,11 @@ function asknotificationPermission() {
 function updateSettingsUI(settings) {
     applyTheme(settings.theme);
     // Général
-    document.getElementById("darkMode").checked = settings.theme === "light"; // Ton label dit "white"
+    document.getElementById("darkMode").checked = settings.theme === "light";
     document.getElementById("notifications-mail").checked = settings.mailnotificationEnabled;
+    document.getElementById("notifications-status").innerText = Notification.permission === "granted" ? "Notifications enabled" : "Notifications disabled";
+    document.querySelector(".chrome-notifications").style.color = Notification.permission === "granted" ? "green" : "red";
+
 
     // Crunchyroll
     document.getElementById("skipIntroOutro").checked = settings.crunchyrollSettings.autoSkip;

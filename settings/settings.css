@@ -211,3 +211,15 @@ html.light-theme {
 .light-theme ::-webkit-scrollbar-thumb:hover {
     background-color: #999;
 }
+
+.chrome-notifications p {
+    display: inline;
+    margin-left: 10px;
+    font-weight: bold;
+}
+.green {
+    color: #4CAF50;
+}
+.red {
+    color: #F44336;
+}
