@@ -10,10 +10,8 @@ export async function getAnimeScheduleWithCache() {
       const now = Date.now();
 
       if (cached && cached.lastUpdate && now - cached.lastUpdate < CACHE_DURATION) {
-        console.log("⏱ Données chargées depuis le cache");
         resolve(cached.animelist);
       } else {
-        console.log("🔄 Cache expiré → récupération AniList");
         try {
           const mediaList = await fetchTwoWeeksSchedule();
           const animeProperties = new AnimeProperties();

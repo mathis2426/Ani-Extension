@@ -9,6 +9,7 @@ body {
   color: #ffffff;
 }
 
+/* --- Loading --- */
 .loading-screen {
   position: fixed;
   top: 0;
@@ -24,7 +25,6 @@ body {
   z-index: 9999;
   opacity: 1;
   transition: opacity 0.5s ease;
-  /* Transition fluide */
 }
 
 .loader {
@@ -40,9 +40,10 @@ body {
 
 @keyframes l13 {
   100% {
-    transform: rotate(1turn)
+    transform: rotate(1turn);
   }
 }
+
 .hide {
   opacity: 0;
   pointer-events: none;
@@ -52,38 +53,149 @@ body {
   transition: opacity 0.5s ease;
 }
 
+/* --- Navigation --- */
 .navigation {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: #2a2a2a;
+  transition: all 0.3s ease-in-out;
 }
 
+.navigation.scrolled {
+  background: none;
+  transition: all 0.3s ease-in-out;
+}
 .navigation button {
   background-color: #a48ee5;
   color: #ffffff;
   border: none;
-  padding: 10px;
+  padding: 10px 14px;
   border-radius: 6px;
+  transition: background-color 0.3s ease, color 0.3s ease, opacity 0.3s ease;
 }
 
 .navigation button:hover {
   background-color: #8873cc;
   cursor: pointer;
+  transform: scale(1.05);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.navigation.scrolled button {
+  color: #ddd;
+  font-size: 0.9em;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  margin: 4px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 50px;
+  margin-left: 75px;
+  position: relative;
+  z-index: 1;
+}
+
+.navigation.scrolled .button::before {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 50%;
+  z-index: -5;
 }
 
 .inactive {
-  background-color: #a9a2bd;
   opacity: 0.5;
   pointer-events: none;
 }
+/* --- Dropdowns + Week label --- */
+.dropdown,
+#week-label {
+  opacity: 1;
+  max-height: 200px;
+  overflow: hidden;
+  transform: translateY(0);
+  transition: opacity 0.4s ease, max-height 0.4s ease, transform 0.4s ease;
+}
 
+.dropdown.hidden,
+#week-label.hidden {
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+}
+
+/* --- Dropdown UI --- */
+.dropdown {
+  position: relative;
+  width: 200px;
+  font-family: sans-serif;
+  user-select: none;
+  transition: all 0.3s ease;
+}
+
+.dropdown-selected {
+  padding: 10px;
+  cursor: pointer;
+  background: #333;
+  border-radius: 6px;
+  transition: background 0.3s ease;
+}
+
+.dropdown-selected:hover {
+  background: #444;
+}
+
+.dropdown-options {
+  position: absolute;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: none;
+  background: #333;
+  max-height: 0;
+  opacity: 0;
+  overflow-y: hidden;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+  z-index: 10;
+}
+
+.dropdown-options.show {
+  max-height: 200px;
+  opacity: 1;
+  overflow-y: auto;
+}
+
+.dropdown-options li {
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown-options li:hover {
+  background: #b2a4db;
+}
+
+.dropdown-options li.active {
+  background: #4d4d4d;
+}
+
+/* --- Schedule grid --- */
 .schedule-grid {
+  z-index: 100;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  /* 7 jours */
   grid-template-rows: repeat(24, 50px);
-  /* 24h, chaque ligne = 1h */
   gap: 1px;
   flex: 1;
   background-color: #444;
@@ -105,6 +217,7 @@ body {
   z-index: 2;
 }
 
+/* --- Events --- */
 .event {
   display: flex;
   background-color: #383838;
@@ -113,6 +226,16 @@ body {
   border-radius: 4px;
   margin: 1px;
   z-index: 1;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInUp 0.4s ease forwards;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .event-img {
@@ -134,11 +257,17 @@ body {
   font-size: 0.9em;
 }
 
-.today-column {
-  background-color: #7f6eb2;
-
+.event.no-time {
+  font-style: italic;
+  background-color: #ddd;
 }
 
+/* --- Today highlight --- */
+.today-column {
+  background-color: #7f6eb2;
+}
+
+/* --- Hours --- */
 .content {
   display: flex;
   width: 100%;
@@ -158,13 +287,7 @@ body {
   height: 80px;
 }
 
-.selected {
-  background: #333;
-  color: white;
-  padding: 10px;
-  cursor: pointer;
-}
-
+/* --- Dropdown options list (old .options class) --- */
 .options {
   position: absolute;
   background: #333;
@@ -172,61 +295,28 @@ body {
   opacity: 0;
   z-index: 10;
   padding: 0;
+  max-height: 0;
+  overflow: hidden;
   transition: max-height 0.3s ease, opacity 0.3s ease;
   pointer-events: none;
+}
+
+.options.show {
+  opacity: 1;
+  max-height: 500px;
+  pointer-events: auto;
 }
 
 .options li:hover {
   background-color: #a48ee5;
   color: white;
+  transition: background-color 0.2s ease;
 }
 
-
-.dropdown {
-  position: relative;
-  width: 200px;
-  font-family: sans-serif;
-  user-select: none;
-}
-
-.dropdown-selected {
+/* --- Selected state --- */
+.selected {
+  background: #333;
+  color: white;
   padding: 10px;
   cursor: pointer;
-  background: #333;
-  border-radius: 6px;
-}
-
-.dropdown-options {
-  position: absolute;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  border-top: none;
-  background: #333;
-  max-height: 200px;
-  overflow-y: auto;
-  display: none;
-  z-index: 10;
-}
-
-.dropdown-options.show {
-  display: block;
-}
-
-.dropdown-options li {
-  padding: 10px;
-  cursor: pointer;
-}
-
-.dropdown-options li:hover {
-  background: #b2a4db;
-}
-.dropdown-options li.active {
-  background: #4d4d4d;
-}
-
-.event.no-time {
-  font-style: italic;
-  background-color: #ddd;
 }

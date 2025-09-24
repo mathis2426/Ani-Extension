@@ -68,6 +68,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("next-week").classList.add("inactive");
     document.getElementById("prev-week").classList.remove("inactive");
   });
+
+  window.addEventListener("scroll", () => {
+    const nav = document.querySelector(".navigation");
+    const prevweekBtn = document.getElementById("prev-week");
+    const nextweekBtn = document.getElementById("next-week");
+    const dropdowns = document.querySelectorAll(".dropdown");
+    const weekLabel = document.getElementById("week-label");
+
+    if (window.scrollY > 50) {
+      nav.classList.add("scrolled");
+
+      prevweekBtn.innerHTML =
+        '<img src="images/fleche-gauche.png" alt="gauche" style="width:16px; vertical-align:middle;">';
+      nextweekBtn.innerHTML =
+        '<img src="images/fleche-droite.png" alt="droite" style="width:16px; vertical-align:middle;">';
+
+      dropdowns.forEach(el => el.classList.add("hidden"));
+      weekLabel.classList.add("hidden");
+    } else {
+      nav.classList.remove("scrolled");
+      prevweekBtn.textContent = "Semaine précédente";
+      nextweekBtn.textContent = "Semaine suivante";
+      dropdowns.forEach(el => el.classList.remove("hidden"));
+      weekLabel.classList.remove("hidden");
+    }
+
+  });
 });
 
 function hideLoadingScreen() {
