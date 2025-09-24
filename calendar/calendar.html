@@ -1,72 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="stylesheet" href="calendar.css" />
-    <script type="module" src="calendar.js"></script>
-    <title>Ani-Extension</title>
-  </head>
-  <body>
-    <div class="loading-screen" id="loading-screen">
-      <div class="loader"></div>
-      <p>Chargement...</p>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="calendar.css" />
+  <script type="module" src="main.js"></script>
+  <title>Ani-Extension</title>
+</head>
+
+<body>
+  <div class="loading-screen" id="loading-screen">
+    <div class="loader"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <div id="main-content" class="main-content">
+    <div class="navigation">
+      <button class="button inactive" id="prev-week">← Semaine précédente</button>
+
+      <div id="sort-dropdown"></div>
+
+      <div id="week-label"></div>
+
+      <div id="filter-dropdown"></div>
+
+      <button class="button" id="next-week">Semaine suivante →</button>
     </div>
-    <div id="main-content" class="main-content">
-      <div class="navigation">
-        <button class="button" id="prev-week">← Semaine précédente</button>
-        <div class="display-filter">
-          <div class="sort">
-            Trier par:
-            <div class="custom-select">
-              <div class="selected">Choisir une option</div>
-              <ul class="options">
-                <li>Popularité</li>
-                <li>Heure</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        <div id="week-label"></div>
-        <div class="filter">
-          <label for="filter-select">Filtrer par :</label>
-          <select id="filter-select">
-            <option value="all">Tous</option>
-            <option value="watched">Regardés</option>
-            <option value="unwatched">Non regardés</option>
-            <option value="planned">Prévu</option>
-          </select>
-        </div>
-        <button class="button" id="next-week">Semaine suivante →</button>
-      </div>
-      <div class="content">
-        <div class="hours">
-          <div class="hour">00:00</div>
-          <div class="hour">01:00</div>
-          <div class="hour">02:00</div>
-          <div class="hour">03:00</div>
-          <div class="hour">04:00</div>
-          <div class="hour">05:00</div>
-          <div class="hour">06:00</div>
-          <div class="hour">07:00</div>
-          <div class="hour">08:00</div>
-          <div class="hour">09:00</div>
-          <div class="hour">10:00</div>
-          <div class="hour">11:00</div>
-          <div class="hour">12:00</div>
-          <div class="hour">13:00</div>
-          <div class="hour">14:00</div>
-          <div class="hour">15:00</div>
-          <div class="hour">16:00</div>
-          <div class="hour">17:00</div>
-          <div class="hour">18:00</div>
-          <div class="hour">19:00</div>
-          <div class="hour">20:00</div>
-          <div class="hour">21:00</div>
-          <div class="hour">22:00</div>
-          <div class="hour">23:00</div>
-        </div>
-        <div class="schedule-grid" id="schedule"></div>
-      </div>
+
+    <div class="content">
+      <div class="hours"></div>
+      <div class="schedule-grid" id="schedule"></div>
     </div>
-  </body>
+  </div>
+</body>
 </html>
