@@ -1,6 +1,12 @@
-//User connexion
+/**
+ * File Name      : login.js
+ * Description    : This file handles user login for the application.
+ * Author         : Mathis Gramage, Mathis Cucherat
+ * Date           : Last update 2025-09-29
+ * Version        : 1.0.0
+ */
 
-const urlApi = "http://localhost/Ani-Api/api/connexion";
+const urlApi = "http://localhost/Ani-Api/api/connexion"; // API endpoint for login
 
 document.getElementById("login-form").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -17,17 +23,13 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
       })
     });
 
-    //if (!response.ok) throw new Error("Échec de connexion");
-
-    if (response.status === 401) {
+    if (response.status === 401) { // Unauthorized by the server
       alert("Identifiants incorrects. Veuillez réessayer.");
       return;
     }
     const tokenJwt = await response.json();
-    await chrome.storage.local.set({ "token": tokenJwt.token });
-    alert("token JWT stocké : " + tokenJwt.token);
-    alert("Connexion reussie !");
-    //window.close(); // Ferme la fenêtre de connexion après succès
+    await chrome.storage.local.set({ "token": tokenJwt.token }); // Stock token in local chrome storage
+    window.close();
   } catch (err) {
     alert("Erreur : " + err.message);
   }

@@ -1,3 +1,11 @@
+/**
+ * File Name      : popup.js
+ * Description    : This file manages the display and interaction logic for the popup page of the extension.
+ * Author         : Mathis Gramage, Mathis Cucherat
+ * Date           : Last update 2025-09-29
+ * Version        : 1.0.0
+ */
+
 let token = null;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -155,79 +163,32 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-
-// Popup connexion with API
-
-// chrome.storage.local.get("token", (result) => {
-//   const token = result.token;
-//   const status = document.getElementById("status");
-
-//   if (token) {
-//     status.textContent = "Connecté ✅";
-//     // Exemple d'appel API :
-//     fetch("https://ton-api.com/data", { // a modifier avec la vrai URL
-//       headers: { Authorization: `Bearer ${token}` }
-//     })
-//       .then(res => res.json())
-//       .then(data => {
-//         console.log("Données de l'API:", data);
-//         // Affiche les données dans le popup
-//       });
-//   } else {
-//     status.textContent = "Non connecté ❌";
-//   }
-// });
-
-//function updateTokenUI(token) {
-//  const mailTest = document.getElementById("mailTest");
-//  mailTest.style.color = "#ffffff";
-//
-//  if (token) {
-//    mailTest.textContent = `Connecté en tant que ${token} ✅`;
-//    console.log("Token actuel:", token);
-//  } else {
-//    mailTest.textContent = "Non connecté ❌";
-//  }
-//}
-//
-//// Chargement initial
-//chrome.storage.local.get("token", (result) => {
-//  token = result.token;
-//  updateTokenUI(token);
-//});
-//
-//// Mise à jour en temps réel
-//chrome.storage.onChanged.addListener((changes, area) => {
-//  if (area === "local" && changes.token) {
-//    token = changes.token.newValue;
-//    updateTokenUI(token);
-//  }
-//});
-
-
-// CLick sur le bouton de connexion
+// Click on the login button
 document.addEventListener("click", (event) => {
   const target = event.target;
 
-  // Vérifie si l'élément cliqué est #connexion
+  // Check if the clicked element is #connexion
   if (target.id === "connexion") {
     chrome.tabs.create({ url: chrome.runtime.getURL("login.html") });
   }
 });
 
-// Déconnexion
+// deconnexion 
 document.addEventListener("click", (event) => {
   const target = event.target;
 
   if (target.id === "deconnexion") {
     chrome.storage.local.remove("token", () => {
       token = null;
-      //updateTokenUI(token);
-      alert("Déconnexion réussie !");
     });
   }
 });
 
+/**
+ * Get user information for the popup
+ * @param {*} token 
+ * @returns 
+ */
 async function getPopupUserInformation(token) {
   try {
     const response = await fetch("http://localhost/Ani-Api/api/userInformations/simpleInformation", {
@@ -237,14 +198,13 @@ async function getPopupUserInformation(token) {
     const data = await response.json();
     alert(data);
     console.log("data id users : ", data.id_users);
-    if ((data.status === "expired" || data.message === "Token expiré, renouvellement possible") && data.id_users) {
-      alert("salut");
+    if ((data.status === "expired" || data.message === "Token expired, renewal possible") && data.id_users) {
       await reloadToken(data.id_users);
       let newToken = await getToken();
       
-      return await getPopupUserInformation(newToken); // récursion uniquement si besoin
+      return await getPopupUserInformation(newToken); // retry with new token
     }
-    return data[0]; // retourne l'objet { uid, username, mail }
+    return data[0]; // returns the object { uid, username, mail }
   } catch (err) {
     console.error("Erreur lors de la récupération des données utilisateur:", err);
     return null;
@@ -308,15 +268,13 @@ async function reloadToken(id_users) {
       })
     });
 
-    if (!response.ok) throw new Error("Échec de connexion");
+    if (!response.ok) throw new Error("Connection échouée");
     const tokenJwt = await response.json(); // error
-    alert("nouveau token JWT stocké : " + tokenJwt.token);
 
     await chrome.storage.local.set({ "token": tokenJwt.token });
 
-    alert("Reconnexion reussie !");
   } catch (err) {
-    alert("Erreur : " + err.message);
+    console.log("Erreur : " + err.message);
   }
 };
 

@@ -1,15 +1,12 @@
+/**
+ * File Name      : foreground.js
+ * Description    : This file manages the extraction, processing, and sending of anime information for the extension.
+ * Author         : Mathis Gramage, Mathis Cucherat
+ * Date           : Last update 2025-09-29
+ * Version        : 1.0.0
+ */
+
 let editorExtensionId = "olggkeglcmmolkpmnpffffcpcpdlonpk";
-
-// Loader paresseux pour le module de filtre
-let _AnimeFilter;
-
-async function useAnimeFilter() {
-  if (!_AnimeFilter) {
-    const mod = await import(chrome.runtime.getURL("assets/AnimeFilter.js"));
-    _AnimeFilter = mod.AnimeFilter;
-  }
-  return _AnimeFilter();
-}
 
 class anime {
   constructor() {
@@ -28,9 +25,7 @@ let animeCarac = new anime();
 switch (location.hostname) {
   case "v6.voiranime.com":
   case "vidmoly.net": // lecteur myTV
-  //case "w9gw7oou.com": // lecteur MOON
   case "voe.sx": // lecteur voe
-  //case "sandratableother.com": // lecteur MOON
   case "my.mail.ru": // lecteur FHD1
     voiranime(animeCarac, () => {
       if (chrome.runtime?.id) { // Check if the extension is connected
@@ -51,12 +46,6 @@ switch (location.hostname) {
   default:
     break;
 }
-
-//function getAnimeCarac() {
-//  console.log("getAnimeCarac");
-//
-//  let link = location.href;
-//}
 
 /**
  * crunchyroll
@@ -124,29 +113,34 @@ function crunchyroll(animeClass, location, callback) {
 
     sendRequestFindAnime();
   } else {
-    console.log("Host not supported");
+    console.log("Hôte non pris en charge");
   }
 }
 
 /**
- * waitVideoElement
+ * voiranime
  * Description: - Get information about the anime currently playing on Voiranime
- * @param animeClass
- * @param callback
+ * @param {animeCarac} animeClass
+ * @param {function} callback
  * @return void
  */
 async function voiranime(animeClass, callback) {
+
+  // Listener for messages from the iframe
   window.addEventListener("message", (event) => {
     if (!event.data) return;
 
+    // Duration is the total duration of the video
     if (event.data.type === "Duration") {
       animeCarac.duration = event.data.data;
     }
 
+    // Time is the current time of the video
     if (event.data.type === "Time") {
       animeCarac.currentTime = event.data.data;
     }
 
+    // Trigger the callback when we receive Duration or Time updates
     if (event.data.type === "Duration" || event.data.type === "Time") {
       callback();
     }
@@ -160,33 +154,38 @@ async function voiranime(animeClass, callback) {
     let episodeLink = link.split("/")[5];
     let episode = episodeLink.substring(0, episodeLink.lastIndexOf("-")).split("-").pop();
 
-    animeClass.name = titleAnime;
-    animeClass.episode = episode;
-    animeClass.link = link;
+    animeClass.name = titleAnime; // Name of the anime
+    animeClass.episode = episode; // Episode number
+    animeClass.link = link; // Link to the anime
     animeClass.notif = false;
 
     sendAnimeNameToIframe(animeClass.name);
   }
 
   if (
-    location.hostname == "vidmoly.net" || // lecteur myTV
-    //location.hostname == "w9gw7oou.com" || // lecteur MOON
-    //location.hostname == "sandratableother.com" || // lecteur MOON
-    location.hostname == "voe.sx" || // lecteur voe
-    location.hostname == "my.mail.ru" // lecteur FHD1
+    location.hostname == "vidmoly.net" || // myTV player
+    location.hostname == "voe.sx" || // voe player
+    location.hostname == "my.mail.ru" // FHD1 player
   ) {
-    sendRequestFindAnime(); // test
+    sendRequestFindAnime();
   }
 }
 
-//
-
+/**
+ * sendAnimeNameToIframe
+ * Description: - Send the anime name to the iframe when it's ready
+ * @param {string} animeName 
+ */
 function sendAnimeNameToIframe(animeName) {
 
-  // 2) Handshake : répondre à l'iframe quand elle est prête,
-  //    même si elle arrive après (ou avant) nous.
+  // Handshake: respond to the iframe when it is ready,
+  // even if it arrives after (or before) us.
   const waitingChildren = new Set(); // garde les fenêtres en attente si nom pas prêt
 
+  /**
+   * Send the anime name to the specified window
+   * @param {*} targetWin 
+   */
   function sendAnimeNameTo(targetWin) {
     try {
       targetWin.postMessage({ type: "AnimeName", data: animeName }, "*");
@@ -195,36 +194,39 @@ function sendAnimeNameToIframe(animeName) {
     }
   }
 
-  // Si plus tard on met à jour le nom, on peut relivrer à tous en attente
+  /**
+   * If later we update the name, we can deliver it again to all waiting
+   * @return void 
+   */
   function flushWaiting() {
     waitingChildren.forEach((w) => sendAnimeNameTo(w));
     waitingChildren.clear();
   }
 
-  // Le parent écoute les signaux de l'iframe
+  // The parent listens for signals from the iframe
   window.addEventListener("message", (event) => {
     const msg = event.data;
     if (!msg || (msg.type !== "ChildReady" && msg.type !== "RequestAnimeName")) return;
 
-    // Répond directement à l'iframe source
+    // Respond directly to the iframe source
     if (animeName) {
       sendAnimeNameTo(event.source);
     } else {
       waitingChildren.add(event.source);
     }
   });
-
   flushWaiting();
 }
 
-
-//---------------------------------------- Gestion des envois de requetes ----------------------------------------//
-
+/**
+ * sendRequestFindAnime
+ * Description: - Send requests to find the anime name from the parent window
+ * @return void
+ */
 async function sendRequestFindAnime() {
   let animeNameFromParent = null;
 
-  // 1) Dès le départ : annoncer qu'on est prêt
-  //    + redemander toutes les 1s jusqu'à réception.
+  // At the start: announce that we're ready and keep requesting every 1s until we get a response.
   window.top.postMessage({ type: "ChildReady" }, "*");
   let askInterval = setInterval(() => {
     if (!animeNameFromParent) {
@@ -234,15 +236,14 @@ async function sendRequestFindAnime() {
     }
   }, 1000);
 
-  // 2) Recevoir le nom
+  // Receive the name
   window.addEventListener("message", (event) => {
     if (event.data?.type === "AnimeName" && event.data.data) {
       animeNameFromParent = event.data.data;
-      console.log("Nom anime reçu du parent :", animeNameFromParent);
     }
   });
 
-  // 3) Gestion de la vidéo + déclenchement à 180s
+  // Video management + trigger at 180s
   let video = document.querySelector("video");
   if (!video)
     video = await waitVideoElement();
@@ -258,26 +259,18 @@ async function sendRequestFindAnime() {
     let hasTriggered = false;
     video.addEventListener("timeupdate", () => {
       let currentTime = Math.floor(video.currentTime);
-      console.log("Current time:", currentTime);
       window.top.postMessage(
         { type: "Time", data: currentTime },
         "*"
       );
-      console.log("animeNameFromParent : ", animeNameFromParent);
-      if (!hasTriggered && currentTime >= 180 && animeNameFromParent) {
+      if (!hasTriggered && currentTime >= 180 && animeNameFromParent) { // Time subject to change
         hasTriggered = true;
 
-        console.log("animetitle : ", animeNameFromParent);
-
-        // Appel du filtre juste avant la requête
-        useAnimeFilter().catch(console.error);
-
-        fetchAllAnimes(animeNameFromParent);
+        fetchAllAnimes(animeNameFromParent); // Fetch animes from Anilist
       }
     });
   }
 }
-
 
 /**
  * waitVideoElement
@@ -286,11 +279,11 @@ async function sendRequestFindAnime() {
  */
 async function waitVideoElement() {
   return new Promise((resolve) => {
-    // 1) Vérifier si la vidéo existe déjà
+    // Check if the video already exists
     const existing = document.getElementsByTagName("video")[0];
     if (existing) return resolve(existing);
 
-    // 2) Observer les changements
+    // Observe changes
     let observer = new MutationObserver(() => {
       const video = document.getElementsByTagName("video")[0];
       if (video) {
@@ -304,10 +297,12 @@ async function waitVideoElement() {
 }
 
 
-
-
-//---------------------------------------- test Anilist-API filter ----------------------------------------//
-
+/**
+ * fetchAllAnimes
+ * Description: - Fetch all animes from Anilist API based on the anime title
+ * @param {any} animeTitle
+ * @return Promise
+ */
 async function fetchAllAnimes(animeTitle) {
   const query = `
     query ($search: String) {
@@ -336,7 +331,6 @@ async function fetchAllAnimes(animeTitle) {
   const variables = {
     search: animeTitle
   };
-
   try {
     const response = await fetch("https://graphql.anilist.co", {
       method: "POST",
@@ -344,13 +338,13 @@ async function fetchAllAnimes(animeTitle) {
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({ query, variables }), // ← ici `variables` doit être défini juste avant
+      body: JSON.stringify({ query, variables }),
     });
 
     const result = await response.json();
     const animes = result.data.Page.media;
 
-    console.log("Animes fetched from Anilist:", animes);
+    console.log("Animes récupérés depuis Anilist :", animes);
     return animes;
 
   } catch (error) {
