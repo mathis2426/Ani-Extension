@@ -1,3 +1,11 @@
+/**
+ * File Name      : service-worker.js
+ * Description    : Handles background message passing and storage for the extension.
+ * Author         : Mathis Gramage, Mathis Cucherat
+ * Date           : Last update 2025-09-29
+ * Version        : 1.0.0
+ */
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "animeData") {
     const animeCarac = message.data;

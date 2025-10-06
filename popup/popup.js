@@ -1,3 +1,13 @@
+/**
+ * File Name      : popup.js
+ * Description    : This file manages the display and interaction logic for the popup page of the extension.
+ * Author         : Mathis Gramage, Mathis Cucherat
+ * Date           : Last update 2025-09-29
+ * Version        : 1.0.0
+ */
+
+let token = null;
+
 document.addEventListener("DOMContentLoaded", () => {
   const listAnime = document.getElementById("content_list");
   chrome.storage.local.get("popupDataList", (result) => {
@@ -199,3 +209,124 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+// Click on the login button
+document.addEventListener("click", (event) => {
+  const target = event.target;
+
+  // Check if the clicked element is #connexion
+  if (target.id === "connexion") {
+    chrome.tabs.create({ url: chrome.runtime.getURL("login.html") });
+  }
+  else if (target.id === "deconnexion") {
+    chrome.storage.local.remove("token", () => {
+      token = null;
+    });
+  }
+});
+
+/**
+ * Get user information for the popup
+ * @param {*} token 
+ * @returns 
+ */
+async function getPopupUserInformation(token) {
+  try {
+    const response = await fetch("http://localhost/Ani-Api/api/userInformations/simpleInformation", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const data = await response.json();
+    console.log("data id users : ", data.id_users);
+    if ((data.status === "expired" || data.message === "Token expired, renewal possible") && data.id_users) {
+      await reloadToken(data.id_users);
+      let newToken = await getToken();
+      
+      return await getPopupUserInformation(newToken); // retry with new token
+    }
+    return data[0]; // returns the object { uid, username, mail }
+  } catch (err) {
+    console.error("Erreur lors de la récupération des données utilisateur:", err);
+    return null;
+  }
+}
+
+// Profile design
+const profilePicture = document.getElementById("profile-picture");
+profilePicture.addEventListener("click", async () => {
+  if (document.querySelector('.profile-container')) return;
+
+  let token = await getToken();
+
+  const base = document.getElementById("base");
+  const containerProfile = document.createElement("div");
+  containerProfile.className = "profile-container";
+
+  if (token) {
+    const userData = await getPopupUserInformation(token);
+
+    if (!userData) {
+      alert("Impossible de récupérer les infos utilisateur");
+      return;
+    }
+
+    containerProfile.innerHTML = `
+        <div class="user-infos">
+          <div class="user-infos-item">
+            <span class="dash"></span>
+            <span>Username : ${userData.username}</span>
+          </div>
+          <div class="user-infos-item">
+            <span class="dash"></span>
+            <span>UID : ${userData.uid}</span>
+          </div>
+          <button class="button-profile">voir le profil</button>
+          <button class="button-profile" id="deconnexion">Déconnexion</button>
+        </div>
+      `;
+  } else {
+    containerProfile.innerHTML = `
+        <div class="user-infos">
+          <button class="button-profile" id="connexion">Se connecter</button>
+        </div>
+      `;
+  }
+
+  base.appendChild(containerProfile);
+});
+
+
+
+// Token reconnection
+async function reloadToken(id_users) {
+  try {
+    const response = await fetch("http://localhost/Ani-Api/api/connexion", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id_users
+      })
+    });
+
+    if (!response.ok) throw new Error("Connection échouée");
+    const tokenJwt = await response.json(); // error
+
+    await chrome.storage.local.set({ "token": tokenJwt.token });
+
+  } catch (err) {
+    console.log("Erreur : " + err.message);
+  }
+};
+
+
+function getToken() {
+  return new Promise((resolve, reject) => {
+    chrome.storage.local.get("token", (result) => {
+      if (chrome.runtime.lastError) {
+        reject(chrome.runtime.lastError);
+      } else {
+        resolve(result.token);
+      }
+    });
+  });
+}

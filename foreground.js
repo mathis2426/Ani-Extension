@@ -1,3 +1,11 @@
+/**
+ * File Name      : foreground.js
+ * Description    : This file manages the extraction, processing, and sending of anime information for the extension.
+ * Author         : Mathis Gramage, Mathis Cucherat
+ * Date           : Last update 2025-09-29
+ * Version        : 1.0.0
+ */
+
 let editorExtensionId = "olggkeglcmmolkpmnpffffcpcpdlonpk";
 
 class anime {
@@ -18,11 +26,9 @@ let animeCarac = new anime();
 
 switch (location.hostname) {
   case "v6.voiranime.com":
-  case "vidmoly.to":
-  case "w9gw7oou.com":
-  case "voe.sx":
-  case "sandratableother.com":
-  case "my.mail.ru":
+  case "vidmoly.net": // lecteur myTV
+  case "voe.sx": // lecteur voe
+  case "my.mail.ru": // lecteur FHD1
     voiranime(animeCarac, () => {
       if (chrome.runtime?.id) { // Check if the extension is connected
         chrome.runtime.sendMessage({ type: "animeData", data: animeCarac });
@@ -94,7 +100,9 @@ function crunchyroll(animeClass, location, callback) {
           }
           if (animenode) {
             animeClass.name = animenode.querySelector("h4").textContent; // Name of the anime
+            sendAnimeNameToIframe(animeClass.name);
           }
+
           if (titleNode && animenode) {
             callback();
             observer.disconnect();
@@ -107,81 +115,37 @@ function crunchyroll(animeClass, location, callback) {
     let observer = new MutationObserver(observerCallback);
     observer.observe(targetNode, config);
   } else if (location.hostname == "static.crunchyroll.com") { // If the page is an iframe
-    let video = document.querySelector("video");
-    video.addEventListener("loadedmetadata", () => {
-      window.parent.postMessage(
-        { type: "Duration", data: video.duration }, // Total duration of the video
-        "*"
-      );
-    });
 
-    video.addEventListener("timeupdate", () => {
-      window.parent.postMessage(
-        { type: "Time", data: Math.floor(video.currentTime) }, // Current time of the video
-        "*"
-      );
-    });
+    sendRequestFindAnime();
   } else {
-    console.log("Host not supported");
+    console.log("Hôte non pris en charge");
   }
 }
 
 /**
- * SPADetectChange
- * Description: - Detects changes in the URL and calls the callback function for Single Page Applications (SPA)
- * @param {void} callback 
- */
-function SPADetectChange(callback) {
-  callback();
-  let currentUrl = location.href;
-
-  function handleEpisodeChange() {
-    if (location.href !== currentUrl && location.href.includes('/watch/')) {
-      currentUrl = location.href;
-      callback();
-
-    }
-  }
-
-  const originalPushState = history.pushState;
-  const originalReplaceState = history.replaceState;
-
-  history.pushState = function (...args) {
-    originalPushState.apply(this, args);
-    setTimeout(handleEpisodeChange, 100);
-  };
-
-  history.replaceState = function (...args) {
-    originalReplaceState.apply(this, args);
-    setTimeout(handleEpisodeChange, 100);
-  };
-
-  const observer = new MutationObserver(() => {
-    handleEpisodeChange();
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
-
-  handleEpisodeChange();
-};
-
-/**
- * waitVideoElement
+ * voiranime
  * Description: - Get information about the anime currently playing on Voiranime
- * @param animeClass
- * @param callback
+ * @param {animeCarac} animeClass
+ * @param {function} callback
  * @return void
  */
 async function voiranime(animeClass, callback) {
+
+  // Listener for messages from the iframe
   window.addEventListener("message", (event) => {
     if (!event.data) return;
 
+    // Duration is the total duration of the video
     if (event.data.type === "Duration") {
       animeCarac.duration = event.data.data;
     }
 
+    // Time is the current time of the video
     if (event.data.type === "Time") {
       animeCarac.currentTime = event.data.data;
     }
+
+    // Trigger the callback when we receive Duration or Time updates
     if (event.data.type === "Duration" || event.data.type === "Time") {
       callback();
     }
@@ -190,37 +154,129 @@ async function voiranime(animeClass, callback) {
   if (location.hostname == "v6.voiranime.com") {
 
     let link = location.href;
+    if(link == "https://v6.voiranime.com/") return; // If on the homepage, do nothing
+
     let titleAnime = link.split("/")[4].split("-").join(" ");
     titleAnime = titleAnime.charAt(0).toUpperCase() + titleAnime.slice(1);
     let episodeLink = link.split("/")[5];
     let episode = episodeLink.substring(0, episodeLink.lastIndexOf("-")).split("-").pop();
 
-    animeClass.name = titleAnime;
-    animeClass.episode = episode;
-    animeClass.link = link;
+    animeClass.name = titleAnime; // Name of the anime
+    animeClass.episode = episode; // Episode number
+    animeClass.link = link; // Link to the anime
     animeClass.notif = false;
+
+    sendAnimeNameToIframe(animeClass.name);
   }
-  if (location.hostname == "vidmoly.to" || location.hostname == "w9gw7oou.com" || location.hostname == "voe.sx" || location.hostname == "sandratableother.com" || location.hostname == "my.mail.ru") {
 
-    let video = document.querySelector("video");
-    if (!video)
-      video = await waitVideoElement();
+  if (
+    location.hostname == "vidmoly.net" || // myTV player
+    location.hostname == "voe.sx" || // voe player
+    location.hostname == "my.mail.ru" // FHD1 player
+  ) {
+    sendRequestFindAnime();
+  }
+}
 
-    if (video) {
-      video.addEventListener("loadedmetadata", () => {
-        window.top.postMessage(
-          { type: "Duration", data: video.duration },
-          "*"
-        );
-      });
+/**
+ * sendAnimeNameToIframe
+ * Description: - Send the anime name to the iframe when it's ready
+ * @param {string} animeName 
+ */
+function sendAnimeNameToIframe(animeName) {
 
-      video.addEventListener("timeupdate", () => {
-        window.top.postMessage(
-          { type: "Time", data: Math.floor(video.currentTime) },
-          "*"
-        );
-      });
+  // Handshake: respond to the iframe when it is ready,
+  // even if it arrives after (or before) us.
+  const waitingChildren = new Set(); // keeps windows waiting if the name is not ready
+
+  /**
+   * Send the anime name to the specified window
+   * @param {*} targetWin 
+   */
+  function sendAnimeNameTo(targetWin) {
+    try {
+      targetWin.postMessage({ type: "AnimeName", data: animeName }, "*");
+    } catch (e) {
+      console.warn("postMessage to iframe failed:", e);
     }
+  }
+
+  /**
+   * If later we update the name, we can deliver it again to all waiting
+   * @return void 
+   */
+  function flushWaiting() {
+    waitingChildren.forEach((w) => sendAnimeNameTo(w));
+    waitingChildren.clear();
+  }
+
+  // The parent listens for signals from the iframe
+  window.addEventListener("message", (event) => {
+    const msg = event.data;
+    if (!msg || (msg.type !== "ChildReady" && msg.type !== "RequestAnimeName")) return;
+
+    // Respond directly to the iframe source
+    if (animeName) {
+      sendAnimeNameTo(event.source);
+    } else {
+      waitingChildren.add(event.source);
+    }
+  });
+  flushWaiting();
+}
+
+/**
+ * sendRequestFindAnime
+ * Description: - Send requests to find the anime name from the parent window
+ * @return void
+ */
+async function sendRequestFindAnime() {
+  let animeNameFromParent = null;
+
+  // At the start: announce that we're ready and keep requesting every 1s until we get a response.
+  window.top.postMessage({ type: "ChildReady" }, "*");
+  let askInterval = setInterval(() => {
+    if (!animeNameFromParent) {
+      window.top.postMessage({ type: "RequestAnimeName" }, "*");
+    } else {
+      clearInterval(askInterval);
+    }
+  }, 1000);
+
+  // Receive the name
+  window.addEventListener("message", (event) => {
+    if (event.data?.type === "AnimeName" && event.data.data) {
+      animeNameFromParent = event.data.data;
+    }
+  });
+
+  // Video management + trigger at 180s
+  let video = document.querySelector("video");
+  if (!video)
+    video = await waitVideoElement();
+
+  if (video) {
+    video.addEventListener("loadedmetadata", () => {
+      window.top.postMessage(
+        { type: "Duration", data: video.duration },
+        "*"
+      );
+    });
+
+    const TIME_TO_DETECT = 180; // Time in seconds to trigger the fetch
+    let hasTriggered = false;
+    video.addEventListener("timeupdate", () => {
+      let currentTime = Math.floor(video.currentTime);
+      window.top.postMessage(
+        { type: "Time", data: currentTime },
+        "*"
+      );
+      if (!hasTriggered && currentTime >= TIME_TO_DETECT && animeNameFromParent) { // Time subject to change
+        hasTriggered = true;
+
+        fetchAllAnimes(animeNameFromParent); // Fetch animes from Anilist
+      }
+    });
   }
 }
 
@@ -231,16 +287,76 @@ async function voiranime(animeClass, callback) {
  */
 async function waitVideoElement() {
   return new Promise((resolve) => {
-    let observer = new MutationObserver(function () {
+    // Check if the video already exists
+    const existing = document.getElementsByTagName("video")[0];
+    if (existing) return resolve(existing);
+
+    // Observe changes
+    let observer = new MutationObserver(() => {
       const video = document.getElementsByTagName("video")[0];
       if (video) {
         resolve(video);
         observer.disconnect();
       }
     });
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
   });
+}
+
+
+/**
+ * fetchAllAnimes
+ * Description: - Fetch all animes from Anilist API based on the anime title
+ * @param {any} animeTitle
+ * @return Promise
+ */
+async function fetchAllAnimes(animeTitle) {
+  const query = `
+    query ($search: String) {
+      Page(page: 1, perPage: 10) {
+        media(search: $search, type: ANIME) {
+          id
+          title {
+            romaji
+            english
+            native
+          }
+          coverImage {
+            large
+          }
+          status
+          startDate {
+            year
+            month
+            day
+          }
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    search: animeTitle
+  };
+  try {
+    const response = await fetch("https://graphql.anilist.co", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ query, variables }),
+    });
+
+    const result = await response.json();
+    const animes = result.data.Page.media;
+
+    console.log("Animes récupérés depuis Anilist :", animes);
+    return animes;
+
+  } catch (error) {
+    console.error("Erreur lors de la requête Anilist :", error);
+    return [];
+  }
 }
