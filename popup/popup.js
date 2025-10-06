@@ -83,7 +83,6 @@ document.addEventListener("DOMContentLoaded", () => {
         event.stopPropagation();
       });
 
-
       checkbox.checked = anime.notif;
 
       checkbox.addEventListener("change", () => {

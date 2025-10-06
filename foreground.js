@@ -123,44 +123,6 @@ function crunchyroll(animeClass, location, callback) {
 }
 
 /**
- * SPADetectChange
- * Description: - Detects changes in the URL and calls the callback function for Single Page Applications (SPA)
- * @param {void} callback 
- */
-function SPADetectChange(callback) {
-  callback();
-  let currentUrl = location.href;
-
-  function handleEpisodeChange() {
-    if (location.href !== currentUrl && location.href.includes('/watch/')) {
-      currentUrl = location.href;
-      callback();
-
-    }
-  }
-
-  const originalPushState = history.pushState;
-  const originalReplaceState = history.replaceState;
-
-  history.pushState = function (...args) {
-    originalPushState.apply(this, args);
-    setTimeout(handleEpisodeChange, 100);
-  };
-
-  history.replaceState = function (...args) {
-    originalReplaceState.apply(this, args);
-    setTimeout(handleEpisodeChange, 100);
-  };
-
-  const observer = new MutationObserver(() => {
-    handleEpisodeChange();
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
-
-  handleEpisodeChange();
-};
-
-/**
  * voiranime
  * Description: - Get information about the anime currently playing on Voiranime
  * @param {animeCarac} animeClass
