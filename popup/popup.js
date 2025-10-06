@@ -218,13 +218,7 @@ document.addEventListener("click", (event) => {
   if (target.id === "connexion") {
     chrome.tabs.create({ url: chrome.runtime.getURL("login.html") });
   }
-});
-
-// deconnexion 
-document.addEventListener("click", (event) => {
-  const target = event.target;
-
-  if (target.id === "deconnexion") {
+  else if (target.id === "deconnexion") {
     chrome.storage.local.remove("token", () => {
       token = null;
     });
@@ -243,7 +237,6 @@ async function getPopupUserInformation(token) {
     });
 
     const data = await response.json();
-    alert(data);
     console.log("data id users : ", data.id_users);
     if ((data.status === "expired" || data.message === "Token expired, renewal possible") && data.id_users) {
       await reloadToken(data.id_users);

@@ -154,6 +154,8 @@ async function voiranime(animeClass, callback) {
   if (location.hostname == "v6.voiranime.com") {
 
     let link = location.href;
+    if(link == "https://v6.voiranime.com/") return; // If on the homepage, do nothing
+
     let titleAnime = link.split("/")[4].split("-").join(" ");
     titleAnime = titleAnime.charAt(0).toUpperCase() + titleAnime.slice(1);
     let episodeLink = link.split("/")[5];
@@ -185,7 +187,7 @@ function sendAnimeNameToIframe(animeName) {
 
   // Handshake: respond to the iframe when it is ready,
   // even if it arrives after (or before) us.
-  const waitingChildren = new Set(); // garde les fenêtres en attente si nom pas prêt
+  const waitingChildren = new Set(); // keeps windows waiting if the name is not ready
 
   /**
    * Send the anime name to the specified window
@@ -195,7 +197,7 @@ function sendAnimeNameToIframe(animeName) {
     try {
       targetWin.postMessage({ type: "AnimeName", data: animeName }, "*");
     } catch (e) {
-      console.warn("postMessage vers l'iframe a échoué :", e);
+      console.warn("postMessage to iframe failed:", e);
     }
   }
 
@@ -261,6 +263,7 @@ async function sendRequestFindAnime() {
       );
     });
 
+    const TIME_TO_DETECT = 180; // Time in seconds to trigger the fetch
     let hasTriggered = false;
     video.addEventListener("timeupdate", () => {
       let currentTime = Math.floor(video.currentTime);
@@ -268,7 +271,7 @@ async function sendRequestFindAnime() {
         { type: "Time", data: currentTime },
         "*"
       );
-      if (!hasTriggered && currentTime >= 180 && animeNameFromParent) { // Time subject to change
+      if (!hasTriggered && currentTime >= TIME_TO_DETECT && animeNameFromParent) { // Time subject to change
         hasTriggered = true;
 
         fetchAllAnimes(animeNameFromParent); // Fetch animes from Anilist
