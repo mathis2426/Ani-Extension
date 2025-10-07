@@ -7,7 +7,7 @@
  */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
-@import url('../assets/assets.css');
+@import url('../../../public/assets/assets.css');
 
 body {
     background-color: #1a1a1a;
@@ -92,7 +92,7 @@ body {
                 justify-content: center;
 
                 .home {
-                    background-image: url(../images-extension/home.png);
+                    background-image: url(../../../public/images-extension/home.png);
                     background-size: cover;
                     width: 31px;
                     height: 31px;
@@ -106,7 +106,7 @@ body {
                 align-items: center;
 
                 .calendar {
-                    background-image: url(../images-extension/calendar.png);
+                    background-image: url(../../../public/images-extension/calendar.png);
                     background-size: cover;
                     width: 33px;
                     height: 33px;
@@ -120,7 +120,7 @@ body {
                 align-items: center;
 
                 .suggestion {
-                    background-image: url(../images-extension/suggestion.png);
+                    background-image: url(../../../public/images-extension/suggestion.png);
                     background-size: cover;
                     width: 25px;
                     height: 25px;
@@ -153,7 +153,7 @@ body {
                 align-items: center;
 
                 .option {
-                    background-image: url(../images-extension/option.png);
+                    background-image: url(../../../public/images-extension/option.png);
                     background-size: cover;
                     width: 23px;
                     height: 23px;
@@ -293,8 +293,6 @@ progress::-webkit-progress-value {
 .combo-box-select:focus {
     outline: none;
 }
-
-.combo-box-select option {}
 
 .combox-back {
     position: absolute;

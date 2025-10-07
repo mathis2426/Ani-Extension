@@ -12,8 +12,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const listAnime = document.getElementById("content_list");
   chrome.storage.local.get("popupDataList", (result) => {
     const animeList = result.popupDataList || [];
-    console.log("Anime List:", animeList);
-    console.log("Number of Animes:", animeList.length);
     if (animeList.length === 0) {
       const emptyMessage = document.createElement("div");
       emptyMessage.className = "empty-message";
@@ -25,6 +23,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const container = document.createElement("div");
       container.className = "content-list";
       container.setAttribute("data-link", anime.link);
+      let epidsodeName = "";
+      if( anime.title ){
+        epidsodeName = `Ep ${anime.episode} - ${anime.title}`;
+      }
+      else {
+        epidsodeName = `Episode ${anime.episode}`;
+      }
 
       container.innerHTML = `
           <div class="top-bar">
@@ -44,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
           <div class="info">
             <div>
-              <h3>Ep ${anime.episode} - ${anime.title}</h3>
+              <h3>${epidsodeName}</h3>
             </div>
             <div class="load">
               <progress value="0" max="100" id="bar-${index}">0%</progress>
@@ -111,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const suffix = otherBtn === btn ? "-activate" : "";
         document.getElementById(
           otherBtn
-        ).style.backgroundImage = `url("../images-extension/${otherBtn}${suffix}.png")`;
+        ).style.backgroundImage = `url("../../../public/images-extension/${otherBtn}${suffix}.png")`;
 
         // .selected class removal
         const selectedEl = document
@@ -124,14 +129,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (btn.target.id === "option") {
         chrome.tabs.query({}, (tabs) => {
           const alreadyOpen = tabs.find((tab) =>
-            tab.url && tab.url.includes("settings/settings.html")
+            tab.url && tab.url.includes("src/components/settings/settings.html")
           );
 
           if (alreadyOpen) {
             chrome.tabs.update(alreadyOpen.id, { active: true });
           } else {
             chrome.tabs.create({
-              url: chrome.runtime.getURL("settings/settings.html"),
+              url: chrome.runtime.getURL("src/components/settings/settings.html"),
             });
           }
         });
@@ -197,7 +202,6 @@ document.addEventListener("DOMContentLoaded", () => {
         // Ne continue que si quelque chose a changé (temps, lecture, etc.)
         const hasChanged = anime.currentTime !== oldAnime.currentTime ||
           anime.duration !== oldAnime.duration;
-
         if (hasChanged) {
           const inprogress = document.getElementById(`in-progress-${index}`);
           if (anime.lastUpdate == Date.now() || anime.lastUpdate > Date.now() - 1100) {
