@@ -1,7 +1,7 @@
 /**
  * voiranime
  * Description: - Get information about the anime currently playing on Voiranime
- * @param {animeCarac} animeClass
+ * @param {animeClass} animeClass
  * @param {function} callback
  * @return void
  */
@@ -13,13 +13,13 @@ async function voiranime(animeClass, callback) {
 
     // Duration is the total duration of the video
     if (event.data.type === "Duration") {
-      animeCarac.duration = event.data.data;
+      animeClass.duration = event.data.data;
     }
 
     // Time is the current time of the video
     if (event.data.type === "Time") {
-      animeCarac.currentTime = event.data.data;
-      animeCarac.lastUpdate = Date.now();
+      animeClass.currentTime = event.data.data;
+      animeClass.lastUpdate = Date.now();
     }
 
     // Trigger the callback when we receive Duration or Time updates

@@ -23,12 +23,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const container = document.createElement("div");
       container.className = "content-list";
       container.setAttribute("data-link", anime.link);
-      let epidsodeName = "";
+      let episodeName = "";
       if( anime.title ){
-        epidsodeName = `Ep ${anime.episode} - ${anime.title}`;
+        episodeName = `Ep ${anime.episode} - ${anime.title}`;
       }
       else {
-        epidsodeName = `Episode ${anime.episode}`;
+        episodeName = `Episode ${anime.episode}`;
       }
 
       container.innerHTML = `
@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
           <div class="info">
             <div>
-              <h3>${epidsodeName}</h3>
+              <h3>${episodeName}</h3>
             </div>
             <div class="load">
               <progress value="0" max="100" id="bar-${index}">0%</progress>

@@ -2,7 +2,7 @@
  * crunchyroll
  * Description :
  *  - Get information about the anime currently playing on Crunchyroll
- * @param {animeCarac} animeClass 
+ * @param {animeClass} animeClass 
  * @param {string} location 
  * @param {function} callback 
  */
@@ -13,16 +13,16 @@ function crunchyroll(animeClass, location, callback) {
 
     // Duration is the total duration of the video
     if (event.data.type === "Duration") {
-      animeCarac.duration = event.data.data;
+      animeClass.duration = event.data.data;
     }
 
     // Time is the current time of the video
     if (event.data.type === "Time") {
-      animeCarac.currentTime = event.data.data;
-      animeCarac.lastUpdate = Date.now(); // Update the last update time
+      animeClass.currentTime = event.data.data;
+      animeClass.lastUpdate = Date.now(); // Update the last update time
     }
 
-    if (animeCarac.title) {
+    if (animeClass.title) {
       callback(); // Send the data to the background script
     }
   });
