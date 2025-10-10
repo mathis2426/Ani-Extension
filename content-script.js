@@ -14,9 +14,7 @@ switch (location.hostname) {
   case "voe.sx": // lecteur voe
   case "my.mail.ru": // lecteur FHD1
     voiranime(animeClass, () => {
-      if (chrome.runtime?.id) { // Check if the extension is connected
         chrome.runtime.sendMessage({ type: "animeData", data: animeClass });
-      }
     });
     break;
 
@@ -24,9 +22,7 @@ switch (location.hostname) {
   case "static.crunchyroll.com":
     SPADetectChange(() => {
       crunchyroll(animeClass, location, () => {
-        if (chrome.runtime?.id) {
           chrome.runtime.sendMessage({ type: "animeData", data: animeClass });
-        }
       });
     });
     break;
