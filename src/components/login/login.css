@@ -9,7 +9,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
 
 body {
-    background-image: url(/images-extension/connexio.webp);
+    background-image: url("../../../public/images-extension/connexion.webp");
     display: flex;
     justify-content: center;
     font-family: 'Roboto', sans-serif;  
