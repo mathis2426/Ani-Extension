@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
       container.className = "content-list";
       container.setAttribute("data-link", anime.link);
       let episodeName = "";
-      if( anime.title ){
+      if (anime.title) {
         episodeName = `Ep ${anime.episode} - ${anime.title}`;
       }
       else {
@@ -220,7 +220,9 @@ document.addEventListener("click", (event) => {
 
   // Check if the clicked element is #connexion
   if (target.id === "connexion") {
-    chrome.tabs.create({ url: chrome.runtime.getURL("login.html") });
+    chrome.tabs.create({
+      url: chrome.runtime.getURL("src/components/login/login.html"),
+    });
   }
   else if (target.id === "deconnexion") {
     chrome.storage.local.remove("token", () => {
@@ -245,7 +247,7 @@ async function getPopupUserInformation(token) {
     if ((data.status === "expired" || data.message === "Token expired, renewal possible") && data.id_users) {
       await reloadToken(data.id_users);
       let newToken = await getToken();
-      
+
       return await getPopupUserInformation(newToken); // retry with new token
     }
     return data[0]; // returns the object { uid, username, mail }
@@ -304,7 +306,7 @@ profilePicture.addEventListener("click", async () => {
 // Token reconnection
 async function reloadToken(id_users) {
   try {
-    const response = await fetch("http://localhost/Ani-Api/api/connexion", {
+    const response = await fetch(URL_API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
