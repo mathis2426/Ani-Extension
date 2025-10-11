@@ -220,9 +220,19 @@ document.addEventListener("click", (event) => {
 
   // Check if the clicked element is #connexion
   if (target.id === "connexion") {
-    chrome.tabs.create({
-      url: chrome.runtime.getURL("src/components/login/login.html"),
-    });
+    chrome.tabs.query({}, (tabs) => {
+          const alreadyOpen = tabs.find((tab) =>
+            tab.url && tab.url.includes("src/components/login/login.html")
+          );
+
+          if (alreadyOpen) {
+            chrome.tabs.update(alreadyOpen.id, { active: true });
+          } else {
+            chrome.tabs.create({
+              url: chrome.runtime.getURL("src/components/login/login.html"),
+            });
+          }
+        });
   }
   else if (target.id === "deconnexion") {
     chrome.storage.local.remove("token", () => {
