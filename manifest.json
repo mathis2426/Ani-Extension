@@ -4,11 +4,11 @@
     "description": "Ani-bankai extension, to track your anime and manga",
     "version": "0.0.1",
     "icons": {
-        "16": "logo/logo-16.png",
-        "48": "logo/logo-48.png",
-        "128": "logo/logo-128.png"
+        "16": "public/logo/logo-16.png",
+        "48": "public/logo/logo-48.png",
+        "128": "public/logo/logo-128.png"
     },
-    "options_page": "settings/settings.html",
+    "options_page": "src/components/settings/settings.html",
     "web_accessible_resources": [
         {
             "resources": [
@@ -29,7 +29,7 @@
     ],
     "action": {
         "default_title": "Ani-extension",
-        "default_popup": "popup/popup.html"
+        "default_popup": "src/components/popup/popup.html"
     },
     "permissions": [
         "tabs",
@@ -51,7 +51,11 @@
         {
             "run_at": "document_idle",
             "js": [
-                "foreground.js"
+                "src/utils/utils.js",
+                "src/streaming-website/voiranime.js",
+                "src/streaming-website/crunchyroll.js",
+                "src/interfaces/Anime.js",
+                "content-script.js"
             ],
             "matches": [
                 "https://v6.voiranime.com/*",

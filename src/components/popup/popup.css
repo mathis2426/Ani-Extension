@@ -7,12 +7,11 @@
  */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
-@import url('../assets/assets.css');
+@import url('../../../public/assets/assets.css');
 
 body {
-    background-color: #1a1a1a;
+    background-color: var(--color-primary-dark);
     display: flex;
-    color: #000000;
     width: 448px;
     height: 432px;
 }
@@ -26,7 +25,7 @@ body {
     color: #ffffff;
     font-family: var(--font-main);
 }
-.left-part {
+.left-part { 
     display: flex;
     align-items: center;
     width: 62px;
@@ -39,7 +38,7 @@ body {
         height: 97%;
         width: 100%;
         border-radius: 9px;
-        background-color: #2c2c2c;
+        background-color: var(--color-secondary-dark);
 
         .profile-picture {
             background-color: #D9D9D9;
@@ -50,7 +49,7 @@ body {
         }
 
         .selected {
-            display: block; /* display:none ne peut pas être animé, donc on utilise l’opacité */
+            display: block;
             opacity: 0;
             background-color: #fefefe;
             width: 4px;
@@ -92,7 +91,7 @@ body {
                 justify-content: center;
 
                 .home {
-                    background-image: url(../images-extension/home.png);
+                    background-image: url(../../../public/images-extension/home.png);
                     background-size: cover;
                     width: 31px;
                     height: 31px;
@@ -106,7 +105,7 @@ body {
                 align-items: center;
 
                 .calendar {
-                    background-image: url(../images-extension/calendar.png);
+                    background-image: url(../../../public/images-extension/calendar.png);
                     background-size: cover;
                     width: 33px;
                     height: 33px;
@@ -120,7 +119,7 @@ body {
                 align-items: center;
 
                 .suggestion {
-                    background-image: url(../images-extension/suggestion.png);
+                    background-image: url(../../../public/images-extension/suggestion.png);
                     background-size: cover;
                     width: 25px;
                     height: 25px;
@@ -153,7 +152,7 @@ body {
                 align-items: center;
 
                 .option {
-                    background-image: url(../images-extension/option.png);
+                    background-image: url(../../../public/images-extension/option.png);
                     background-size: cover;
                     width: 23px;
                     height: 23px;
@@ -185,12 +184,12 @@ body {
 }
 
 progress::-webkit-progress-bar {
-    background-color: #1A1A1A;
+    background-color: var(--color-primary-dark);
     border-radius: 10px;
 }
 
 progress::-webkit-progress-value {
-    background-color: #A48EE5;
+    background-color: var(--color-primary-purple);
     border-radius: 10px;
 }
 
@@ -263,7 +262,7 @@ progress::-webkit-progress-value {
 }
 
 .content-list:hover {
-    box-shadow: 0 0 7px 3px #A48EE5;
+    box-shadow: 0 0 7px 3px var(--color-primary-purple);
     transition: 0.5s;
 }
 
@@ -293,8 +292,6 @@ progress::-webkit-progress-value {
 .combo-box-select:focus {
     outline: none;
 }
-
-.combo-box-select option {}
 
 .combox-back {
     position: absolute;
@@ -333,21 +330,24 @@ progress::-webkit-progress-value {
 
 
 ::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #fff8ea9d;
+    background: var(--color-primary-dark);
     border-radius: 5px;
+    opacity: 1 !important;
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.50);
+    background-color: #505050;
     border-radius: 5px;
+    opacity: 1 !important;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background-color: #8f8075;
+    background-color: #6a6a6a;
+    opacity: 1 !important;
 }
 
 .top-bar .notif {
@@ -524,7 +524,7 @@ input[type="checkbox"]:not(:checked) ~ .bell-regular {
   }
   50% {
     opacity: 1;
-    color: #A48EE5;
+    color: var(--color-primary-purple);
   }
 }
 .delimiter-container{

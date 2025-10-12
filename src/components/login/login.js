@@ -2,11 +2,10 @@
  * File Name      : login.js
  * Description    : This file handles user login for the application.
  * Author         : Mathis Gramage, Mathis Cucherat
- * Date           : Last update 2025-09-29
+ * Date           : Last update 2025-10-07
  * Version        : 1.0.0
  */
-
-const urlApi = "http://localhost/Ani-Api/api/connexion"; // API endpoint for login
+import { URL_API } from "../../vars.js";
 
 document.getElementById("login-form").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -14,7 +13,7 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
   const password = document.getElementById("password").value;
 
   try {
-    const response = await fetch(urlApi, {
+    const response = await fetch(URL_API, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ 

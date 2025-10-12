@@ -1,0 +1,9 @@
+:root{
+    --font-main: "Inter", sans-serif;
+
+    /* Colors */
+    --color-primary-purple: #A48EE5;
+
+    --color-primary-dark: #1a1a1a;
+    --color-secondary-dark: #2c2c2c;
+}
