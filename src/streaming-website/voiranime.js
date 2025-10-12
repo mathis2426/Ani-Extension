@@ -1,4 +1,13 @@
 /**
+ * File Name      : voiranime.js
+ * Description    : Script to retrieve information about the currently playing anime on Voiranime.
+ * Author         : Mathis Gramage, Mathis Cucherat
+ * Last Updated   : 2024-06-10
+ * Version        : 1.0.0
+ */
+
+
+/**
  * voiranime
  * Description: - Get information about the anime currently playing on Voiranime
  * @param {animeClass} animeClass

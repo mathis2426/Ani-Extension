@@ -1,4 +1,12 @@
 /**
+ * File Name      : crunchyroll.js
+ * Description    : Crunchyroll streaming website integration.
+ * Author         : Mathis Gramage, Mathis Cucherat
+ * Last Updated   : 2024-06-10
+ * Version        : 1.0.1
+ */
+
+/**
  * crunchyroll
  * Description :
  *  - Get information about the anime currently playing on Crunchyroll

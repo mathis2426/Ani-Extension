@@ -1,3 +1,11 @@
+/**
+ * File Name      : settings.css
+ * Description    : Manage the logic of the setting page.
+ * Author         : Mathis Gramage, Mathis Cucherat
+ * Last Updated   : 2025-09-29
+ * Version        : 1.0.0
+ */
+
 document.addEventListener("DOMContentLoaded", () => {
     const buttons = document.querySelectorAll(".button");
     const sections = document.querySelectorAll(".section");

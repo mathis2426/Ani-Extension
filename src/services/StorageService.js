@@ -1,6 +1,6 @@
 /**
  * StorageService
- * Encapsule chrome.storage.local pour simplifier les appels.
+ * Simplifies interactions with chrome.storage.local.
  */
 export const StorageService = {
   async get(key) {

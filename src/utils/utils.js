@@ -1,3 +1,10 @@
+/**
+ * File Name      : utils.js
+ * Description    : Utility functions for Ani-Extension.
+ * Author         : Mathis Gramage, Mathis Cucherat
+ * Last Updated   : 2024-06-09
+ * Version        : 1.0.0
+ */
 
 /**
  * sendAnimeNameToIframe
