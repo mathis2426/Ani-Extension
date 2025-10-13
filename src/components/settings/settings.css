@@ -6,7 +6,7 @@
  * Version        : 1.0.0
  */
 
-@import url('../../../public/assets/assets.css');
+@import url('../assets/assets.css');
 
 body,
 html {
@@ -28,7 +28,7 @@ html {
     padding: 20px;
 
     input[type="checkbox"] {
-        accent-color: var(--color-primary-purple);
+        accent-color: #A48EE5;
         
     }
 }
@@ -121,11 +121,11 @@ input[type="text"] {
             }
 
             .button:hover {
-                background-color: var(--color-primary-purple);
+                background-color: #A48EE5;
                 cursor: pointer;
             }
             .button.active {
-                background-color: var(--color-primary-purple);
+                background-color: #A48EE5;
             }
         }
     }
