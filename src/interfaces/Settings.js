@@ -19,6 +19,7 @@ class Settings {
         this.mailnotificationEnabled = false; // Default mail notification setting
         this.crunchyrollSettings = new CrunchyrollSettings(); // Crunchyroll specific settings
         this.voiranimeSettings = new VoiranimeSettings(); // Voiranime specific settings
+        this.openSubtitlesToken = ""; // OpenSubtitles API key
     }
 }
 

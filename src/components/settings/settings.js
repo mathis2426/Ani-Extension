@@ -7,9 +7,11 @@
  */
 
 import { getOrCreateSettings, saveSettings } from "../../interfaces/Settings.js";
+import { OpenSubtitlesAPIKey } from "../../../temp-key-do-not-push.js";
+import { OpenSubtitlesService } from "../../services/OpenSubtitlesService.js"
 
 let settings;
-
+let openSubtitlesService = new OpenSubtitlesService(OpenSubtitlesAPIKey);
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -17,24 +19,21 @@ document.addEventListener("DOMContentLoaded", () => {
         settings = settings_data;
         updateSettingsUI(settings);
         setupEventListeners(settings);
-        
+
     });
     const buttons = document.querySelectorAll(".button");
     const sections = document.querySelectorAll(".section");
 
-    // Fonction pour enlever la classe active à tous les boutons
     function clearActive() {
         buttons.forEach(btn => btn.classList.remove("active"));
     }
 
-    // Fonction pour activer un bouton via son id
     function setActiveButton(id) {
         clearActive();
         const btn = document.getElementById(id);
         if (btn) btn.classList.add("active");
     }
 
-    // Scroll vers la section au clic sur bouton
     buttons.forEach(button => {
         button.addEventListener("click", (e) => {
             e.preventDefault();
@@ -47,10 +46,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Mise à jour active bouton lors du scroll
     window.addEventListener("scroll", () => {
         let current = "";
-        const scrollPosition = window.scrollY + window.innerHeight / 3; // Ajuste le seuil
+        const scrollPosition = window.scrollY + window.innerHeight / 3;
 
         sections.forEach(section => {
             if (section.offsetTop <= scrollPosition) {
@@ -62,8 +60,6 @@ document.addEventListener("DOMContentLoaded", () => {
             setActiveButton(current);
         }
     });
-
-    // Initialisation : active "home" au chargement
     setActiveButton("home");
 
 });
@@ -99,11 +95,11 @@ function asknotificationPermission() {
                 icon: "../logo/logo-128.png",
                 vibrate: [200, 100, 200]
             });
-                settings.notificationsEnabled = true;
-                saveSettings(settings);
-                updateSettingsUI(settings);
+            settings.notificationsEnabled = true;
+            saveSettings(settings);
+            updateSettingsUI(settings);
         });
-        
+
 
     }
 }
@@ -116,6 +112,24 @@ function updateSettingsUI(settings) {
     document.getElementById("notifications-status").innerText = Notification.permission === "granted" ? "Notifications enabled" : "Notifications disabled";
     document.querySelector(".chrome-notifications").style.color = Notification.permission === "granted" ? "green" : "red";
 
+    // OpenSubtitles
+    const loginButton = document.getElementById("openSubtitlesConnect");
+    const status = document.getElementById("openSubtitlesStatus");
+    if (settings.openSubtitlesToken) {
+        document.getElementById("openSubtitlesEmail").style.display = "none";
+        document.getElementById("openSubtitlesPassword").style.display = "none";
+        status.textContent = "Connected to OpenSubtitles";
+        status.style.color = "green";
+        loginButton.textContent = "Logout";
+
+    } else {
+        document.getElementById("openSubtitlesEmail").style.display = "block";
+        document.getElementById("openSubtitlesPassword").style.display = "block";
+        status.textContent = "Not connected to OpenSubtitles";
+        status.style.color = "red";
+
+        loginButton.textContent = "Login";
+    }
 
     // Crunchyroll
     document.getElementById("skipIntroOutro").checked = settings.crunchyrollSettings.autoSkip;
@@ -158,5 +172,42 @@ function setupEventListeners(settings) {
     document.getElementById("voiranimeAutoNext").addEventListener("change", (e) => {
         settings.voiranimeSettings.autoPlayNext = e.target.checked;
         saveSettings(settings);
+    });
+    document.getElementById("openSubtitlesConnect").addEventListener("click", async () => {
+
+        if (document.getElementById("openSubtitlesConnect").textContent === "Login") {
+            const email = document.getElementById("openSubtitlesEmail");
+            const password = document.getElementById("openSubtitlesPassword");
+
+            if (email.value && password.value) {
+                try {
+                    await openSubtitlesService.login(email.value, password.value);
+                    email.style.display = "none";
+                    password.style.display = "none";
+                    let status = document.getElementById("openSubtitlesStatus")
+                    status.textContent = "Connected to OpenSubtitles";
+                    status.style.color = "green";
+                    settings.openSubtitlesToken = openSubtitlesService._token;
+                    saveSettings(settings);
+
+
+                } catch (error) {
+                    console.error("Error:", error);
+                }
+            } else {
+                alert("Please enter your OpenSubtitles credentials.");
+            }
+        } else {
+            // Logout
+            document.getElementById("openSubtitlesEmail").style.display = "block";
+            document.getElementById("openSubtitlesPassword").style.display = "block";
+            let status = document.getElementById("openSubtitlesStatus")
+            status.textContent = "Not connected to OpenSubtitles";
+            status.style.color = "red";
+            settings.openSubtitlesToken = "";
+            saveSettings(settings);
+            document.getElementById("openSubtitlesConnect").textContent = "Login";
+            await openSubtitlesService.logout();
+        }
     });
 }

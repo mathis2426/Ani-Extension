@@ -35,10 +35,13 @@
         "tabs",
         "activeTab",
         "scripting",
-        "storage"
+        "storage",
+        "declarativeNetRequest",
+        "declarativeNetRequestWithHostAccess"
     ],
     "host_permissions": [
-        "*://*/*"
+        "*://*/*",
+        "https://api.opensubtitles.com/*"
     ],
     "background": {
         "service_worker": "service-worker.js",
