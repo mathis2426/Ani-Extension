@@ -6,7 +6,7 @@
  * Version        : 1.0.0
  */
 
-import { getOrCreateSettings, saveSettings } from "../interfaces/Settings.js";
+import { getOrCreateSettings, saveSettings } from "../../interfaces/Settings.js";
 
 let settings;
 
