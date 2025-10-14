@@ -55,17 +55,49 @@ html {
     color: #fff;
 }
 .tooltip-not-implemented {
-    color: red;
+    color: var(--color-alert);
 }
 label {
     display: block;
     margin-bottom: 10px;
     font-size: 1em;
+    width: fit-content;
 }
+
+.classic-btn {
+    background-color: #A48EE5;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 1em;
+    margin-top: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+.classic-btn:hover {
+    background-color: #8b6fcf;
+}
+
+/* Inputs */
+
+
 
 input[type="checkbox"] {
     margin-right: 10px;
     transform: scale(1.2);
+    border: 0;
+    outline: none;
+    box-shadow: none;
+    background-clip: content-box;
+
+}
+input[type="checkbox"]:focus {
+    outline: none;
+    box-shadow: none;
 }
 
 input[type="text"] {
@@ -75,6 +107,29 @@ input[type="text"] {
     width: 300px;
     margin-top: 10px;
 }
+input[type="password"] {
+    padding: 5px;
+    border-radius: 5px;
+    border: none;
+    width: 300px;
+    margin-top: 10px;
+}
+input::placeholder {
+    color: #888;
+    transition: color 0.3s ease;
+}
+input:focus {
+    outline: none;
+    box-shadow: 0 0 5px #A48EE5;
+}
+input:focus::placeholder {
+    color: transparent;
+    transition: color 0.3s ease;
+}
+
+
+
+/* Navigation */
 .nav-bar {
     display: flex;
     flex-direction: column;
@@ -115,6 +170,7 @@ input[type="text"] {
                 width: 86%;
                 height: 27px;
                 border-radius: 6px;
+                border: 0;
                 text-align: left;
                 font-size: 1em;
                 transition: background-color 0.5s ease;
@@ -225,9 +281,123 @@ html.light-theme {
     margin-left: 10px;
     font-weight: bold;
 }
-.green {
-    color: #4CAF50;
+.success {
+    color: var(--color-success);
 }
-.red {
-    color: #F44336;
+.alert {
+    color: var(--color-alert);
 }
+.warning {
+    color: var(--color-warning);
+}
+
+
+
+
+.open-subtitles-block{
+    display: flex;
+    flex-direction: column;
+}
+
+
+
+
+:root {
+  --bg: #0f0f12;
+  --card: #1a1a1f;
+  --text: #eae9f3;
+  --muted: #9aa0a6;
+}
+
+* { box-sizing: border-box; }
+
+.choices fieldset {
+  border: 0; 
+  padding: 0; 
+  margin: 24px 0;
+  display: flex; 
+  gap: 20px;
+}
+
+.choices legend { margin-bottom: 8px; font-weight: 600; }
+
+.choices input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* La carte cliquable */
+.card{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:14px;
+  width:200px;
+  border-radius:14px;
+  background:var(--card);
+  border:2px solid transparent;
+  cursor:pointer;
+  color: var(--text);
+  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.thumb{
+  width:100%;
+  object-fit:fill;
+  border-radius:10px;
+  display:block;
+}
+
+
+.card:hover { transform: translateY(-1px); }
+.choices input[type="radio"]:focus-visible + .card {
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary-purple) 40%, transparent);
+}
+
+
+
+.card:hover .title-box{
+    background: transparent;
+}
+
+.card:hover .title,
+.card:hover .subtitle {
+    transform: translateY(100%);
+    opacity: 0;
+}
+
+.subtitle,.title{
+    position: absolute;
+    z-index: 1;
+    transition: transform .25s ease, opacity .2s ease;
+}
+.title{ 
+    bottom: 40px;
+    font-weight:700; 
+    font-size:1.05rem; 
+}
+.subtitle{ 
+    bottom: 20px;
+    color:var(--muted); 
+}
+/* Badge check masqué par défaut */
+.check {
+  position: absolute;
+  right: 12px; bottom: 12px;
+  width: 28px; height: 28px;
+  display: grid; place-items: center;
+  border-radius: 999px;
+  background: var(--color-primary-purple);
+  color: white;
+  font-weight: 900;
+  opacity: 0; transform: scale(.85);
+  transition: opacity .15s, transform .15s;
+}
+
+/* État sélectionné = radio :checked */
+#style-default:checked + .card,
+#style-simplified:checked + .card { border-color: var(--color-primary-purple); }
+#style-default:checked + .card .check,
+#style-simplified:checked + .card .check { opacity:1; transform:scale(1); }

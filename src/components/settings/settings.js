@@ -110,7 +110,7 @@ function updateSettingsUI(settings) {
     document.getElementById("darkMode").checked = settings.theme === "light";
     document.getElementById("notifications-mail").checked = settings.mailnotificationEnabled;
     document.getElementById("notifications-status").innerText = Notification.permission === "granted" ? "Notifications enabled" : "Notifications disabled";
-    document.querySelector(".chrome-notifications").style.color = Notification.permission === "granted" ? "green" : "red";
+    document.querySelector(".chrome-notifications").classList.add(Notification.permission === "granted" ? "success" : "alert");
 
     // OpenSubtitles
     const loginButton = document.getElementById("openSubtitlesConnect");
@@ -119,14 +119,14 @@ function updateSettingsUI(settings) {
         document.getElementById("openSubtitlesEmail").style.display = "none";
         document.getElementById("openSubtitlesPassword").style.display = "none";
         status.textContent = "Connected to OpenSubtitles";
-        status.style.color = "green";
+        status.style.color = "sucess";
         loginButton.textContent = "Logout";
 
     } else {
         document.getElementById("openSubtitlesEmail").style.display = "block";
         document.getElementById("openSubtitlesPassword").style.display = "block";
         status.textContent = "Not connected to OpenSubtitles";
-        status.style.color = "red";
+        status.classList.add("alert");
 
         loginButton.textContent = "Login";
     }
@@ -186,7 +186,7 @@ function setupEventListeners(settings) {
                     password.style.display = "none";
                     let status = document.getElementById("openSubtitlesStatus")
                     status.textContent = "Connected to OpenSubtitles";
-                    status.style.color = "green";
+                    status.classList.add("success");
                     settings.openSubtitlesToken = openSubtitlesService._token;
                     saveSettings(settings);
 
@@ -203,7 +203,7 @@ function setupEventListeners(settings) {
             document.getElementById("openSubtitlesPassword").style.display = "block";
             let status = document.getElementById("openSubtitlesStatus")
             status.textContent = "Not connected to OpenSubtitles";
-            status.style.color = "red";
+            status.classList.add("alert");
             settings.openSubtitlesToken = "";
             saveSettings(settings);
             document.getElementById("openSubtitlesConnect").textContent = "Login";

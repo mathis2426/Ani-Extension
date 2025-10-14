@@ -64,18 +64,48 @@
         <!-- GENERAL SETTINGS -->
         <div id="section-generalSettings" class="section">
             <div class="section-title">Global Settings</div>
+
+
+            <form class="choices">
+                <fieldset>
+                    <input type="radio" name="style" id="style-default" value="default" checked>
+                    <label class="card" for="style-default">
+                        <img class="thumb" src="../../../public/images-extension/Skeleton-extension-classic.png"
+                            alt="Aperçu Default">
+                        <span class="title">Default</span>
+                        <span class="subtitle">Default company branding.</span>
+
+                        <span class="check" aria-hidden="true">✓</span>
+                    </label>
+
+                    <input type="radio" name="style" id="style-simplified" value="simplified">
+                    <label class="card" for="style-simplified">
+                        <img class="thumb" src="" alt="Aperçu Simplified">
+
+                        <span class="title">Simplified</span>
+                        <span class="subtitle">Minimal and modern.</span>
+
+                        <span class="check" aria-hidden="true">✓</span>
+                    </label>
+                </fieldset>
+            </form>
+
+
+
+
             <label>
                 <input type="checkbox" id="darkMode">
                 Enable white theme
             </label><br>
             <label class="chrome-notifications">
-                <button id="notifications-extension">
-                Enable chrome notifications </button>
+                <button class="classic-btn" id="notifications-extension">
+                    Enable chrome notifications </button>
                 <p id="notifications-status"></p>
             </label><br>
             <label>
                 <input type="checkbox" id="notifications-mail">
-                Enable mail notifications for future releases <div class="tooltip-not-implemented">Feature not implemented yet</div>
+                Enable mail notifications for future releases <div class="tooltip-not-implemented">Feature not
+                    implemented yet</div>
             </label>
         </div>
 
@@ -110,10 +140,12 @@
             <div class="section-title">Planning Integration</div>
             <label>
                 <input type="checkbox" id="syncGoogleCalendar">
-                Sync planning with Google Calendar <div class="tooltip-not-implemented">Feature not implemented yet</div>
+                Sync planning with Google Calendar <div class="tooltip-not-implemented">Feature not implemented yet
+                </div>
             </label><br>
             <label>
-                <input type="text" placeholder="Google Calendar API Key" id="calendarApiKey"> <div class="tooltip-not-implemented">Feature not implemented yet</div>
+                <input type="text" placeholder="Google Calendar API Key" id="calendarApiKey">
+                <div class="tooltip-not-implemented">Feature not implemented yet</div>
             </label>
         </div>
 
@@ -129,11 +161,11 @@
                     <input type="password" placeholder="Mot de passe OpenSubtitles" id="openSubtitlesPassword">
                 </label>
                 <div class="actions">
-                    <button id="openSubtitlesConnect">Login</button>
+                    <button id="openSubtitlesConnect" class="classic-btn">Login</button>
                 </div>
             </div>
 
-    </div>
+        </div>
     </div>
 </body>
 
