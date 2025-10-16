@@ -17,7 +17,7 @@ export class OpenSubtitlesService {
   }
 
   /** Internal fetch helper with unified headers / errors */
-  async _request(path, { method = "GET", body, auth = false, qs } = {}) {
+  async request(path, { method = "GET", body, auth = false, qs } = {}) {
     const url = new URL(this.baseUrl + path);
     if (qs && typeof qs === "object") {
       Object.entries(qs).forEach(([k, v]) => {
@@ -33,7 +33,7 @@ export class OpenSubtitlesService {
     };
 
     if (auth) {
-      if (!this._tokenValid()) {
+      if (!this.tokenValid()) {
         throw new Error("Not authenticated or token expired. Call login() again.");
       }
       headers["Authorization"] = `Bearer ${this._token}`;
@@ -61,10 +61,8 @@ export class OpenSubtitlesService {
     return data;
   }
 
-  /** Whether we still have a valid JWT (very rough check; API may not return exp) */
-  _tokenValid() {
+  tokenValid() {
     if (!this._token) return false;
-    // If we don't have exp, assume valid for this session:
     if (!this._tokenExp) return true;
     return Math.floor(Date.now() / 1000) < this._tokenExp - 30;
   }
@@ -78,7 +76,7 @@ export class OpenSubtitlesService {
     if (!username || !password) throw new Error("Username and password are required");
 
     // POST /login { username, password }
-    const data = await this._request("/login", {
+    const data = await this.request("/login", {
       method: "POST",
       body: { username, password },
       auth: false,
@@ -92,15 +90,14 @@ export class OpenSubtitlesService {
       const payload = JSON.parse(atob(data.token.split(".")[1]));
       if (payload?.exp) {
         this._tokenExp = payload.exp;
+        console.log("Token expiration set to:", this._tokenExp);
       }
     } catch {
       this._tokenExp = 0;
+      console.warn("Failed to parse token expiration");
     }
     return true;
   }
-
-
-
 
   /** Log out (local only) */
   logout() {
@@ -136,7 +133,7 @@ export class OpenSubtitlesService {
       order_by: params.order_by,
     };
 
-    return await this._request("/subtitles", { qs, auth: true });
+    return await this.request("/subtitles", { qs, auth: true });
   }
 
   /**
@@ -147,7 +144,7 @@ export class OpenSubtitlesService {
   async downloadSubtitle(file_id) {
     if (!file_id) throw new Error("file_id is required");
     // POST /download { file_id }
-    return await this._request("/download", {
+    return await this.request("/download", {
       method: "POST",
       body: { file_id: Number(file_id) },
       auth: true,

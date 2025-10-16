@@ -12,6 +12,12 @@ class VoiranimeSettings {
         this.autoSkipAds = false; // Default auto-skip ads setting
     }
 }
+class OpenSubtitlesSettings {
+    constructor() {
+        this.token = "";
+        this.tokenExpiration = 0;
+    }
+}
 class Settings {
     constructor() {
         this.theme = "dark"; // Default theme
@@ -19,7 +25,7 @@ class Settings {
         this.mailnotificationEnabled = false; // Default mail notification setting
         this.crunchyrollSettings = new CrunchyrollSettings(); // Crunchyroll specific settings
         this.voiranimeSettings = new VoiranimeSettings(); // Voiranime specific settings
-        this.openSubtitlesToken = ""; // OpenSubtitles API key
+        this.openSubtitlesSettings = new OpenSubtitlesSettings(); // OpenSubtitles specific settings
     }
 }
 

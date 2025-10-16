@@ -19,8 +19,11 @@ document.addEventListener("DOMContentLoaded", () => {
         settings = settings_data;
         updateSettingsUI(settings);
         setupEventListeners(settings);
+        openSubtitlesService._token = settings.openSubtitlesSettings.token;
+        openSubtitlesService._tokenExp = settings.openSubtitlesSettings.tokenExpiration;
 
     });
+
     const buttons = document.querySelectorAll(".button");
     const sections = document.querySelectorAll(".section");
 
@@ -115,11 +118,11 @@ function updateSettingsUI(settings) {
     // OpenSubtitles
     const loginButton = document.getElementById("openSubtitlesConnect");
     const status = document.getElementById("openSubtitlesStatus");
-    if (settings.openSubtitlesToken) {
+    if (settings.openSubtitlesSettings.token) {
         document.getElementById("openSubtitlesEmail").style.display = "none";
         document.getElementById("openSubtitlesPassword").style.display = "none";
         status.textContent = "Connected to OpenSubtitles";
-        status.style.color = "sucess";
+        status.classList.add("success");
         loginButton.textContent = "Logout";
 
     } else {
@@ -186,8 +189,10 @@ function setupEventListeners(settings) {
                     password.style.display = "none";
                     let status = document.getElementById("openSubtitlesStatus")
                     status.textContent = "Connected to OpenSubtitles";
+                    status.classList.remove("alert");
                     status.classList.add("success");
-                    settings.openSubtitlesToken = openSubtitlesService._token;
+                    settings.openSubtitlesSettings.token = openSubtitlesService._token;
+                    settings.openSubtitlesSettings.tokenExpiration = openSubtitlesService._tokenExp;
                     saveSettings(settings);
 
 
@@ -203,11 +208,18 @@ function setupEventListeners(settings) {
             document.getElementById("openSubtitlesPassword").style.display = "block";
             let status = document.getElementById("openSubtitlesStatus")
             status.textContent = "Not connected to OpenSubtitles";
+            status.classList.remove("success");
             status.classList.add("alert");
-            settings.openSubtitlesToken = "";
+            settings.openSubtitlesSettings.token = "";
             saveSettings(settings);
             document.getElementById("openSubtitlesConnect").textContent = "Login";
             await openSubtitlesService.logout();
         }
+    });
+    document.getElementById("testApiOpenSubtitles").addEventListener("click", async () => {
+        openSubtitlesService.searchSubtitles({ query: "Black Clover", episode: 1, languages: ["fr"] })
+            .then(results => {
+                console.log("Search results:", results);
+            })
     });
 }

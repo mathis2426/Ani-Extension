@@ -19,19 +19,22 @@ html {
     scroll-behavior: smooth;
 
 }
-.content{
+
+.content {
     flex: 1;
     margin-left: 290px;
 
 }
+
 .section {
     padding: 20px;
 
     input[type="checkbox"] {
         accent-color: #A48EE5;
-        
+
     }
 }
+
 .section-title {
     display: flex;
     align-items: center;
@@ -54,14 +57,22 @@ html {
     margin-bottom: 10px;
     color: #fff;
 }
+
 .tooltip-not-implemented {
     color: var(--color-alert);
 }
+
 label {
     display: block;
-    margin-bottom: 10px;
     font-size: 1em;
     width: fit-content;
+}
+
+.block{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
 }
 
 .classic-btn {
@@ -78,6 +89,7 @@ label {
     cursor: pointer;
     transition: background-color 0.3s ease;
 }
+
 .classic-btn:hover {
     background-color: #8b6fcf;
 }
@@ -95,6 +107,7 @@ input[type="checkbox"] {
     background-clip: content-box;
 
 }
+
 input[type="checkbox"]:focus {
     outline: none;
     box-shadow: none;
@@ -106,22 +119,28 @@ input[type="text"] {
     border: none;
     width: 300px;
     margin-top: 10px;
+    background-color: #3a3a3a;
 }
+
 input[type="password"] {
     padding: 5px;
     border-radius: 5px;
     border: none;
     width: 300px;
     margin-top: 10px;
+    background-color: #3a3a3a;
 }
+
 input::placeholder {
     color: #888;
     transition: color 0.3s ease;
 }
+
 input:focus {
     outline: none;
-    box-shadow: 0 0 5px #A48EE5;
+    box-shadow: 0 0 6px #A48EE5;
 }
+
 input:focus::placeholder {
     color: transparent;
     transition: color 0.3s ease;
@@ -141,20 +160,23 @@ input:focus::placeholder {
     position: fixed;
     top: 0;
     left: 0;
-    .logo{
+
+    .logo {
         height: 83px;
         width: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
     }
+
     .menu {
 
-        .title{
+        .title {
             margin-bottom: 15px;
             margin-left: 10px;
-            
+
         }
+
         .buttons {
             display: flex;
             flex-direction: column;
@@ -180,6 +202,7 @@ input:focus::placeholder {
                 background-color: #A48EE5;
                 cursor: pointer;
             }
+
             .button.active {
                 background-color: #A48EE5;
             }
@@ -220,12 +243,15 @@ html.light-theme {
 .light-theme .section {
     color: #222;
 }
+
 .light-theme .section-title {
     color: #333;
 }
+
 .light-theme .section-title::after {
     background-color: #ccc;
 }
+
 .light-theme .section h2 {
     color: #111;
 }
@@ -245,28 +271,33 @@ html.light-theme {
 .light-theme .nav-bar {
     background-color: #e0e0e0;
 }
+
 .light-theme .nav-bar .button {
-    background-color: #e0e0e0;  
+    background-color: #e0e0e0;
     color: #000;
 }
+
 .light-theme .nav-bar .buttons .button {
     background-color: #e0e0e0;
     color: #000;
 }
-.light-theme .nav-bar .button:hover{
+
+.light-theme .nav-bar .button:hover {
     background-color: #A48EE5;
 }
+
 .light-theme .nav-bar .button.active {
     background-color: #A48EE5;
     color: #fff;
 }
+
 /* Scrollbar */
 
 /* Scrollbar en thème clair */
 .light-theme ::-webkit-scrollbar-track {
     background: #ffffff;
 }
-    
+
 .light-theme ::-webkit-scrollbar-thumb {
     background-color: #bbb;
     border: 2px solid #ffffff;
@@ -281,12 +312,15 @@ html.light-theme {
     margin-left: 10px;
     font-weight: bold;
 }
+
 .success {
     color: var(--color-success);
 }
+
 .alert {
     color: var(--color-alert);
 }
+
 .warning {
     color: var(--color-warning);
 }
@@ -294,7 +328,7 @@ html.light-theme {
 
 
 
-.open-subtitles-block{
+.open-subtitles-block {
     display: flex;
     flex-direction: column;
 }
@@ -303,62 +337,70 @@ html.light-theme {
 
 
 :root {
-  --bg: #0f0f12;
-  --card: #1a1a1f;
-  --text: #eae9f3;
-  --muted: #9aa0a6;
+    --bg: #0f0f12;
+    --card: #1a1a1f;
+    --text: #eae9f3;
+    --muted: #9aa0a6;
 }
 
-* { box-sizing: border-box; }
+* {
+    box-sizing: border-box;
+}
 
 .choices fieldset {
-  border: 0; 
-  padding: 0; 
-  margin: 24px 0;
-  display: flex; 
-  gap: 20px;
+    border: 0;
+    padding: 0;
+    margin: 24px 0;
+    display: flex;
+    gap: 20px;
 }
 
-.choices legend { margin-bottom: 8px; font-weight: 600; }
+.choices legend {
+    margin-bottom: 8px;
+    font-weight: 600;
+}
 
 .choices input[type="radio"] {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
 }
 
 /* La carte cliquable */
-.card{
-  position:relative;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  padding:14px;
-  width:200px;
-  border-radius:14px;
-  background:var(--card);
-  border:2px solid transparent;
-  cursor:pointer;
-  color: var(--text);
-  transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+.card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    width: 200px;
+    border-radius: 14px;
+    background: var(--card);
+    border: 2px solid transparent;
+    cursor: pointer;
+    color: var(--text);
+    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
 }
 
-.thumb{
-  width:100%;
-  object-fit:fill;
-  border-radius:10px;
-  display:block;
-}
-
-
-.card:hover { transform: translateY(-1px); }
-.choices input[type="radio"]:focus-visible + .card {
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary-purple) 40%, transparent);
+.thumb {
+    width: 100%;
+    object-fit: fill;
+    border-radius: 10px;
+    display: block;
 }
 
 
+.card:hover {
+    transform: translateY(-1px);
+}
 
-.card:hover .title-box{
+.choices input[type="radio"]:focus-visible+.card {
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary-purple) 40%, transparent);
+}
+
+
+
+.card:hover .title-box {
     background: transparent;
 }
 
@@ -368,36 +410,111 @@ html.light-theme {
     opacity: 0;
 }
 
-.subtitle,.title{
+.subtitle,
+.title {
     position: absolute;
     z-index: 1;
     transition: transform .25s ease, opacity .2s ease;
 }
-.title{ 
+
+.title {
     bottom: 40px;
-    font-weight:700; 
-    font-size:1.05rem; 
+    font-weight: 700;
+    font-size: 1.05rem;
 }
-.subtitle{ 
+
+.subtitle {
     bottom: 20px;
-    color:var(--muted); 
+    color: var(--muted);
 }
+
 /* Badge check masqué par défaut */
 .check {
-  position: absolute;
-  right: 12px; bottom: 12px;
-  width: 28px; height: 28px;
-  display: grid; place-items: center;
-  border-radius: 999px;
-  background: var(--color-primary-purple);
-  color: white;
-  font-weight: 900;
-  opacity: 0; transform: scale(.85);
-  transition: opacity .15s, transform .15s;
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: var(--color-primary-purple);
+    color: white;
+    font-weight: 900;
+    opacity: 0;
+    transform: scale(.85);
+    transition: opacity .15s, transform .15s;
 }
 
 /* État sélectionné = radio :checked */
-#style-default:checked + .card,
-#style-simplified:checked + .card { border-color: var(--color-primary-purple); }
-#style-default:checked + .card .check,
-#style-simplified:checked + .card .check { opacity:1; transform:scale(1); }
+#style-default:checked+.card,
+#style-simplified:checked+.card {
+    border-color: var(--color-primary-purple);
+}
+
+#style-default:checked+.card .check,
+#style-simplified:checked+.card .check {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* switch */
+
+/* From Uiverse.io by TimTrayler */
+.switch {
+
+    --secondary-container: #47394b;
+    --primary: var(--color-primary-purple);
+    font-size: 11px;
+    position: relative;
+    display: inline-block;
+    width: 3.7em;
+    height: 1.8em;
+}
+
+.switch input {
+    display: none;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #313033;
+    transition: .2s;
+    border-radius: 30px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 1.4em;
+    width: 1.4em;
+    border-radius: 20px;
+    left: 0.2em;
+    bottom: 0.2em;
+    background-color: #aeaaae;
+    transition: .4s;
+}
+
+input:checked+.slider::before {
+    background-color: var(--primary);
+}
+
+input:checked+.slider {
+    background-color: var(--secondary-container);
+}
+
+input:focus+.slider {
+    box-shadow: 0 0 1px var(--secondary-container);
+}
+
+input:checked+.slider:before {
+    transform: translateX(1.9em);
+}
