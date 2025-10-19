@@ -55,6 +55,7 @@
             "run_at": "document_idle",
             "js": [
                 "src/utils/utils.js",
+                "src/streaming-website/netflix.js",
                 "src/streaming-website/voiranime.js",
                 "src/streaming-website/crunchyroll.js",
                 "src/interfaces/Anime.js",
@@ -69,7 +70,8 @@
                 "*://*.voe.sx/*",
                 "https://sandratableother.com/*",
                 "https://my.mail.ru/*",
-                "https://streamtape.com/*"
+                "https://streamtape.com/*",
+                "https://www.netflix.com/watch/*"
             ],
             "type": "module",
             "all_frames": true

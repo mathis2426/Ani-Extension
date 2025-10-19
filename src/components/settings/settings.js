@@ -7,21 +7,41 @@
  */
 
 import { getOrCreateSettings, saveSettings } from "../../interfaces/Settings.js";
-import { OpenSubtitlesAPIKey } from "../../../temp-key-do-not-push.js";
+import { OpenSubtitlesAPIKey, TMDbAPIKey } from "../../../temp-key-do-not-push.js";
 import { OpenSubtitlesService } from "../../services/OpenSubtitlesService.js"
+import { TMDbService } from "../../services/TMDbService.js";
+import { SubtitlesSearchService } from "../../services/SubtitlesSearchService.js";
 
 let settings;
 let openSubtitlesService = new OpenSubtitlesService(OpenSubtitlesAPIKey);
+let tmdbService = null;
+let subtitlesSearchService = null;
 
 document.addEventListener("DOMContentLoaded", () => {
 
     getOrCreateSettings((settings_data) => {
         settings = settings_data;
+        
+        // Initialize with default TMDb key if not set
+        if (!settings.tmdbSettings.apiKey && TMDbAPIKey !== 'YOUR_TMDB_API_KEY_HERE') {
+            settings.tmdbSettings.apiKey = TMDbAPIKey;
+        }
+        
         updateSettingsUI(settings);
         setupEventListeners(settings);
         openSubtitlesService._token = settings.openSubtitlesSettings.token;
         openSubtitlesService._tokenExp = settings.openSubtitlesSettings.tokenExpiration;
 
+        // Initialize TMDb service if API key is provided
+        if (settings.tmdbSettings && settings.tmdbSettings.apiKey && settings.tmdbSettings.apiKey !== 'YOUR_TMDB_API_KEY_HERE') {
+            try {
+                tmdbService = new TMDbService(settings.tmdbSettings.apiKey);
+                subtitlesSearchService = new SubtitlesSearchService(tmdbService, openSubtitlesService);
+                console.log("TMDb service initialized successfully");
+            } catch (error) {
+                console.error("Failed to initialize TMDb service:", error);
+            }
+        }
     });
 
     const buttons = document.querySelectorAll(".button");
@@ -134,6 +154,35 @@ function updateSettingsUI(settings) {
         loginButton.textContent = "Login";
     }
 
+    // TMDb
+    if (settings.tmdbSettings) {
+        const tmdbApiKeyInput = document.getElementById("tmdbApiKey");
+        const tmdbEnabledCheckbox = document.getElementById("tmdbEnabled");
+        const tmdbLanguageSelect = document.getElementById("tmdbLanguage");
+        const tmdbStatusElement = document.getElementById("tmdbStatus");
+        
+        if (tmdbApiKeyInput) {
+            tmdbApiKeyInput.value = settings.tmdbSettings.apiKey || "";
+        }
+        if (tmdbEnabledCheckbox) {
+            tmdbEnabledCheckbox.checked = settings.tmdbSettings.enabled !== false;
+        }
+        if (tmdbLanguageSelect) {
+            tmdbLanguageSelect.value = settings.tmdbSettings.language || "fr-FR";
+        }
+        if (tmdbStatusElement) {
+            if (settings.tmdbSettings.apiKey) {
+                tmdbStatusElement.textContent = "TMDb API Key configured";
+                tmdbStatusElement.classList.remove("alert");
+                tmdbStatusElement.classList.add("success");
+            } else {
+                tmdbStatusElement.textContent = "TMDb API Key not configured";
+                tmdbStatusElement.classList.remove("success");
+                tmdbStatusElement.classList.add("alert");
+            }
+        }
+    }
+
     // Crunchyroll
     document.getElementById("skipIntroOutro").checked = settings.crunchyrollSettings.autoSkip;
     document.getElementById("autoNext").checked = settings.crunchyrollSettings.autoPlayNext;
@@ -216,10 +265,97 @@ function setupEventListeners(settings) {
             await openSubtitlesService.logout();
         }
     });
+    // TMDb settings
+    const tmdbApiKeyInput = document.getElementById("tmdbApiKey");
+    const tmdbEnabledCheckbox = document.getElementById("tmdbEnabled");
+    const tmdbLanguageSelect = document.getElementById("tmdbLanguage");
+    
+    if (tmdbApiKeyInput) {
+        tmdbApiKeyInput.addEventListener("change", (e) => {
+            settings.tmdbSettings.apiKey = e.target.value.trim();
+            saveSettings(settings);
+            
+            // Reinitialize services with new API key
+            if (settings.tmdbSettings.apiKey) {
+                tmdbService = new TMDbService(settings.tmdbSettings.apiKey);
+                subtitlesSearchService = new SubtitlesSearchService(tmdbService, openSubtitlesService);
+            }
+            updateSettingsUI(settings);
+        });
+    }
+    
+    if (tmdbEnabledCheckbox) {
+        tmdbEnabledCheckbox.addEventListener("change", (e) => {
+            settings.tmdbSettings.enabled = e.target.checked;
+            saveSettings(settings);
+        });
+    }
+    
+    if (tmdbLanguageSelect) {
+        tmdbLanguageSelect.addEventListener("change", (e) => {
+            settings.tmdbSettings.language = e.target.value;
+            saveSettings(settings);
+        });
+    }
+
+    // Test buttons
     document.getElementById("testApiOpenSubtitles").addEventListener("click", async () => {
-        openSubtitlesService.searchSubtitles({ query: "Black Clover", episode: 1, languages: ["fr"] })
+        openSubtitlesService.searchSubtitles({tmdb_id: 2058052, languages: ["fr"] })
             .then(results => {
                 console.log("Search results:", results);
             })
     });
+    
+    const testTmdbButton = document.getElementById("testApiTMDb");
+    if (testTmdbButton) {
+        testTmdbButton.addEventListener("click", async () => {
+            if (!tmdbService) {
+                alert("Please configure TMDb API key first");
+                return;
+            }
+            
+            try {
+                // Test by episode title (more reliable)
+                const result = await tmdbService.searchEpisodeByTitle({
+                    showName: "Black Clover",
+                    episodeTitle: "L'aube",
+                    language: settings.tmdbSettings.language || "fr-FR"
+                });
+                console.log("TMDb test result:", result);
+                alert(`TMDb Test (by title):\n${result.success ? 
+                    `Found: ${result.tvShow.name}\nEpisode: ${result.episode.name}\nSeason: ${result.episode.seasonNumber}\nEpisode: ${result.episode.episodeNumber}\nMatch: ${result.matchType}` : 
+                    `Error: ${result.error}`}`);
+            } catch (error) {
+                console.error("TMDb test error:", error);
+                alert(`TMDb test failed: ${error.message}`);
+            }
+        });
+    }
+    
+    const testIntegratedSearchButton = document.getElementById("testIntegratedSearch");
+    if (testIntegratedSearchButton) {
+        testIntegratedSearchButton.addEventListener("click", async () => {
+            if (!subtitlesSearchService) {
+                alert("Please configure TMDb and OpenSubtitles first");
+                return;
+            }
+            
+            try {
+                // Test with episode title (more reliable than episode number)
+                const result = await subtitlesSearchService.searchSubtitles({
+                    showName: "Black Clover",
+                    episodeTitle: "L'aube", // Search by title instead of number
+                    languages: ["fr"],
+                    targetLanguage: settings.tmdbSettings.language || "fr-FR"
+                });
+                console.log("Integrated search result:", result);
+                alert(`Integrated Search (by title):\n${result.success ? 
+                    `Found ${result.subtitles.length} subtitles\nMethod: ${result.searchMethod}\nEpisode: ${result.tmdbInfo?.episode?.name || 'N/A'}\nS${result.tmdbInfo?.episode?.seasonNumber}E${result.tmdbInfo?.episode?.episodeNumber}` : 
+                    `Error: ${result.error}`}`);
+            } catch (error) {
+                console.error("Integrated search error:", error);
+                alert(`Integrated search failed: ${error.message}`);
+            }
+        });
+    }
 }

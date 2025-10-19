@@ -26,7 +26,13 @@ switch (location.hostname) {
       });
     });
     break;
-
+  
+  case "www.netflix.com":
+    netflix(animeClass, () => {
+      chrome.runtime.sendMessage({ type: "animeData", data: animeClass });
+    });
+    break;
   default:
+    console.log("Site non supporté pour le moment : " + location.hostname);
     break;
 }
