@@ -116,7 +116,13 @@ export class SubtitlesSearchService {
 
         if (subtitles && subtitles.length > 0) {
           result.success = true;
-          result.subtitles = subtitles;
+          // Rank and pick best matching subtitle first
+          const ranked = this._rankSubtitles(
+            subtitles,
+            tmdbResult,
+            { languages }
+          );
+          result.subtitles = ranked;
           result.searchMethod = episodeTitle ? "tmdb_title_enhanced" : "tmdb_number_enhanced";
           return result;
         }
@@ -135,7 +141,13 @@ export class SubtitlesSearchService {
 
       if (basicSubtitles && basicSubtitles.length > 0) {
         result.success = true;
-        result.subtitles = basicSubtitles;
+        // We may not have precise TMDb info here, so rank lightly if possible
+        const ranked = this._rankSubtitles(
+          basicSubtitles,
+          tmdbResult?.success ? tmdbResult : null,
+          { languages }
+        );
+        result.subtitles = ranked;
         result.searchMethod = "basic";
         return result;
       }
@@ -149,6 +161,66 @@ export class SubtitlesSearchService {
       result.error = error.message;
       return result;
     }
+  }
+
+  /**
+   * Rank OpenSubtitles results to surface the most relevant first
+   * Uses TMDb info when available to favor exact S/E matches.
+   * @private
+   * @param {Array<object>} items - OpenSubtitles response data array
+   * @param {object|null} tmdbInfo - Result from TMDb helpers (may be null)
+   * @param {object} options
+   * @param {string[]} options.languages - Preferred languages
+   * @returns {Array<object>} - Sorted items (best first)
+   */
+  _rankSubtitles(items, tmdbInfo, { languages = ["fr"] } = {}) {
+    if (!Array.isArray(items) || items.length === 0) return [];
+
+    const preferredLangs = new Set(languages.map(l => l.toLowerCase()));
+    const expectedSeason = tmdbInfo?.episode?.seasonNumber;
+    const expectedEpisode = tmdbInfo?.episode?.episodeNumber;
+    const expectedImdbEpisode = tmdbInfo?.searchParams?.episodeImdbId;
+    const expectedImdbShow = tmdbInfo?.searchParams?.showImdbId;
+
+    const scoreItem = (it) => {
+      const a = it?.attributes || {};
+      const feat = a.feature_details || {};
+      let s = 0;
+
+      // Language preference
+      if (a.language && preferredLangs.has(String(a.language).toLowerCase())) s += 20;
+
+      // Exact S/E match
+      if (
+        expectedSeason !== undefined && expectedEpisode !== undefined &&
+        feat.season_number === expectedSeason && feat.episode_number === expectedEpisode
+      ) s += 50;
+
+      // IMDb alignment
+      if (expectedImdbEpisode && (a.imdb_id === expectedImdbEpisode || feat.imdb_id === expectedImdbEpisode)) s += 30;
+      else if (expectedImdbShow && (a.imdb_id === expectedImdbShow || feat.imdb_id === expectedImdbShow)) s += 10;
+
+      // Popularity/quality hints
+      if (typeof a.download_count === "number") s += Math.min(15, Math.floor(a.download_count / 1000));
+      if (a.hearing_impaired === false) s += 3; // small bias to non-HI by default
+
+      // Prefer recent uploads slightly (if provided)
+      const created = a.upload_date || a.created || a.updated;
+      if (created) {
+        const ts = Date.parse(created);
+        if (!Number.isNaN(ts)) {
+          const days = (Date.now() - ts) / (1000 * 60 * 60 * 24);
+          if (days < 365) s += 5; // lightly prefer recent
+        }
+      }
+
+      return s;
+    };
+
+    return items
+      .map(it => ({ it, score: scoreItem(it) }))
+      .sort((x, y) => y.score - x.score)
+      .map(x => x.it);
   }
 
   /**
@@ -284,6 +356,18 @@ export class SubtitlesSearchService {
    */
   async downloadSubtitle(fileId) {
     return await this.openSubtitles.downloadSubtitle(fileId);
+  }
+
+  /**
+   * Public helper: pick the best subtitle from a list using current ranking
+   * @param {Array<object>} items
+   * @param {object|null} tmdbInfo
+   * @param {object} options
+   * @returns {object|null}
+   */
+  pickBestSubtitle(items, tmdbInfo, options = {}) {
+    const ranked = this._rankSubtitles(items, tmdbInfo, options);
+    return ranked?.[0] || null;
   }
 
   /**

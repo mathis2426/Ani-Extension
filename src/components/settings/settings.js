@@ -300,10 +300,14 @@ function setupEventListeners(settings) {
 
     // Test buttons
     document.getElementById("testApiOpenSubtitles").addEventListener("click", async () => {
-        openSubtitlesService.searchSubtitles({tmdb_id: 2058052, languages: ["fr"] })
+        // openSubtitlesService.searchSubtitles({imdbid: "tt7441658", languages: ["fr"] })
+        //     .then(results => {
+        //         console.log("Search results:", results);
+        //     })
+        openSubtitlesService.searchByImdbOrEpisode({imdbId: "7441658", season: 3, languages: "fr" })
             .then(results => {
                 console.log("Search results:", results);
-            })
+            });
     });
     
     const testTmdbButton = document.getElementById("testApiTMDb");
@@ -349,9 +353,25 @@ function setupEventListeners(settings) {
                     targetLanguage: settings.tmdbSettings.language || "fr-FR"
                 });
                 console.log("Integrated search result:", result);
-                alert(`Integrated Search (by title):\n${result.success ? 
-                    `Found ${result.subtitles.length} subtitles\nMethod: ${result.searchMethod}\nEpisode: ${result.tmdbInfo?.episode?.name || 'N/A'}\nS${result.tmdbInfo?.episode?.seasonNumber}E${result.tmdbInfo?.episode?.episodeNumber}` : 
-                    `Error: ${result.error}`}`);
+                if (result.success) {
+                    const best = result.subtitles?.[0];
+                    const a = best?.attributes || {};
+                    const feat = a.feature_details || {};
+                    const release = a.release || a.files?.[0]?.file_name || "(no release)";
+                    alert(
+                        `Integrated Search (by title):\n` +
+                        `Method: ${result.searchMethod}\n` +
+                        `Episode (TMDb): ${result.tmdbInfo?.episode?.name || 'N/A'} ` +
+                        `(S${result.tmdbInfo?.episode?.seasonNumber}E${result.tmdbInfo?.episode?.episodeNumber})\n` +
+                        `Found: ${result.subtitles.length} subtitles\n` +
+                        `Top pick: ${release}\n` +
+                        `OS S/E: S${feat.season_number ?? '?'}E${feat.episode_number ?? '?'} ` +
+                        `Lang: ${a.language || '?'} ` +
+                        `HI: ${a.hearing_impaired ? 'yes' : 'no'}`
+                    );
+                } else {
+                    alert(`Integrated Search failed: ${result.error}`);
+                }
             } catch (error) {
                 console.error("Integrated search error:", error);
                 alert(`Integrated search failed: ${error.message}`);

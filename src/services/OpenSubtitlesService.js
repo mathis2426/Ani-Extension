@@ -110,7 +110,7 @@ export class OpenSubtitlesService {
    * Search subtitles
    * @param {object} params
    * @param {string} [params.query] - Free text
-   * @param {string} [params.imdb_id] - e.g., "1234567" (without 'tt')
+   * @param {string} [params.imdbid] - e.g., "1234567" (without 'tt')
    * @param {string} [params.tmdb_id]
    * @param {number} [params.season]
    * @param {number} [params.episode]
@@ -123,7 +123,7 @@ export class OpenSubtitlesService {
     // GET /subtitles with query params
     const qs = {
       query: params.query,
-      imdb_id: params.imdb_id,     // docs say: remove 'tt' prefix if present
+      imdb_id: params.imdbid,     
       tmdb_id: params.tmdb_id,
       season_number: params.season,
       episode_number: params.episode,
@@ -154,10 +154,9 @@ export class OpenSubtitlesService {
   /**
    * Convenience: search by IMDB (movie) or SxxExx (episode)
    */
-  async searchByImdbOrEpisode({ imdbId, season, episode, languages = ["fr","en"] }) {
-    const imdb_id = (imdbId || "").replace(/^tt/i, "");
+  async searchByImdbOrEpisode({ imdbId, season, episode, languages}) {
     return this.searchSubtitles({
-      imdb_id,
+      imdbid: imdbId,
       season,
       episode,
       languages,
