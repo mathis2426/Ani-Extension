@@ -21,12 +21,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     getOrCreateSettings((settings_data) => {
         settings = settings_data;
-        
+
         // Initialize with default TMDb key if not set
         if (!settings.tmdbSettings.apiKey && TMDbAPIKey !== 'YOUR_TMDB_API_KEY_HERE') {
             settings.tmdbSettings.apiKey = TMDbAPIKey;
         }
-        
+
         updateSettingsUI(settings);
         setupEventListeners(settings);
         openSubtitlesService._token = settings.openSubtitlesSettings.token;
@@ -160,7 +160,7 @@ function updateSettingsUI(settings) {
         const tmdbEnabledCheckbox = document.getElementById("tmdbEnabled");
         const tmdbLanguageSelect = document.getElementById("tmdbLanguage");
         const tmdbStatusElement = document.getElementById("tmdbStatus");
-        
+
         if (tmdbApiKeyInput) {
             tmdbApiKeyInput.value = settings.tmdbSettings.apiKey || "";
         }
@@ -269,12 +269,12 @@ function setupEventListeners(settings) {
     const tmdbApiKeyInput = document.getElementById("tmdbApiKey");
     const tmdbEnabledCheckbox = document.getElementById("tmdbEnabled");
     const tmdbLanguageSelect = document.getElementById("tmdbLanguage");
-    
+
     if (tmdbApiKeyInput) {
         tmdbApiKeyInput.addEventListener("change", (e) => {
             settings.tmdbSettings.apiKey = e.target.value.trim();
             saveSettings(settings);
-            
+
             // Reinitialize services with new API key
             if (settings.tmdbSettings.apiKey) {
                 tmdbService = new TMDbService(settings.tmdbSettings.apiKey);
@@ -283,14 +283,14 @@ function setupEventListeners(settings) {
             updateSettingsUI(settings);
         });
     }
-    
+
     if (tmdbEnabledCheckbox) {
         tmdbEnabledCheckbox.addEventListener("change", (e) => {
             settings.tmdbSettings.enabled = e.target.checked;
             saveSettings(settings);
         });
     }
-    
+
     if (tmdbLanguageSelect) {
         tmdbLanguageSelect.addEventListener("change", (e) => {
             settings.tmdbSettings.language = e.target.value;
@@ -304,12 +304,37 @@ function setupEventListeners(settings) {
         //     .then(results => {
         //         console.log("Search results:", results);
         //     })
-        openSubtitlesService.searchByImdbOrEpisode({imdbId: "7441658", season: 3, languages: "fr" })
+        // openSubtitlesService.searchByImdbOrEpisode({imdbId: "7441658", season: 3, languages: "fr" })
+        //     .then(results => {
+        //         console.log("Search results:", results);
+        //     });
+
+        openSubtitlesService.searchSubtitles({ query: "Black clover s03e120", languages: ["fr"] })
             .then(results => {
-                console.log("Search results:", results);
+                if (!results) {
+                    console.log("Search results:", results);
+                }
+                else {
+                    // Fallback to episode search
+                    // openSubtitlesService.searchSubtitles({query: "Black Clover", languages: ["fr"] }).then(results => {
+                    //     for (let i = 1; i <= results.total_pages; i++) {
+                    //         openSubtitlesService.searchSubtitles({ query: "Black Clover", languages: ["fr"], page: i }).then(pageResults => {
+                    //             pageResults.data.forEach(subtitle => {
+                    //                 const a = subtitle.attributes || {};
+                    //                 console.log(`Subtitle: ${a.release || a.files?.[0]?.file_name || "(no release)"} | Lang: ${a.language} | HI: ${a.hearing_impaired ? "yes" : "no"}`);
+                    //             });
+                    //         });
+                    //         setTimeout(() => {}, 100000);
+                    //     }
+                    // });
+
+                    // Fallback to episode search
+                    const { seasonCounts, totalEpisodes, seasons } = getEpisodesPerSeasonFromOpenSubtitlesByImdb("7441658", ["fr"]);
+                    console.log("Season counts from OpenSubtitles (by imdb):", seasonCounts, "TotalEpisodes:", totalEpisodes, "Seasons:", seasons);
+                }
+
             });
     });
-    
     const testTmdbButton = document.getElementById("testApiTMDb");
     if (testTmdbButton) {
         testTmdbButton.addEventListener("click", async () => {
@@ -317,7 +342,7 @@ function setupEventListeners(settings) {
                 alert("Please configure TMDb API key first");
                 return;
             }
-            
+
             try {
                 // Test by episode title (more reliable)
                 const result = await tmdbService.searchEpisodeByTitle({
@@ -326,8 +351,8 @@ function setupEventListeners(settings) {
                     language: settings.tmdbSettings.language || "fr-FR"
                 });
                 console.log("TMDb test result:", result);
-                alert(`TMDb Test (by title):\n${result.success ? 
-                    `Found: ${result.tvShow.name}\nEpisode: ${result.episode.name}\nSeason: ${result.episode.seasonNumber}\nEpisode: ${result.episode.episodeNumber}\nMatch: ${result.matchType}` : 
+                alert(`TMDb Test (by title):\n${result.success ?
+                    `Found: ${result.tvShow.name}\nEpisode: ${result.episode.name}\nSeason: ${result.episode.seasonNumber}\nEpisode: ${result.episode.episodeNumber}\nMatch: ${result.matchType}` :
                     `Error: ${result.error}`}`);
             } catch (error) {
                 console.error("TMDb test error:", error);
@@ -335,7 +360,7 @@ function setupEventListeners(settings) {
             }
         });
     }
-    
+
     const testIntegratedSearchButton = document.getElementById("testIntegratedSearch");
     if (testIntegratedSearchButton) {
         testIntegratedSearchButton.addEventListener("click", async () => {
@@ -343,7 +368,7 @@ function setupEventListeners(settings) {
                 alert("Please configure TMDb and OpenSubtitles first");
                 return;
             }
-            
+
             try {
                 // Test with episode title (more reliable than episode number)
                 const result = await subtitlesSearchService.searchSubtitles({
@@ -378,4 +403,117 @@ function setupEventListeners(settings) {
             }
         });
     }
+}
+
+
+async function getEpisodesPerSeasonFromOpenSubtitlesByImdb(imdbId, languages = ["fr"]) {
+    const seasonCounts = {};
+    let page = 1;
+    let totalPages = 1;
+
+    // Normalize possible imdb id forms
+    const idStr = String(imdbId || "").trim();
+    const withTt = idStr.startsWith("tt") ? idStr : `tt${idStr}`;
+    const withoutTt = idStr.startsWith("tt") ? idStr.slice(2) : idStr;
+
+    try {
+        do {
+            // Essayer plusieurs clés que ton OpenSubtitlesService pourrait accepter.
+            // Certains services demandent "imdbid" (avec tt...), d'autres "imdb_id" ou "imdbId" (sans tt).
+            const tryParamsList = [
+                { imdbid: withTt },
+                { imdbid: withoutTt },
+                { imdb_id: withTt },
+                { imdb_id: withoutTt },
+                { imdbId: withoutTt },
+                { imdbId: withTt }
+            ];
+
+            let res = null;
+            // Essayer chaque formulation jusqu'à obtenir des données
+            for (const p of tryParamsList) {
+                try {
+                    // ajouter page & languages à chaque essai
+                    const params = Object.assign({}, p, { page, languages });
+                    res = await openSubtitlesService.searchSubtitles(params);
+                } catch (e) {
+                    // ignorer l'erreur, tenter la prochaine clé
+                    res = null;
+                }
+                if (res && res.data && Array.isArray(res.data) && res.data.length > 0) break;
+            }
+
+            if (!res || !res.data || !Array.isArray(res.data)) {
+                // Si aucune des formes n'a renvoyé de données, on sort
+                break;
+            }
+
+            if (res.total_pages) totalPages = res.total_pages;
+
+            for (const item of res.data) {
+                const a = item.attributes || {};
+                const feat = a.feature_details || {};
+
+                let sn = feat.season_number ?? null;
+                let en = feat.episode_number ?? null;
+
+                // fallback: extraire depuis file_name / release
+                if ((sn === null || en === null) && a.files && a.files.length > 0) {
+                    const fname = a.files[0].file_name || a.release || "";
+                    // regex pour S03E10, s03e10, 3x10, 03x10, 3-10, etc.
+                    const m = fname.match(/(?:S?)(\d{1,2})[ ._xX-]?(?:E|e|x)(\d{1,3})/);
+                    if (m) {
+                        sn = sn ?? parseInt(m[1], 10);
+                        en = en ?? parseInt(m[2], 10);
+                    } else {
+                        const m2 = fname.match(/(\d{1,2})x(\d{1,3})/);
+                        if (m2) {
+                            sn = sn ?? parseInt(m2[1], 10);
+                            en = en ?? parseInt(m2[2], 10);
+                        }
+                    }
+                }
+
+                if (sn !== null && en !== null && !isNaN(sn) && !isNaN(en)) {
+                    sn = Number(sn);
+                    en = Number(en);
+                    if (!seasonCounts[sn] || seasonCounts[sn] < en) {
+                        seasonCounts[sn] = en;
+                    }
+                }
+            }
+
+            page++;
+            if (!res.total_pages && page > 40) break; // sécurité : empêcher boucle infinie
+        } while (page <= totalPages);
+
+        const seasons = Object.keys(seasonCounts).map(n => parseInt(n, 10)).sort((a, b) => a - b);
+        const totalEpisodes = seasons.reduce((acc, s) => acc + (seasonCounts[s] || 0), 0);
+
+        return { seasonCounts, totalEpisodes, seasons };
+    } catch (err) {
+        console.error("Erreur getEpisodesPerSeasonFromOpenSubtitlesByImdb:", err);
+        return { seasonCounts: {}, totalEpisodes: 0, seasons: [] };
+    }
+}
+
+/**
+ * Convertit un numéro d'épisode global (1-based) en saison/épisode
+ * (identique à la version précédente)
+ */
+function globalEpisodeToSeasonEpisode(globalEpisode, seasonCounts) {
+    if (!globalEpisode || globalEpisode < 1) return null;
+    const seasons = Object.keys(seasonCounts).map(n => parseInt(n,10)).sort((a,b) => a-b);
+    let remaining = globalEpisode;
+    for (const s of seasons) {
+        const count = seasonCounts[s] || 0;
+        if (remaining <= count) {
+            return { season: s, episode: remaining, overflow: false };
+        }
+        remaining -= count;
+    }
+    const lastSeason = seasons.length ? seasons[seasons.length - 1] : 1;
+    const guessedSeason = lastSeason + Math.ceil(remaining / (seasonCounts[lastSeason] || 12));
+    const guessedEpisode = remaining;
+    return { season: guessedSeason, episode: guessedEpisode, overflow: true };
 }
