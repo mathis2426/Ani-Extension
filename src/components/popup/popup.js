@@ -6,6 +6,7 @@
  * Version        : 1.0.0
  */
 
+import { URL_API } from "../../vars.js";
 let token = null;
 
 document.addEventListener("DOMContentLoaded", () => {
