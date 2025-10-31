@@ -161,67 +161,34 @@
         <div id="section-openSubtitles" class="section">
             <div class="section-title">OpenSubtitles Settings</div>
             <div class="open-subtitles-block">
-                <p id="openSubtitlesStatus"></p>
+                    <p id="openSubtitlesStatus"></p>
+                    <!-- Language selector for OpenSubtitles (used for subtitle searches) -->
+                    <label class="block">
+                        <span>Preferred subtitle language</span>
+                            <div class="language-control">
+                                <img id="openSubtitlesLanguageFlag" class="language-flag" src="" alt="flag">
+                                <select id="openSubtitlesLanguage" class="language-select">
+                                    <option value="fr">Français</option>
+                                    <option value="en">English</option>
+                                    <option value="es">Español</option>
+                                    <option value="de">Deutsch</option>
+                                    <option value="it">Italiano</option>
+                                    <option value="ja">日本語</option>
+                                    <option value="pt">Português</option>
+                                    <option value="ru">Русский</option>
+                                </select>
+                            </div>
+                    </label>
                 <label>
                     <input type="text" placeholder="Username" id="openSubtitlesEmail">
                 </label>
                 <label>
                     <input type="password" placeholder="Password" id="openSubtitlesPassword">
                 </label>
+                
                 <div class="actions">
                     <button id="openSubtitlesConnect" class="classic-btn">Login</button>
                     <button id="testApiOpenSubtitles" class="classic-btn">Test API</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- TMDB -->
-        <div id="section-tmdb" class="section">
-            <div class="section-title">TMDb Settings</div>
-            <p class="description">
-                The Movie Database (TMDb) is used to get accurate episode information and improve subtitle search.
-                <a href="https://www.themoviedb.org/settings/api" target="_blank">Get your API key here</a>
-            </p>
-            <div class="tmdb-block">
-                <p id="tmdbStatus"></p>
-                
-                <label>
-                    Enable TMDb Integration
-                    <label class="switch">
-                        <input type="checkbox" id="tmdbEnabled">
-                        <span class="slider"></span>
-                    </label>
-                </label><br>
-                
-                <label>
-                    TMDb API Key (v3)
-                    <input type="text" placeholder="Enter your TMDb API key" id="tmdbApiKey">
-                </label><br>
-                
-                <label>
-                    Preferred Language for Episode Titles
-                    <select id="tmdbLanguage">
-                        <option value="fr-FR">French (France)</option>
-                        <option value="en-US">English (US)</option>
-                        <option value="ja-JP">Japanese</option>
-                        <option value="es-ES">Spanish (Spain)</option>
-                        <option value="de-DE">German</option>
-                    </select>
-                </label><br>
-                
-                <div class="actions">
-                    <button id="testApiTMDb" class="classic-btn">Test TMDb API</button>
-                    <button id="testIntegratedSearch" class="classic-btn">Test Integrated Search</button>
-                </div>
-                
-                <div class="info-box">
-                    <h4>How it works:</h4>
-                    <ol>
-                        <li>TMDb is queried to get the exact episode information</li>
-                        <li>Episode title in your preferred language is retrieved</li>
-                        <li>IMDb and TVDB IDs are obtained for precise matching</li>
-                        <li>OpenSubtitles is searched using multiple strategies for best results</li>
-                    </ol>
                 </div>
             </div>
         </div>

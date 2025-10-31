@@ -333,6 +333,69 @@ html.light-theme {
     flex-direction: column;
 }
 
+/* Language select styling (OpenSubtitles) */
+.language-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding: 0px 12px;
+    border-radius: 8px;
+    border: 1px solid #3a3a3a;
+    background-color: #3a3a3a;
+    color: var(--text, #eae9f3);
+    font-size: 0.95rem;
+    min-width: 220px;
+}
+
+.language-select:focus {
+    outline: none;
+    box-shadow: 0 0 6px rgba(164,142,229,0.6);
+}
+
+/* Light theme overrides */
+.light-theme .language-select {
+    background-color: #fff;
+    color: #111;
+    border: 1px solid #ddd;
+}
+
+/* Flag next to language select */
+.language-control {
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    vertical-align: middle;
+}
+
+/* Place the flag inside the select area, circular, no border */
+.language-flag {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    width: 21px;
+    height: 21px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: none;
+    box-shadow: none;
+}
+
+.light-theme .language-flag {
+    /* subtle outline in light theme to keep visibility */
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.06) inset;
+}
+
+/* Make the select reserve space for the flag on the left and the caret on the right */
+.language-select {
+    padding-left: 48px; /* enough to clear the circular flag */
+    padding-right: 28px;
+    height: 40px;
+    line-height: 40px;
+    border-radius: 10px;
+}
+
 
 
 

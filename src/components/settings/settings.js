@@ -138,6 +138,7 @@ function updateSettingsUI(settings) {
     // OpenSubtitles
     const loginButton = document.getElementById("openSubtitlesConnect");
     const status = document.getElementById("openSubtitlesStatus");
+    const openSubtitlesLanguageSelect = document.getElementById("openSubtitlesLanguage");
     if (settings.openSubtitlesSettings.token) {
         document.getElementById("openSubtitlesEmail").style.display = "none";
         document.getElementById("openSubtitlesPassword").style.display = "none";
@@ -152,6 +153,20 @@ function updateSettingsUI(settings) {
         status.classList.add("alert");
 
         loginButton.textContent = "Login";
+    }
+
+    // OpenSubtitles language
+    if (openSubtitlesLanguageSelect) {
+        openSubtitlesLanguageSelect.value = settings.openSubtitlesSettings.language || "fr";
+    }
+    // Update flag image for OpenSubtitles language
+    const flagImg = document.getElementById("openSubtitlesLanguageFlag");
+    if (flagImg && openSubtitlesLanguageSelect) {
+        const code = openSubtitlesLanguageSelect.value || (settings.openSubtitlesSettings.language || "fr");
+        const country = getFlagCountryCode(code);
+    // use SVG for crisp rendering at any size
+    flagImg.src = `https://flagcdn.com/${country}.svg`;
+        flagImg.alt = `${code} flag`;
     }
 
     // TMDb
@@ -295,6 +310,22 @@ function setupEventListeners(settings) {
         tmdbLanguageSelect.addEventListener("change", (e) => {
             settings.tmdbSettings.language = e.target.value;
             saveSettings(settings);
+        });
+    }
+
+    // OpenSubtitles language change listener
+    const openSubtitlesLanguageSelectEl = document.getElementById("openSubtitlesLanguage");
+    if (openSubtitlesLanguageSelectEl) {
+        openSubtitlesLanguageSelectEl.addEventListener("change", (e) => {
+            settings.openSubtitlesSettings.language = e.target.value;
+            saveSettings(settings);
+            // update flag image
+            const flagImg = document.getElementById("openSubtitlesLanguageFlag");
+            if (flagImg) {
+                const country = getFlagCountryCode(e.target.value);
+                flagImg.src = `https://flagcdn.com/${country}.svg`;
+                flagImg.alt = `${e.target.value} flag`;
+            }
         });
     }
 
@@ -516,4 +547,25 @@ function globalEpisodeToSeasonEpisode(globalEpisode, seasonCounts) {
     const guessedSeason = lastSeason + Math.ceil(remaining / (seasonCounts[lastSeason] || 12));
     const guessedEpisode = remaining;
     return { season: guessedSeason, episode: guessedEpisode, overflow: true };
+}
+
+/**
+ * Map a language ISO to a country code suitable for flag images.
+ * Some languages don't have a single country; we choose a representative flag.
+ */
+function getFlagCountryCode(lang) {
+    if (!lang) return 'fr';
+    const l = lang.toLowerCase();
+    switch (l) {
+        case 'en': return 'gb'; // use UK flag for english
+        case 'ja': return 'jp';
+        case 'pt': return 'pt';
+        case 'es': return 'es';
+        case 'de': return 'de';
+        case 'it': return 'it';
+        case 'ru': return 'ru';
+        case 'fr':
+        default:
+            return 'fr';
+    }
 }
