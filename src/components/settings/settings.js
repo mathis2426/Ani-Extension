@@ -120,6 +120,7 @@ function updateSettingsUI(settings) {
     // OpenSubtitles
     const loginButton = document.getElementById("openSubtitlesConnect");
     const status = document.getElementById("openSubtitlesStatus");
+    const openSubtitlesLanguageSelect = document.getElementById("openSubtitlesLanguage");
     if (settings.openSubtitlesSettings.token) {
         document.getElementById("openSubtitlesEmail").style.display = "none";
         document.getElementById("openSubtitlesPassword").style.display = "none";
@@ -134,6 +135,49 @@ function updateSettingsUI(settings) {
         status.classList.add("alert");
 
         loginButton.textContent = "Login";
+    }
+
+    // OpenSubtitles language
+    if (openSubtitlesLanguageSelect) {
+        openSubtitlesLanguageSelect.value = settings.openSubtitlesSettings.language || "fr";
+    }
+    // Update flag image for OpenSubtitles language
+    const flagImg = document.getElementById("openSubtitlesLanguageFlag");
+    if (flagImg && openSubtitlesLanguageSelect) {
+        const code = openSubtitlesLanguageSelect.value || (settings.openSubtitlesSettings.language || "fr");
+        const country = getFlagCountryCode(code);
+    // use SVG for crisp rendering at any size
+    flagImg.src = `https://flagcdn.com/${country}.svg`;
+        flagImg.alt = `${code} flag`;
+    }
+
+    // TMDb
+    if (settings.tmdbSettings) {
+        const tmdbApiKeyInput = document.getElementById("tmdbApiKey");
+        const tmdbEnabledCheckbox = document.getElementById("tmdbEnabled");
+        const tmdbLanguageSelect = document.getElementById("tmdbLanguage");
+        const tmdbStatusElement = document.getElementById("tmdbStatus");
+
+        if (tmdbApiKeyInput) {
+            tmdbApiKeyInput.value = settings.tmdbSettings.apiKey || "";
+        }
+        if (tmdbEnabledCheckbox) {
+            tmdbEnabledCheckbox.checked = settings.tmdbSettings.enabled !== false;
+        }
+        if (tmdbLanguageSelect) {
+            tmdbLanguageSelect.value = settings.tmdbSettings.language || "fr-FR";
+        }
+        if (tmdbStatusElement) {
+            if (settings.tmdbSettings.apiKey) {
+                tmdbStatusElement.textContent = "TMDb API Key configured";
+                tmdbStatusElement.classList.remove("alert");
+                tmdbStatusElement.classList.add("success");
+            } else {
+                tmdbStatusElement.textContent = "TMDb API Key not configured";
+                tmdbStatusElement.classList.remove("success");
+                tmdbStatusElement.classList.add("alert");
+            }
+        }
     }
 
     // Crunchyroll
@@ -608,4 +652,25 @@ function setupEventListeners(settings) {
         return s;
     }
 
+}
+
+/**
+ * Map a language ISO to a country code suitable for flag images.
+ * Some languages don't have a single country; we choose a representative flag.
+ */
+function getFlagCountryCode(lang) {
+    if (!lang) return 'fr';
+    const l = lang.toLowerCase();
+    switch (l) {
+        case 'en': return 'gb'; // use UK flag for english
+        case 'ja': return 'jp';
+        case 'pt': return 'pt';
+        case 'es': return 'es';
+        case 'de': return 'de';
+        case 'it': return 'it';
+        case 'ru': return 'ru';
+        case 'fr':
+        default:
+            return 'fr';
+    }
 }

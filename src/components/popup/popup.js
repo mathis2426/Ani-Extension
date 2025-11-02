@@ -199,28 +199,35 @@ document.addEventListener("DOMContentLoaded", () => {
     if (area === "local" && changes.popupDataList) {
       const oldList = changes.popupDataList.oldValue || [];
       const newList = changes.popupDataList.newValue || [];
-      let count = 0;
-      let animeCurentlyWatching = document.querySelectorAll(".in-progress");
-      animeCurentlyWatching.forEach(element => {
-        if (element.style.display == "flex") count++;
+      // Détecte d'abord s'il y a eu un vrai changement lié à la lecture
+      let anyHasChanged = false;
+      newList.forEach((anime, index) => {
+        const oldAnime = oldList[index];
+        if (!oldAnime) return; // nouvel élément ? ignore
+        if (anime.currentTime !== oldAnime.currentTime || anime.duration !== oldAnime.duration) {
+          anyHasChanged = true;
+        }
       });
 
-      const listanime = document.getElementById(`content_list`);
-      let delimiter = document.createElement("div");
-      delimiter.innerHTML = '<div class="delimiter-container"><div class="delimiter" id="delimiter"></div></div>';
-      const refernode = listanime.children[count + 1];
-
-      if (!document.getElementById("delimiter")) {
-        listanime.insertBefore(delimiter, refernode);
+      // N'insère le delimiter que si un changement de lecture a eu lieu.
+      if (anyHasChanged) {
+        // Compte les items qui sont réellement marqués comme "in-progress.active"
+        const activeCount = document.querySelectorAll('.in-progress.active').length;
+        const listanime = document.getElementById(`content_list`);
+        if (!document.getElementById("delimiter")) {
+          let delimiter = document.createElement("div");
+          delimiter.innerHTML = '<div class="delimiter-container"><div class="delimiter" id="delimiter"></div></div>';
+          const refernode = listanime.children[activeCount + 1] || null;
+          listanime.insertBefore(delimiter, refernode);
+        }
       }
 
+      // Puis applique les mises à jour de temps/état uniquement pour les éléments réellement modifiés
       newList.forEach((anime, index) => {
         const oldAnime = oldList[index];
         if (!oldAnime) return; // nouvel élément ? ignore
 
-        // Ne continue que si quelque chose a changé (temps, lecture, etc.)
-        const hasChanged = anime.currentTime !== oldAnime.currentTime ||
-          anime.duration !== oldAnime.duration;
+        const hasChanged = anime.currentTime !== oldAnime.currentTime || anime.duration !== oldAnime.duration;
         if (hasChanged) {
           const inprogress = document.getElementById(`in-progress-${index}`);
           const subtitleBtn = document.querySelector(`.subtitle-search-btn[data-index="${index}"]`);

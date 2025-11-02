@@ -161,13 +161,31 @@
         <div id="section-openSubtitles" class="section">
             <div class="section-title">OpenSubtitles Settings</div>
             <div class="open-subtitles-block">
-                <p id="openSubtitlesStatus"></p>
+                    <p id="openSubtitlesStatus"></p>
+                    <!-- Language selector for OpenSubtitles (used for subtitle searches) -->
+                    <label class="block">
+                        <span>Preferred subtitle language</span>
+                            <div class="language-control">
+                                <img id="openSubtitlesLanguageFlag" class="language-flag" src="" alt="flag">
+                                <select id="openSubtitlesLanguage" class="language-select">
+                                    <option value="fr">Français</option>
+                                    <option value="en">English</option>
+                                    <option value="es">Español</option>
+                                    <option value="de">Deutsch</option>
+                                    <option value="it">Italiano</option>
+                                    <option value="ja">日本語</option>
+                                    <option value="pt">Português</option>
+                                    <option value="ru">Русский</option>
+                                </select>
+                            </div>
+                    </label>
                 <label>
                     <input type="text" placeholder="Username" id="openSubtitlesEmail">
                 </label>
                 <label>
                     <input type="password" placeholder="Password" id="openSubtitlesPassword">
                 </label>
+                
                 <div class="actions">
                     <button id="openSubtitlesConnect" class="classic-btn">Login</button>
                     <button id="testApiOpenSubtitles" class="classic-btn">Test API</button>
