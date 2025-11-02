@@ -2,17 +2,105 @@
  * File Name      : service-worker.js
  * Description    : Handles background message passing for the extension.
  * Author         : Mathis Gramage, Mathis Cucherat
- * Date           : Last update 2025-10-07
- * Version        : 1.1.0
+ * Date           : Last update 2025-11-02
+ * Version        : 1.2.0
  */
 
 import { AnimeManager } from "./src/core/AnimeManager.js";
+import { OpenSubtitlesService } from "./src/services/OpenSubtitlesService.js";
+import { OpenSubtitlesAPIKey } from "./temp-key-do-not-push.js";
+
+let openSubtitlesService = null;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "animeData") {
     AnimeManager.saveAnime(message.data);
   }
+  
+  // Handle subtitle search request from content script
+  if (message.type === "searchSubtitles") {
+    handleSubtitleSearch(message.anime, sendResponse);
+    return true; // Keep channel open for async response
+  }
+  
+  // Handle subtitle download request
+  if (message.type === "downloadSubtitle") {
+    handleSubtitleDownload(message.subtitle, message.anime, message.offsetMs || 0, sendResponse);
+    return true;
+  }
 });
+
+/**
+ * Handle subtitle search in background
+ */
+async function handleSubtitleSearch(anime, sendResponse) {
+  try {
+    // Initialize service if needed
+    if (!openSubtitlesService) {
+      openSubtitlesService = new OpenSubtitlesService(OpenSubtitlesAPIKey);
+      
+      // Load token from settings
+      const settings = await chrome.storage.sync.get("settings");
+      if (settings?.settings?.openSubtitlesSettings?.token) {
+        openSubtitlesService._token = settings.settings.openSubtitlesSettings.token;
+        openSubtitlesService._tokenExp = settings.settings.openSubtitlesSettings.tokenExpiration;
+      } else {
+        sendResponse({ success: false, error: "Non connecté à OpenSubtitles" });
+        return;
+      }
+    }
+    
+    console.log(`🔍 Recherche sous-titres pour: ${anime.name} - Episode ${anime.episode}`);
+    
+    const foundSubtitle = await openSubtitlesService.searchEpisodeSubtitle(
+      anime.name,
+      anime.episode,
+      ["fr"]
+    );
+    
+    if (!foundSubtitle || (Array.isArray(foundSubtitle) && foundSubtitle.length === 0)) {
+      sendResponse({ success: false, error: "Aucun sous-titre trouvé" });
+      return;
+    }
+    
+    sendResponse({ success: true, data: foundSubtitle });
+    
+  } catch (error) {
+    console.error("Erreur recherche sous-titres:", error);
+    sendResponse({ success: false, error: error.message });
+  }
+}
+
+/**
+ * Handle subtitle download in background
+ */
+async function handleSubtitleDownload(subtitle, anime, offsetMs, sendResponse) {
+  try {
+    const fileId = subtitle.attributes?.files?.[0]?.file_id;
+    if (!fileId) {
+      sendResponse({ success: false, error: "ID de fichier manquant" });
+      return;
+    }
+    
+    console.log("📥 Téléchargement sous-titre, file_id:", fileId);
+    
+    const subtitleContent = await openSubtitlesService.downloadSubtitleContent(fileId);
+    
+    sendResponse({ 
+      success: true, 
+      content: subtitleContent,
+      info: {
+        name: subtitle.attributes?.release || "Subtitle",
+        language: subtitle.attributes?.language || "fr"
+      },
+      offsetMs: offsetMs
+    });
+    
+  } catch (error) {
+    console.error("Erreur téléchargement sous-titre:", error);
+    sendResponse({ success: false, error: error.message });
+  }
+}
 
 const RULE_ID = 1001;
 

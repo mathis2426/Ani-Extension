@@ -54,6 +54,10 @@
         {
             "run_at": "document_idle",
             "js": [
+                "src/streaming-website/features/subtitle-btn.js",
+                "src/utils/videoUtils.js",
+                "src/utils/anilistUtils.js",
+                "src/utils/navigationUtils.js",
                 "src/utils/utils.js",
                 "src/streaming-website/netflix.js",
                 "src/streaming-website/voiranime.js",
@@ -73,7 +77,6 @@
                 "https://streamtape.com/*",
                 "https://www.netflix.com/watch/*"
             ],
-            "type": "module",
             "all_frames": true
         }
     ],

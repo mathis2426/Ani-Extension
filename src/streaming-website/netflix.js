@@ -14,6 +14,7 @@
  * @param {function} callback 
  */
 function netflix(animeClass, callback) {
+    createSubtitleButton();
     let targetNode = document.body;
     let config = { childList: true, subtree: true };
     let videoListenersAdded = false; // Flag to ensure listeners are added only once

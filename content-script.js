@@ -247,17 +247,39 @@ function injectSubtitleStyle() {
 
   const css = `
   ::cue {
-    color: #ffffff;
-    font-size: 1.05em;
-    font-weight: 600;
-    text-shadow:
-      0 1px 0 rgba(0,0,0,0.95),
-      0 2px 4px rgba(0,0,0,0.6);
-    line-height: 1.2;
-    background: rgba(0,0,0,0.28);
-    padding: 0.06em 0.45em;
-    border-radius: 0.35em;
-  }
+  color: #ffffff;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  font-size: 1.1em;
+  font-weight: 700;
+  line-height: 1.3;
+  background: transparent;
+  padding: 0;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  text-shadow:
+    /* flou central un peu plus large pour lisser */
+    0 0 9px rgba(0,0,0,0.85),
+
+    /* diagonales légères et fractionnaires */
+    -1.2px -1.2px 1px rgba(0,0,0,0.95),
+    1.2px -1.2px 1px rgba(0,0,0,0.95),
+    -1.2px 1.2px 1px rgba(0,0,0,0.95),
+    1.2px 1.2px 1px rgba(0,0,0,0.95),
+
+    /* nouvelle couche diagonale proche pour renforcer l'épaisseur */
+    -1.5px -1.5px 1px rgba(0,0,0,0.92),
+    1.5px -1.5px 1px rgba(0,0,0,0.92),
+    -1.5px 1.5px 1px rgba(0,0,0,0.92),
+    1.5px 1.5px 1px rgba(0,0,0,0.92),
+
+    /* axes horizontaux et verticaux */
+    -2px 0 1px rgba(0,0,0,0.88),
+    2px 0 1px rgba(0,0,0,0.88),
+    0 -2px 1px rgba(0,0,0,0.88),
+    0 2px 1px rgba(0,0,0,0.88);
+}
   /* fallback overlay style */
   #aniext-subtitle-overlay {
     position: absolute;
@@ -268,18 +290,27 @@ function injectSubtitleStyle() {
     text-align: center;
     pointer-events: none;
     z-index: 999999;
-    font-weight: 600;
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+    font-weight: 700;
     color: #fff;
-    text-shadow: 0 1px 0 rgba(0,0,0,0.95), 0 2px 4px rgba(0,0,0,0.6);
+    text-shadow:
+      -2px -2px 0 #000,
+      2px -2px 0 #000,
+      -2px 2px 0 #000,
+      2px 2px 0 #000,
+      -2px 0 0 #000,
+      2px 0 0 #000,
+      0 -2px 0 #000,
+      0 2px 0 #000,
+      0 0 4px rgba(0,0,0,0.8);
   }
   #aniext-subtitle-overlay .line {
     display: block;
     margin: 2px 0;
-    background: rgba(0,0,0,0.28);
-    padding: 0.06em 0.45em;
-    border-radius: 0.35em;
-    font-size: 1.05em;
-    line-height: 1.2;
+    background: transparent;
+    padding: 0;
+    font-size: 1.1em;
+    line-height: 1.3;
   }
   `;
 
