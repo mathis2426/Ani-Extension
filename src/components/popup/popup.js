@@ -6,8 +6,12 @@
  * Version        : 1.0.0
  */
 import { URL_API } from "../../vars.js";
+import { OpenSubtitlesService } from "../../services/OpenSubtitlesService.js";
+import { OpenSubtitlesAPIKey } from "../../../temp-key-do-not-push.js";
+import { StorageService } from "../../services/StorageService.js";
 
 let token = null;
+let openSubtitlesService = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   const listAnime = document.getElementById("content_list");
@@ -56,11 +60,25 @@ document.addEventListener("DOMContentLoaded", () => {
               <progress value="0" max="100" id="bar-${index}">0%</progress>
               <p id="timecode-${index}">00:00</p>
             </div>
-            <div class="in-progress" id="in-progress-${index}">Lecture en cours</div>
+            <div class="actions-row">
+              <button class="subtitle-search-btn" data-index="${index}" title="Rechercher sous-titres" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 0 576 512" fill="currentColor">
+                  <path d="M0 96C0 60.7 28.7 32 64 32H512c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM200 208c0 13.3-10.7 24-24 24s-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24zm-24 56c13.3 0 24 10.7 24 24s-10.7 24-24 24s-24-10.7-24-24s10.7-24 24-24zm120-56c0 13.3-10.7 24-24 24s-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24zm-24 56c13.3 0 24 10.7 24 24s-10.7 24-24 24s-24-10.7-24-24s10.7-24 24-24zm120-56c0 13.3-10.7 24-24 24s-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24zM552 352H424c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8H552c4.4 0 8-3.6 8-8V360c0-4.4-3.6-8-8-8zm-400 8c0-4.4-3.6-8-8-8H24c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8H144c4.4 0 8-3.6 8-8V360zm216 0c0-4.4-3.6-8-8-8H216c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8H360c4.4 0 8-3.6 8-8V360z"/>
+                </svg>
+              </button>
+              <div class="in-progress" id="in-progress-${index}">Lecture en cours</div>
+            </div>
           </div>
         `;
 
       listAnime.appendChild(container);
+
+      // Subtitle search button
+      const subtitleBtn = container.querySelector(".subtitle-search-btn");
+      subtitleBtn.addEventListener("click", async (event) => {
+        event.stopPropagation();
+        await handleSubtitleSearch(anime, index);
+      });
 
       // Anime link 
       container.addEventListener("click", () => {
@@ -205,8 +223,16 @@ document.addEventListener("DOMContentLoaded", () => {
           anime.duration !== oldAnime.duration;
         if (hasChanged) {
           const inprogress = document.getElementById(`in-progress-${index}`);
+          const subtitleBtn = document.querySelector(`.subtitle-search-btn[data-index="${index}"]`);
+
           if (anime.lastUpdate == Date.now() || anime.lastUpdate > Date.now() - 1100) {
             inprogress.classList.add("active");
+            // Afficher le bouton de sous-titres quand l'anime est en cours de lecture
+            if (subtitleBtn) subtitleBtn.style.display = "flex";
+          } else {
+            inprogress.classList.remove("active");
+            // Masquer le bouton quand l'anime n'est plus en cours de lecture
+            if (subtitleBtn) subtitleBtn.style.display = "none";
           }
           updateTime(anime.currentTime, anime.duration, index);
         }
@@ -222,18 +248,18 @@ document.addEventListener("click", (event) => {
   // Check if the clicked element is #connexion
   if (target.id === "connexion") {
     chrome.tabs.query({}, (tabs) => {
-          const alreadyOpen = tabs.find((tab) =>
-            tab.url && tab.url.includes("src/components/login/login.html")
-          );
+      const alreadyOpen = tabs.find((tab) =>
+        tab.url && tab.url.includes("src/components/login/login.html")
+      );
 
-          if (alreadyOpen) {
-            chrome.tabs.update(alreadyOpen.id, { active: true });
-          } else {
-            chrome.tabs.create({
-              url: chrome.runtime.getURL("src/components/login/login.html"),
-            });
-          }
+      if (alreadyOpen) {
+        chrome.tabs.update(alreadyOpen.id, { active: true });
+      } else {
+        chrome.tabs.create({
+          url: chrome.runtime.getURL("src/components/login/login.html"),
         });
+      }
+    });
   }
   else if (target.id === "deconnexion") {
     chrome.storage.local.remove("token", () => {
@@ -347,3 +373,345 @@ function getToken() {
     });
   });
 }
+
+/**
+ * Handle subtitle search for an anime episode
+ * @param {object} anime - Anime data from storage
+ * @param {number} index - Index in the list
+ */
+async function handleSubtitleSearch(anime, index) {
+  try {
+    // Initialize OpenSubtitles service if needed
+    if (!openSubtitlesService) {
+      openSubtitlesService = new OpenSubtitlesService(OpenSubtitlesAPIKey);
+
+      // Load token from settings using StorageService (sync storage)
+      const settings = await StorageService.getsync("settings");
+
+      if (settings?.openSubtitlesSettings?.token) {
+        openSubtitlesService._token = settings.openSubtitlesSettings.token;
+        openSubtitlesService._tokenExp = settings.openSubtitlesSettings.tokenExpiration;
+      } else {
+        alert("Veuillez vous connecter à OpenSubtitles dans les paramètres.");
+        return;
+      }
+    }
+
+    // Show loading state
+    const btn = document.querySelector(`[data-index="${index}"]`);
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '<span style="font-size:10px;">...</span>';
+    btn.disabled = true;
+
+    console.log(`Recherche sous-titres pour: ${anime.name} - Episode ${anime.episode}`);
+
+    // Use service method for search
+    const foundSubtitle = await openSubtitlesService.searchEpisodeSubtitle(
+      anime.name,
+      anime.episode,
+      ["fr"]
+    );
+
+    // If service returns a single object (old behavior)
+    if (!foundSubtitle) {
+      // restore and fallback manual input
+      btn.innerHTML = originalHTML;
+      btn.disabled = false;
+      showManualSubtitleInput(anime, index);
+      return;
+    }
+
+    // If we received an array (multiple candidates)
+    if (Array.isArray(foundSubtitle)) {
+      if (foundSubtitle.length === 0) {
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+        showManualSubtitleInput(anime, index);
+        return;
+      }
+      // Show modal allowing user to pick among candidates
+      showSubtitleCandidatesModal(foundSubtitle, anime, index, btn, originalHTML);
+      return;
+    }
+
+    // Otherwise object (single candidate) -> download directly
+    btn.innerHTML = originalHTML;
+    btn.disabled = false;
+
+    console.log("Sous-titre trouvé (unique):", foundSubtitle);
+    await downloadAndApplySubtitle(foundSubtitle, anime, index);
+
+
+  } catch (error) {
+    console.error("Erreur lors de la recherche de sous-titres:", error);
+    alert(`Erreur: ${error.message}`);
+
+    const btn = document.querySelector(`[data-index="${index}"]`);
+    if (btn) {
+      btn.innerHTML = originalHTML;
+      btn.disabled = false;
+    }
+  }
+}
+
+/**
+ * Download subtitle and send to content script to display on video
+ */
+async function downloadAndApplySubtitle(subtitle, anime, index, offsetMs = 0) {
+  try {
+    const fileId = subtitle.attributes?.files?.[0]?.file_id;
+    if (!fileId) {
+      alert("Impossible de trouver l'ID du fichier de sous-titres.");
+      return;
+    }
+
+    console.log("Téléchargement du sous-titre, file_id:", fileId);
+
+    // Use service method for download
+    const subtitleContent = await openSubtitlesService.downloadSubtitleContent(fileId);
+
+    console.log("Contenu du sous-titre téléchargé, taille:", subtitleContent.length);
+
+    // Send to content script
+    chrome.tabs.query({ url: anime.link }, (tabs) => {
+      if (tabs.length > 0) {
+        chrome.tabs.sendMessage(tabs[0].id, {
+          action: "applySubtitle",
+          subtitleContent: subtitleContent,
+          subtitleInfo: {
+            name: subtitle.attributes?.release || "Subtitle",
+            language: subtitle.attributes?.language || "fr"
+          },
+          offsetMs: offsetMs
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            console.error("Erreur envoi message:", chrome.runtime.lastError);
+            alert("Erreur: impossible de communiquer avec la page vidéo. Rechargez la page.");
+          } else if (response && response.success) {
+            alert(`Sous-titres appliqués avec succès!\n${subtitle.attributes?.release || 'Subtitle'}`);
+          } else {
+            alert("Erreur lors de l'application des sous-titres.");
+          }
+        });
+      } else {
+        alert("Page vidéo introuvable. Assurez-vous que l'anime est ouvert.");
+      }
+    });
+
+  } catch (error) {
+    console.error("Erreur téléchargement sous-titre:", error);
+    alert(`Erreur lors du téléchargement: ${error.message}`);
+  }
+}
+
+/**
+ * Show manual input dialog for OpenSubtitles URL
+ */
+function showManualSubtitleInput(anime, index) {
+  const modal = document.createElement("div");
+  modal.className = "subtitle-modal";
+  modal.innerHTML = `
+    <div class="subtitle-modal-content">
+      <h3>Aucun sous-titre trouvé automatiquement</h3>
+      <p>Anime: <strong>${anime.name}</strong></p>
+      <p>Épisode: <strong>${anime.episode}</strong></p>
+      <p>Veuillez fournir l'URL de la page OpenSubtitles:</p>
+      <input type="text" id="manual-subtitle-url" placeholder="https://www.opensubtitles.com/..." />
+      <div class="modal-buttons">
+        <button id="modal-cancel" class="btn-secondary">Annuler</button>
+        <button id="modal-submit" class="btn-primary">Télécharger</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  document.getElementById("modal-cancel").addEventListener("click", () => {
+    document.body.removeChild(modal);
+  });
+
+  document.getElementById("modal-submit").addEventListener("click", async () => {
+    const url = document.getElementById("manual-subtitle-url").value.trim();
+
+    if (!url) {
+      alert("Veuillez entrer une URL.");
+      return;
+    }
+
+    // Extract file_id from OpenSubtitles URL
+    // Example: https://www.opensubtitles.com/en/subtitles/12345678
+    const match = url.match(/\/subtitles\/(\d+)/);
+
+    if (!match) {
+      alert("URL invalide. Format attendu: https://www.opensubtitles.com/.../subtitles/[ID]");
+      return;
+    }
+
+    const fileId = match[1];
+
+    try {
+      document.getElementById("modal-submit").textContent = "Téléchargement...";
+      document.getElementById("modal-submit").disabled = true;
+
+      // Create a fake subtitle object with the file_id
+      const fakeSubtitle = {
+        attributes: {
+          files: [{ file_id: parseInt(fileId) }],
+          release: "Manual subtitle",
+          language: "fr"
+        }
+      };
+
+      await downloadAndApplySubtitle(fakeSubtitle, anime, index);
+      document.body.removeChild(modal);
+
+    } catch (error) {
+      console.error("Erreur:", error);
+      alert(`Erreur: ${error.message}`);
+      document.getElementById("modal-submit").textContent = "Télécharger";
+      document.getElementById("modal-submit").disabled = false;
+    }
+  });
+}
+
+/**
+ * Affiche une modal listant plusieurs candidats de sous-titres et permet de choisir lequel télécharger.
+ * @param {Array} candidates - tableau d'objets subtitle (OpenSubtitles item)
+ * @param {object} anime - anime info
+ * @param {number} index - index du bouton / item dans la popup
+ * @param {HTMLElement} btn - le bouton de recherche (pour restaurer état)
+ * @param {string} originalHTML - html original du bouton
+ */
+function showSubtitleCandidatesModal(candidates, anime, index, btn, originalHTML) {
+  // création modal
+  const modal = document.createElement("div");
+  modal.className = "subtitle-modal";
+  modal.style.zIndex = 9999;
+  modal.innerHTML = `
+    <div class="subtitle-modal-content">
+      <h3>Choisir un sous-titre pour : <strong>${anime.name} — Ep ${anime.episode}</strong></h3>
+      
+      <div style="margin: 12px 0; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 6px;">
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
+          <span style="min-width: 120px;">Offset de synchro:</span>
+          <input type="range" id="offset-slider" min="-10000" max="10000" value="0" step="100" 
+                 style="flex: 1; cursor: pointer;" />
+          <span id="offset-value" style="min-width: 70px; font-weight: 600;">0 ms</span>
+        </label>
+        <div style="font-size: 11px; color: #666; margin-top: 4px;">
+          Ajustez si les sous-titres sont décalés (positif = en avance, négatif = en retard)
+        </div>
+      </div>
+
+      <div class="candidates-list" id="candidates-list"></div>
+      <div style="margin-top:12px;text-align:right;">
+        <button id="modal-close" class="btn-secondary">Fermer</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Gestion du slider
+  const slider = modal.querySelector("#offset-slider");
+  const offsetValueDisplay = modal.querySelector("#offset-value");
+  let currentOffset = 0;
+
+  slider.addEventListener("input", (e) => {
+    currentOffset = parseInt(e.target.value);
+    offsetValueDisplay.textContent = `${currentOffset} ms`;
+  });
+
+  const listEl = modal.querySelector("#candidates-list");
+
+  // si pas de candidats, afficher message
+  if (!candidates || candidates.length === 0) {
+    listEl.innerHTML = `<p>Aucun candidat trouvé.</p>`;
+  } else {
+    // construire la liste
+    candidates.forEach((c, i) => {
+      const attrs = c.attributes || {};
+      const feat = attrs.feature_details || {};
+      const title = feat.title || attrs.release || attrs.files?.[0]?.file_name || "(no title)";
+      const season = feat.season_number ?? (attrs.season_number ?? " ?");
+      const episode = feat.episode_number ?? (attrs.episode_number ?? " ?");
+      const lang = attrs.language || "(langue inconnue)";
+      const sizeInfo = attrs.files && attrs.files[0] && attrs.files[0].file_size ? ` — ${attrs.files[0].file_size} bytes` : "";
+
+      const row = document.createElement("div");
+      row.className = "candidate-row";
+      row.style.display = "flex";
+      row.style.justifyContent = "space-between";
+      row.style.alignItems = "center";
+      row.style.padding = "6px 0";
+      row.style.borderBottom = "1px solid rgba(0,0,0,0.08)";
+
+      const left = document.createElement("div");
+      left.style.maxWidth = "72%";
+      left.innerHTML = `<strong>${title}</strong><br/><small>S${season} • E${episode} • ${lang}${sizeInfo}</small>`;
+
+      const actions = document.createElement("div");
+      actions.style.display = "flex";
+      actions.style.gap = "8px";
+
+      const applyBtn = document.createElement("button");
+      applyBtn.className = "btn-primary";
+      applyBtn.textContent = "Appliquer";
+      applyBtn.style.fontSize = "12px";
+      applyBtn.addEventListener("click", async (ev) => {
+        ev.stopPropagation();
+        applyBtn.disabled = true;
+        applyBtn.textContent = "Téléchargement...";
+        try {
+          await downloadAndApplySubtitle(c, anime, index, currentOffset);
+          // fermer la modal après application réussie
+          document.body.removeChild(modal);
+        } catch (e) {
+          console.error("Erreur apply candidate:", e);
+          alert("Erreur lors du téléchargement/appli : " + (e.message || e));
+          applyBtn.disabled = false;
+          applyBtn.textContent = "Appliquer";
+        } finally {
+          // restore button in popup
+          if (btn) {
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+          }
+        }
+      });
+
+      const inspectBtn = document.createElement("button");
+      inspectBtn.className = "btn-secondary";
+      inspectBtn.textContent = "Voir";
+      inspectBtn.style.fontSize = "12px";
+      inspectBtn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        // open the OpenSubtitles page if id present
+        const osId = c.id || c.attributes?.files?.[0]?.file_id;
+        if (osId) {
+          const url = `https://www.opensubtitles.com/en/subtitles/${osId}`;
+          window.open(url, "_blank");
+        } else {
+          alert("Aucun identifiant pour ouvrir la page OpenSubtitles.");
+        }
+      });
+
+      actions.appendChild(applyBtn);
+      actions.appendChild(inspectBtn);
+
+      row.appendChild(left);
+      row.appendChild(actions);
+      listEl.appendChild(row);
+    });
+  }
+
+  modal.querySelector("#modal-close").addEventListener("click", () => {
+    if (modal.parentElement) modal.parentElement.removeChild(modal);
+    // restore btn
+    if (btn) {
+      btn.innerHTML = originalHTML;
+      btn.disabled = false;
+    }
+  });
+}
+

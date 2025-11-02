@@ -33,7 +33,10 @@ function netflix(animeClass, callback) {
 
                     let spans = videoTitleElement.querySelectorAll("span");
                     if (spans.length >= 2) {
-                        animeClass.episode = spans[0].innerText.split("")[1]; // Episode number
+                        // Extract episode number properly (e.g., "E23" -> "23")
+                        const episodeText = spans[0].innerText;
+                        const episodeMatch = episodeText.match(/\d+/);
+                        animeClass.episode = episodeMatch ? parseInt(episodeMatch[0]) : episodeText;
                         animeClass.title = spans[1].innerText; // Title of the episode
                     }
 

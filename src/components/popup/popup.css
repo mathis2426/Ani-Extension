@@ -15,6 +15,7 @@ body {
     width: 448px;
     height: 432px;
 }
+
 .empty-message {
     display: flex;
     flex-direction: column;
@@ -25,7 +26,8 @@ body {
     color: #ffffff;
     font-family: var(--font-main);
 }
-.left-part { 
+
+.left-part {
     display: flex;
     align-items: center;
     width: 62px;
@@ -65,7 +67,7 @@ body {
         .selected.active {
             opacity: 1;
         }
-        
+
 
         .menu {
             display: flex;
@@ -80,6 +82,7 @@ body {
                 cursor: pointer;
                 transition: filter 0.3s ease-in-out, transform 0.3s ease;
             }
+
             button:hover {
                 filter: brightness(1.2);
                 transform: scale(1.05);
@@ -138,10 +141,12 @@ body {
                 cursor: pointer;
                 transition: filter 0.3s ease-in-out, transform 0.3s ease;
             }
+
             button:hover {
                 filter: brightness(1.2);
                 transform: scale(1.05);
             }
+
             .selected {
                 left: -19px;
             }
@@ -359,22 +364,23 @@ progress::-webkit-progress-value {
 }
 
 .bell-regular {
-  display: none;
+    display: none;
 }
 
 
-input[type="checkbox"]:checked ~ .bell-solid {
-  display: inline;
+input[type="checkbox"]:checked~.bell-solid {
+    display: inline;
 }
 
-input[type="checkbox"]:not(:checked) ~ .bell-regular {
-  display: inline;
+input[type="checkbox"]:not(:checked)~.bell-regular {
+    display: inline;
 }
 
 /* ------ ProfileResume ------ */
 .profile-container {
     position: absolute;
-    left: 50px; /* Ajuste selon ton design */
+    left: 50px;
+    /* Ajuste selon ton design */
     top: 70px;
     background: transparent;
     display: flex;
@@ -386,60 +392,62 @@ input[type="checkbox"]:not(:checked) ~ .bell-regular {
 }
 
 .user-infos {
-  background: #636363;
-  border-radius: 12px;
-  border: 2px solid #0090ff;
-  padding: 32px 24px 24px 24px;
-  width: 260px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  box-sizing: border-box;
-  font-family: 'Segoe UI', Arial, sans-serif;
+    background: #636363;
+    border-radius: 12px;
+    border: 2px solid #0090ff;
+    padding: 32px 24px 24px 24px;
+    width: 260px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Arial, sans-serif;
 }
 
 .user-infos-item {
-  display: flex;
-  align-items: center;
-  font-size: 1rem;
-  color: #fff;
-  font-weight: 400;
-  gap: 14px;
+    display: flex;
+    align-items: center;
+    font-size: 1rem;
+    color: #fff;
+    font-weight: 400;
+    gap: 14px;
 }
 
 .dash {
-  width: 20px;
-  height: 4px;
-  background: #d3d3d3;
-  border-radius: 2px;
-  margin-right: 2px;
-  display: inline-block;
+    width: 20px;
+    height: 4px;
+    background: #d3d3d3;
+    border-radius: 2px;
+    margin-right: 2px;
+    display: inline-block;
 }
 
 .button-profile {
-  background: #262626;
-  color: #fff;
-  font-size: 1rem;
-  border: none;
-  border-radius: 20px;
-  padding: 10px 0;
-  width: 90%;
-  margin: 24px auto 0 auto;
-  display: block;
-  cursor: pointer;
-  transition: background 0.2s;
-  font-family: inherit;
-  letter-spacing: 0.02em;
+    background: #262626;
+    color: #fff;
+    font-size: 1rem;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 0;
+    width: 90%;
+    margin: 24px auto 0 auto;
+    display: block;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: inherit;
+    letter-spacing: 0.02em;
 }
+
 .button-profile:hover {
-  background: #333;
+    background: #333;
 }
 
 /* ------ ProfileResume ------ */
 .profile-container {
     position: absolute;
-    left: 50px; /* Ajuste selon ton design */
+    left: 50px;
+    /* Ajuste selon ton design */
     top: 70px;
     background: transparent;
     display: flex;
@@ -451,57 +459,58 @@ input[type="checkbox"]:not(:checked) ~ .bell-regular {
 }
 
 .user-infos {
-  background: #636363;
-  border-radius: 12px;
-  border: 2px solid #0090ff;
-  padding: 32px 24px 24px 24px;
-  width: 260px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  box-sizing: border-box;
-  font-family: 'Segoe UI', Arial, sans-serif;
+    background: #636363;
+    border-radius: 12px;
+    border: 2px solid #0090ff;
+    padding: 32px 24px 24px 24px;
+    width: 260px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Arial, sans-serif;
 }
 
 .user-infos-item {
-  display: flex;
-  align-items: center;
-  font-size: 1rem;
-  color: #fff;
-  font-weight: 400;
-  gap: 14px;
+    display: flex;
+    align-items: center;
+    font-size: 1rem;
+    color: #fff;
+    font-weight: 400;
+    gap: 14px;
 }
 
 .dash {
-  width: 20px;
-  height: 4px;
-  background: #d3d3d3;
-  border-radius: 2px;
-  margin-right: 2px;
-  display: inline-block;
+    width: 20px;
+    height: 4px;
+    background: #d3d3d3;
+    border-radius: 2px;
+    margin-right: 2px;
+    display: inline-block;
 }
 
 .button-profile {
-  background: #262626;
-  color: #fff;
-  font-size: 1rem;
-  border: none;
-  border-radius: 20px;
-  padding: 10px 0;
-  width: 90%;
-  margin: 24px auto 0 auto;
-  display: block;
-  cursor: pointer;
-  transition: background 0.2s;
-  font-family: inherit;
-  letter-spacing: 0.02em;
-}
-.button-profile:hover {
-  background: #333;
+    background: #262626;
+    color: #fff;
+    font-size: 1rem;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 0;
+    width: 90%;
+    margin: 24px auto 0 auto;
+    display: block;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: inherit;
+    letter-spacing: 0.02em;
 }
 
-.in-progress{
+.button-profile:hover {
+    background: #333;
+}
+
+.in-progress {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -512,22 +521,204 @@ input[type="checkbox"]:not(:checked) ~ .bell-regular {
     opacity: 0;
     transition: all 0.5s ease;
 }
-.in-progress.active{
+
+.in-progress.active {
     opacity: 1;
     animation: breathing 2s ease-in-out infinite;
 }
 
 @keyframes breathing {
-  0%, 100% {
-    opacity: 0.6;
-    color: #9F9F9F;
-  }
-  50% {
-    opacity: 1;
-    color: var(--color-primary-purple);
-  }
+
+    0%,
+    100% {
+        opacity: 0.6;
+        color: #9F9F9F;
+    }
+
+    50% {
+        opacity: 1;
+        color: var(--color-primary-purple);
+    }
 }
-.delimiter-container{
+
+/* Actions row with subtitle button */
+.actions-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.subtitle-search-btn {
+    background: var(--color-primary-purple);
+    border: none;
+    border-radius: 6px;
+    width: 32px;
+    height: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    margin-left: 40px;
+}
+
+.subtitle-search-btn:hover {
+    background: #7b5ac2;
+    transform: scale(1.05);
+}
+
+.subtitle-search-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.subtitle-search-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Subtitle modal */
+.subtitle-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.subtitle-modal-content {
+    background: var(--color-secondary-dark);
+    border-radius: 12px;
+    padding: 24px;
+    width: 90%;
+    max-width: 380px;
+    font-family: var(--font-main);
+    color: #ffffff;
+}
+
+.subtitle-modal-content h3 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    color: var(--color-primary-purple);
+}
+
+.subtitle-modal-content p {
+    margin: 8px 0;
+    font-size: 13px;
+}
+
+.subtitle-modal-content strong {
+    color: var(--color-primary-purple);
+}
+
+.subtitle-modal-content input {
+    width: 100%;
+    padding: 10px;
+    margin: 16px 0;
+    border: 1px solid #505050;
+    border-radius: 6px;
+    background: var(--color-primary-dark);
+    color: #ffffff;
+    font-family: var(--font-main);
+    font-size: 12px;
+    box-sizing: border-box;
+}
+
+.subtitle-modal-content input:focus {
+    outline: none;
+    border-color: var(--color-primary-purple);
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.modal-buttons button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    font-family: var(--font-main);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: var(--color-primary-purple);
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background: #7b5ac2;
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background: #505050;
+    color: #ffffff;
+}
+
+.btn-secondary:hover {
+    background: #6a6a6a;
+}
+
+.subtitle-modal {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.subtitle-modal-content {
+    background: #fff;
+    padding: 14px;
+    border-radius: 8px;
+    width: 560px;
+    max-height: 70vh;
+    overflow: auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.btn-primary {
+    background: #2b7cff;
+    color: #fff;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background: #eee;
+    color: #222;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.candidate-row small {
+    color: #666;
+}
+
+.delimiter-container {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -536,7 +727,8 @@ input[type="checkbox"]:not(:checked) ~ .bell-regular {
     height: 3px;
     margin-right: 15px;
 }
-.delimiter{
+
+.delimiter {
     width: 60%;
     height: 100%;
     border-radius: 10px;
@@ -555,9 +747,10 @@ input[type="checkbox"]:not(:checked) ~ .bell-regular {
     font-size: var(--size);
     user-select: none;
     fill: var(--color);
-    transition: filter 0.3s ease-in-out, transform 0.3s ease;   
+    transition: filter 0.3s ease-in-out, transform 0.3s ease;
     will-change: transform;
 }
+
 .container:hover {
     filter: brightness(1.2);
     transform: scale(1.06);

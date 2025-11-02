@@ -19,5 +19,17 @@ export const StorageService = {
     return new Promise((resolve) => {
       chrome.storage.local.remove(key, resolve);
     });
+  },
+
+  async getsync(key) {
+    return new Promise((resolve) => {
+      chrome.storage.sync.get(key, (result) => resolve(result[key]));
+    });
+  },
+
+  async setsync(key, value) {
+    return new Promise((resolve) => {
+      chrome.storage.sync.set({ [key]: value }, resolve);
+    });
   }
 };

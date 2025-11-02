@@ -9,8 +9,9 @@
 /**
  * sendAnimeNameToIframe
  * Description: - Send the anime name to the iframe when it's ready
- * @param {string} animeName 
+ * @param {string} animeName
  */
+
 function sendAnimeNameToIframe(animeName) {
 
   // Handshake: respond to the iframe when it is ready,
