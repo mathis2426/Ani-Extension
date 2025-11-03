@@ -239,6 +239,21 @@ function setupEventListeners(settings) {
                     settings.openSubtitlesSettings.tokenExpiration = openSubtitlesService._tokenExp;
                     saveSettings(settings);
 
+                    // Optionnel: mémoriser les identifiants en local pour renouveler automatiquement le token
+                    // ATTENTION: stocké en local (machine), pas synchronisé, en clair.
+                    try {
+                        await chrome.storage.local.set({
+                            openSubtitlesCredentials: {
+                                username: email.value,
+                                password: password.value,
+                                savedAt: Date.now()
+                            }
+                        });
+                        console.log("OpenSubtitles credentials saved locally for auto-refresh.");
+                    } catch (e) {
+                        console.warn("Failed to save credentials locally:", e);
+                    }
+
 
                 } catch (error) {
                     console.error("Error:", error);
@@ -258,6 +273,7 @@ function setupEventListeners(settings) {
             saveSettings(settings);
             document.getElementById("openSubtitlesConnect").textContent = "Login";
             await openSubtitlesService.logout();
+            try { await chrome.storage.local.remove("openSubtitlesCredentials"); } catch {}
         }
     });
 

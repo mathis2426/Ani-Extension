@@ -31,32 +31,86 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 /**
+ * Ensure OpenSubtitles auth is valid. If token is missing/expired, try to re-login
+ * using locally stored credentials (chrome.storage.local.openSubtitlesCredentials).
+ * On success, persist fresh token back to chrome.storage.sync settings.
+ * @returns {Promise<boolean>} true if authenticated
+ */
+async function ensureOpenSubtitlesAuth() {
+  if (!openSubtitlesService) {
+    openSubtitlesService = new OpenSubtitlesService(OpenSubtitlesAPIKey);
+  }
+
+  // If token already valid, nothing to do
+  if (openSubtitlesService.tokenValid()) return true;
+
+  // Try load token from synced settings first
+  try {
+    const settings = await chrome.storage.sync.get("settings");
+    if (settings?.settings?.openSubtitlesSettings?.token) {
+      openSubtitlesService._token = settings.settings.openSubtitlesSettings.token;
+      openSubtitlesService._tokenExp = settings.settings.openSubtitlesSettings.tokenExpiration;
+      if (openSubtitlesService.tokenValid()) return true;
+    }
+  } catch {}
+
+  // Try silent re-login with locally saved credentials
+  try {
+    const { openSubtitlesCredentials } = await chrome.storage.local.get("openSubtitlesCredentials");
+    const username = openSubtitlesCredentials?.username;
+    const password = openSubtitlesCredentials?.password;
+    if (username && password) {
+      await openSubtitlesService.login(username, password);
+      // Save new token back to sync settings
+      const settings = await chrome.storage.sync.get("settings");
+      const s = settings.settings || {};
+      s.openSubtitlesSettings = s.openSubtitlesSettings || {};
+      s.openSubtitlesSettings.token = openSubtitlesService._token;
+      s.openSubtitlesSettings.tokenExpiration = openSubtitlesService._tokenExp;
+      await chrome.storage.sync.set({ settings: s });
+      return true;
+    }
+  } catch (e) {
+    console.warn("Silent re-login failed:", e);
+  }
+
+  return false;
+}
+
+/**
  * Handle subtitle search in background
  */
 async function handleSubtitleSearch(anime, sendResponse) {
   try {
-    // Initialize service if needed
-    if (!openSubtitlesService) {
-      openSubtitlesService = new OpenSubtitlesService(OpenSubtitlesAPIKey);
-      
-      // Load token from settings
-      const settings = await chrome.storage.sync.get("settings");
-      if (settings?.settings?.openSubtitlesSettings?.token) {
-        openSubtitlesService._token = settings.settings.openSubtitlesSettings.token;
-        openSubtitlesService._tokenExp = settings.settings.openSubtitlesSettings.tokenExpiration;
-      } else {
-        sendResponse({ success: false, error: "Non connecté à OpenSubtitles" });
-        return;
-      }
-    }
+    const ok = await ensureOpenSubtitlesAuth();
+    if (!ok) { sendResponse({ success: false, error: "Non connecté à OpenSubtitles" }); return; }
     
     console.log(`🔍 Recherche sous-titres pour: ${anime.name} - Episode ${anime.episode}`);
     
-    const foundSubtitle = await openSubtitlesService.searchEpisodeSubtitle(
-      anime.name,
-      anime.episode,
-      ["fr"]
-    );
+    let foundSubtitle;
+    try {
+      foundSubtitle = await openSubtitlesService.searchEpisodeSubtitle(
+        anime.name,
+        anime.episode,
+        ["fr"]
+      );
+    } catch (e) {
+      // Retry once on auth-related errors
+      if ((e.message || "").includes("401") || (e.message || "").toLowerCase().includes("not authenticated")) {
+        const reok = await ensureOpenSubtitlesAuth();
+        if (reok) {
+          foundSubtitle = await openSubtitlesService.searchEpisodeSubtitle(
+            anime.name,
+            anime.episode,
+            ["fr"]
+          );
+        } else {
+          throw e;
+        }
+      } else {
+        throw e;
+      }
+    }
     
     if (!foundSubtitle || (Array.isArray(foundSubtitle) && foundSubtitle.length === 0)) {
       sendResponse({ success: false, error: "Aucun sous-titre trouvé" });
@@ -76,6 +130,8 @@ async function handleSubtitleSearch(anime, sendResponse) {
  */
 async function handleSubtitleDownload(subtitle, anime, offsetMs, sendResponse) {
   try {
+    const ok = await ensureOpenSubtitlesAuth();
+    if (!ok) { sendResponse({ success: false, error: "Non connecté à OpenSubtitles" }); return; }
     const fileId = subtitle.attributes?.files?.[0]?.file_id;
     if (!fileId) {
       sendResponse({ success: false, error: "ID de fichier manquant" });
@@ -83,8 +139,18 @@ async function handleSubtitleDownload(subtitle, anime, offsetMs, sendResponse) {
     }
     
     console.log("📥 Téléchargement sous-titre, file_id:", fileId);
-    
-    const subtitleContent = await openSubtitlesService.downloadSubtitleContent(fileId);
+    let subtitleContent;
+    try {
+      subtitleContent = await openSubtitlesService.downloadSubtitleContent(fileId);
+    } catch (e) {
+      if ((e.message || "").includes("401") || (e.message || "").toLowerCase().includes("not authenticated")) {
+        const reok = await ensureOpenSubtitlesAuth();
+        if (reok) subtitleContent = await openSubtitlesService.downloadSubtitleContent(fileId);
+        else throw e;
+      } else {
+        throw e;
+      }
+    }
     
     sendResponse({ 
       success: true, 
