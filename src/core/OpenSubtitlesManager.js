@@ -4,8 +4,8 @@
     Ensures token validity and silent re-login if needed.
 */
 
-import { OpenSubtitlesService } from "./src/services/OpenSubtitlesService.js";
-import { OpenSubtitlesAPIKey } from "./temp-key-do-not-push.js";
+import { OpenSubtitlesService } from "../services/OpenSubtitlesService.js";
+import { OpenSubtitlesAPIKey } from "../../temp-key-do-not-push.js";
 import { StorageService } from "../services/StorageService.js";
 
 let openSubtitlesService = null;
@@ -19,7 +19,7 @@ export class OpenSubtitlesManager {
      * On success, persist fresh token back to chrome.storage.sync settings.
      * @returns {Promise<boolean>} true if authenticated
      */
-    async ensureOpenSubtitlesAuth() {
+    static async ensureOpenSubtitlesAuth() {
         if (!openSubtitlesService) {
             openSubtitlesService = new OpenSubtitlesService(OpenSubtitlesAPIKey);
         }
@@ -30,12 +30,14 @@ export class OpenSubtitlesManager {
         // Try load token from synced settings first
         try {
             const settings = await StorageService.getsync("settings");
-            if (settings?.settings?.openSubtitlesSettings?.token) {
-                openSubtitlesService._token = settings.settings.openSubtitlesSettings.token;
-                openSubtitlesService._tokenExp = settings.settings.openSubtitlesSettings.tokenExpiration;
+            if (settings?.openSubtitlesSettings?.token) {
+                openSubtitlesService._token = settings.openSubtitlesSettings.token;
+                openSubtitlesService._tokenExp = settings.openSubtitlesSettings.tokenExpiration;
                 if (openSubtitlesService.tokenValid()) return true;
             }
-        } catch { }
+        } catch { 
+            console.warn("Failed to load OpenSubtitles token from sync storage");
+        }
 
         // Try silent re-login with locally saved credentials
         try {
@@ -63,9 +65,9 @@ export class OpenSubtitlesManager {
     /**
      * Handle subtitle search in background
      */
-    async SubtitleSearch(anime, sendResponse) {
+    static async SubtitleSearch(anime, sendResponse) {
         try {
-            const ok = await ensureOpenSubtitlesAuth();
+            const ok = await OpenSubtitlesManager.ensureOpenSubtitlesAuth();
             if (!ok) { sendResponse({ success: false, error: "Non connecté à OpenSubtitles" }); return; }
 
             let foundSubtitle;
@@ -78,7 +80,7 @@ export class OpenSubtitlesManager {
             } catch (e) {
                 // Retry once on auth-related errors
                 if ((e.message || "").includes("401") || (e.message || "").toLowerCase().includes("not authenticated")) {
-                    const reok = await ensureOpenSubtitlesAuth();
+                    const reok = await OpenSubtitlesManager.ensureOpenSubtitlesAuth();
                     if (reok) {
                         foundSubtitle = await openSubtitlesService.searchEpisodeSubtitle(
                             anime.name,
@@ -109,9 +111,9 @@ export class OpenSubtitlesManager {
     /**
      * Handle subtitle download in background
      */
-    async SubtitleDownload(subtitle, anime, offsetMs, sendResponse) {
+    static async SubtitleDownload(subtitle, anime, offsetMs, sendResponse) {
         try {
-            const ok = await ensureOpenSubtitlesAuth();
+            const ok = await OpenSubtitlesManager.ensureOpenSubtitlesAuth();
             if (!ok) { sendResponse({ success: false, error: "Non connecté à OpenSubtitles" }); return; }
             const fileId = subtitle.attributes?.files?.[0]?.file_id;
             if (!fileId) {
@@ -124,7 +126,7 @@ export class OpenSubtitlesManager {
                 subtitleContent = await openSubtitlesService.downloadSubtitleContent(fileId);
             } catch (e) {
                 if ((e.message || "").includes("401") || (e.message || "").toLowerCase().includes("not authenticated")) {
-                    const reok = await ensureOpenSubtitlesAuth();
+                    const reok = await OpenSubtitlesManager.ensureOpenSubtitlesAuth();
                     if (reok) subtitleContent = await openSubtitlesService.downloadSubtitleContent(fileId);
                     else throw e;
                 } else {

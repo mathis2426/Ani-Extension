@@ -40,11 +40,21 @@ export class OpenSubtitlesService {
       headers["Authorization"] = `Bearer ${this._token}`;
     }
 
-    const res = await fetch(url.toString(), {
-      method,
-      headers,
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    let res;
+    try {
+      // Attempt the fetch and capture low-level network errors for clearer diagnostics
+      res = await fetch(url.toString(), {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+      });
+    } catch (networkErr) {
+      // Re-throw a more informative error including the request URL and original error
+      const err = new Error(`Network error while fetching ${url.toString()}: ${networkErr?.message || networkErr}`);
+      err.cause = networkErr;
+      console.error(err);
+      throw err;
+    }
 
     const text = await res.text();
     let data;
@@ -302,7 +312,16 @@ export class OpenSubtitlesService {
       throw new Error("Unable to get download link");
     }
 
-    const response = await fetch(downloadData.link);
+    let response;
+    try {
+      response = await fetch(downloadData.link);
+    } catch (networkErr) {
+      const err = new Error(`Network error while downloading subtitle from ${downloadData.link}: ${networkErr?.message || networkErr}`);
+      err.cause = networkErr;
+      console.error(err);
+      throw err;
+    }
+
     if (!response.ok) {
       throw new Error(`Failed to download subtitle: ${response.status}`);
     }

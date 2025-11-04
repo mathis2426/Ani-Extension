@@ -18,13 +18,6 @@ class OpenSubtitlesSettings {
         this.tokenExpiration = 0;
     }
 }
-class TMDbSettings {
-    constructor() {
-        this.apiKey = ""; // TMDb API key
-        this.enabled = true; // Enable TMDb integration for better subtitle matching
-        this.language = "fr-FR"; // Preferred language for episode titles
-    }
-}
 class Settings {
     constructor() {
         this.theme = "dark"; // Default theme
@@ -33,7 +26,6 @@ class Settings {
         this.crunchyrollSettings = new CrunchyrollSettings(); // Crunchyroll specific settings
         this.voiranimeSettings = new VoiranimeSettings(); // Voiranime specific settings
         this.openSubtitlesSettings = new OpenSubtitlesSettings(); // OpenSubtitles specific settings
-        this.tmdbSettings = new TMDbSettings(); // TMDb specific settings
     }
 }
 
