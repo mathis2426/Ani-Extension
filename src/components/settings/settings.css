@@ -366,14 +366,12 @@ html.light-theme {
     align-items: center;
     justify-content: center;
     position: relative;
-    vertical-align: middle;
 }
 
 /* Place the flag inside the select area, circular, no border */
 .language-flag {
     position: absolute;
     left: 10px;
-    top: 50%;
     width: 21px;
     height: 21px;
     object-fit: cover;

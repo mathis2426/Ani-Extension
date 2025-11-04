@@ -5,34 +5,37 @@
  * Last Updated   : 2025-11-02
  * Version        : 1.0.2
  */
-
-// Import necessary services (will be available globally in content script context)
+import { StorageService } from "../../services/StorageService";
 let openSubtitlesService = null;
+let storageService = new StorageService();
 
-// Offset storage helpers (per hostname)
 async function getStoredOffset(host = location.hostname) {
     try {
-        const { aniextOffsets } = await chrome.storage.local.get("aniextOffsets");
-        if (aniextOffsets && typeof aniextOffsets[host] === "number") return aniextOffsets[host];
-    } catch (_) {}
+        const offset = await storageService.get("aniextOffsets").then((data) => {
+            const map = data.aniextOffsets || {};
+            return map[host] || 0;
+        });
+        return offset;
+    } catch (error) {}
     return 0;
 }
 async function setStoredOffset(value, host = location.hostname) {
     try {
-        const data = await chrome.storage.local.get("aniextOffsets");
+        const data = await storageService.get("aniextOffsets");
         const map = data.aniextOffsets || {};
         map[host] = value;
-        await chrome.storage.local.set({ aniextOffsets: map });
-    } catch (_) {}
+        await storageService.set({ aniextOffsets: map });
+    } catch (error) {}
+    return;
 }
 
 function createSubtitleButton() {
-    // Éviter de créer plusieurs fois le bouton
-    if (document.getElementById('aniext-subtitle-btn')) return;
+    if (document.getElementById('aniext-subtitle-btn')) return; // Avoid duplicates
 
-    // Attendre que le player Netflix soit chargé
+    // Interval to wait for the Netflix player controls to load
     const waitForControls = setInterval(() => {
-        // Chercher le conteneur vidéo principal de Netflix
+
+        // Find the Netflix player controls container
         const playerContainer = document.querySelector('.watch-video--player-view')
             || document.querySelector('.NFPlayer')
             || document.querySelector('[data-uia="video-canvas"]')
@@ -41,12 +44,12 @@ function createSubtitleButton() {
         if (playerContainer) {
             clearInterval(waitForControls);
             
-            // S'assurer que le conteneur est en position relative
+            // Make sure the container is positioned relatively for absolute button placement
             if (getComputedStyle(playerContainer).position === 'static') {
                 playerContainer.style.position = 'relative';
             }
-            
-            // Créer le bouton
+
+            // Create the button
             const btn = document.createElement('button');
             btn.id = 'aniext-subtitle-btn';
             btn.className = 'aniext-subtitle-btn';
@@ -57,7 +60,7 @@ function createSubtitleButton() {
             `;
             btn.title = 'Charger des sous-titres AniExt';
             
-            // Style du bouton
+            // Button styles
             btn.style.cssText = `
                 position: absolute;
                 bottom: 200px;
@@ -79,7 +82,7 @@ function createSubtitleButton() {
                 pointer-events: auto;
             `;
             
-            // Effets hover
+            // Hover effects
             btn.addEventListener('mouseenter', () => {
                 btn.style.transform = 'scale(1.1)';
                 btn.style.background = '#A48EE5';
@@ -89,15 +92,16 @@ function createSubtitleButton() {
                 btn.style.background = 'rgba(0, 0, 0, 0.7)';
             });
             
-            // Action au clic - rechercher les sous-titres
+            // Button click handler
             btn.onclick = async () => {
                 await handleSubtitleSearchFromButton();
             };
-            
-            // Insérer le bouton dans le conteneur player
+
+            // Insert the button into the player container
             playerContainer.appendChild(btn);
             
-            // === Auto-hide simple basé sur le mouvement de souris ===
+            // Auto-hide logic
+
             let hideTimeout;
             
             const resetHideTimer = () => {
@@ -107,16 +111,15 @@ function createSubtitleButton() {
                 hideTimeout = setTimeout(() => {
                     btn.style.opacity = '0';
                     btn.style.pointerEvents = 'none';
-                }, 2500);
+                }, 2500); // Hide after 2.5 seconds based on Netflix controls behavior
             };
             
             playerContainer.addEventListener('mousemove', resetHideTimer);
             resetHideTimer();
-            
-            console.log('✅ Bouton sous-titres AniExt ajouté à Netflix avec auto-hide');
         }
-    }, 1000);
-    
+    }, 1000); // Wait for 1 second before checking for player controls, future improvements could use MutationObserver
+
+    // Safety timeout to stop trying after 10 seconds
     setTimeout(() => clearInterval(waitForControls), 10000);
 }
 
@@ -126,7 +129,7 @@ function createSubtitleButton() {
 async function handleSubtitleSearchFromButton() {
     try {
         // Get current anime info from background/storage
-        const result = await chrome.storage.local.get("popupDataList");
+        const result = await storageService.get("popupDataList");
         const animeList = result.popupDataList || [];
         
         // Find the currently playing anime (the one on Netflix)
@@ -215,20 +218,6 @@ async function showSubtitleModal(candidates, anime) {
     content.innerHTML = `
         <h2 style="margin: 0 0 16px 0; font-size: 20px;">Sous-titres pour ${anime.name} - Ep ${anime.episode}</h2>
         
-        <div style="margin: 16px 0; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 6px;">
-            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
-                <span style="min-width: 120px;">Offset de synchro:</span>
-                <input type="range" id="offset-slider" min="-10000" max="10000" value="0" step="100" 
-                       style="flex: 1; cursor: pointer;" />
-                <input type="number" id="offset-input" min="-10000" max="10000" step="100" value="0"
-                       style="width: 90px; background: #111; color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 6px 8px;" />
-                <span id="offset-value" style="min-width: 70px; font-weight: 600;">0 ms</span>
-            </div>
-            <div style="font-size: 11px; color: #aaa; margin-top: 4px;">
-                Crantage 100 ms. Vous pouvez aussi taper une valeur.
-            </div>
-        </div>
-        
         <div id="candidates-list" style="margin: 16px 0;"></div>
         
         <button id="close-modal" style="
@@ -247,39 +236,8 @@ async function showSubtitleModal(candidates, anime) {
     document.body.appendChild(modal);
     
     // Slider handling
-    let currentOffset = await getStoredOffset();
-    const slider = content.querySelector("#offset-slider");
-    const input = content.querySelector("#offset-input");
-    const offsetDisplay = content.querySelector("#offset-value");
+    let currentOffset = await getStoredOffset() || 0;
 
-    const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
-    const snap100 = (v) => Math.round(v / 100) * 100;
-
-    // Init UI with stored value
-    slider.value = String(currentOffset);
-    input.value = String(currentOffset);
-    offsetDisplay.textContent = `${currentOffset} ms`;
-
-    const syncFromSlider = () => {
-        const snapped = snap100(parseInt(slider.value || 0));
-        currentOffset = clamp(snapped, -10000, 10000);
-        if (Number(slider.value) !== currentOffset) slider.value = String(currentOffset);
-        input.value = String(currentOffset);
-        offsetDisplay.textContent = `${currentOffset} ms`;
-    };
-    const syncFromInput = () => {
-        const val = parseInt(input.value || 0);
-        const snapped = snap100(isNaN(val) ? 0 : val);
-        currentOffset = clamp(snapped, -10000, 10000);
-        input.value = String(currentOffset);
-        slider.value = String(currentOffset);
-        offsetDisplay.textContent = `${currentOffset} ms`;
-    };
-
-    slider.addEventListener("input", syncFromSlider);
-    input.addEventListener("change", syncFromInput);
-    input.addEventListener("blur", syncFromInput);
-    
     // Populate candidates
     const listEl = content.querySelector("#candidates-list");
     candidates.forEach((candidate, i) => {
@@ -352,7 +310,7 @@ async function downloadAndApplySubtitle(subtitle, anime, offsetMs) {
             type: "downloadSubtitle",
             subtitle: subtitle,
             anime: anime,
-            offsetMs: 0 // Toujours télécharger avec offset 0, on ajustera après
+            offsetMs: 0 // We apply offset later
         }, async (response) => {
             if (chrome.runtime.lastError) {
                 showNotification("Erreur de communication", "error");
@@ -366,7 +324,7 @@ async function downloadAndApplySubtitle(subtitle, anime, offsetMs) {
                     await applySubtitleToVideo(response.content, response.info, offsetMs);
                     showNotification("Sous-titres appliqués avec succès !", "success");
                     
-                    // Afficher le contrôle d'offset en temps réel
+                    // Show offset control
                     showOffsetControl(response.content, response.info, offsetMs);
                     
                 } catch (error) {
