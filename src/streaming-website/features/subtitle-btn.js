@@ -331,26 +331,97 @@ async function showSubtitleModal(candidates, anime) {
             return;
         }
 
-        candidates.forEach((candidate, index) => {
+        // Fonction pour vérifier si le titre correspond à l'anime recherché
+        function isMatchingAnime(subtitle, targetName) {
+            const attrs = subtitle.attributes || {};
+            const feat = attrs.feature_details || {};
+            
+            // Récupérer le nom du fichier/release
+            const release = (attrs.release || '').toLowerCase();
+            const title = (feat.title || '').toLowerCase();
+            const movieName = (feat.movie_name || '').toLowerCase();
+            
+            // Nettoyer et normaliser le nom cible
+            const target = targetName.toLowerCase()
+                .replace(/[:\-]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+            
+            // Vérifier si le nom de l'anime apparaît dans les métadonnées
+            const allText = `${release} ${title} ${movieName}`;
+            
+            // Split target pour vérifier chaque mot clé
+            const targetWords = target.split(' ').filter(w => w.length > 2);
+            
+            // Au moins 70% des mots importants doivent matcher
+            const matchCount = targetWords.filter(word => allText.includes(word)).length;
+            const matchRatio = matchCount / targetWords.length;
+            
+            return matchRatio >= 0.7;
+        }
+
+        // Filtrer les candidats qui correspondent vraiment à l'anime
+        const filteredCandidates = candidates.filter(candidate => {
+            return isMatchingAnime(candidate, anime.name || '');
+        });
+
+        console.log(`[Auto Search] Candidats avant filtrage: ${candidates.length}, après: ${filteredCandidates.length}`);
+
+        if (filteredCandidates.length === 0) {
+            const p = document.createElement('div');
+            p.className = 'tab-placeholder';
+            p.textContent = "Aucun sous-titre correspondant après filtrage.";
+            contentArea.appendChild(p);
+            return;
+        }
+
+        // Trier par pertinence (download_count décroissant)
+        filteredCandidates.sort((a, b) => {
+            const aCount = a.attributes?.download_count ?? 0;
+            const bCount = b.attributes?.download_count ?? 0;
+            return bCount - aCount;
+        });
+
+        filteredCandidates.forEach((candidate, index) => {
             const attrs = candidate.attributes || {};
             const feat = attrs.feature_details || {};
-            const titleTxt = feat.title || attrs.release || candidate.title || "(no title)";
+            const release = attrs.release || 'Unknown';
+            const titleTxt = feat.title || release || "(no title)";
             const season = feat.season_number ?? candidate.season ?? "?";
             const episodeNum = feat.episode_number ?? candidate.episode ?? "?";
             const lang = attrs.language || candidate.lang || "?";
+            const downloads = attrs.download_count || 0;
 
             const row = document.createElement('div');
             row.className = 'candidate';
+            row.style.cssText = `
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px;
+                background: rgba(255,255,255,0.02);
+                border-radius: 8px;
+                margin-bottom: 8px;
+                transition: all 0.2s ease;
+                border: 1px solid rgba(255,255,255,0.05);
+            `;
+            
+            // Badge "Meilleur" pour le premier (plus téléchargé)
+            const badge = index === 0 ? '<span style="color: #46d369; font-weight: 600; margin-left: 6px;">• Meilleur</span>' : '';
+            
             row.innerHTML = `
-                <div class="candidate-info">
-                    <div class="candidate-title">${escapeHtml(titleTxt)}</div>
-                    <div class="candidate-meta">S${escapeHtml(season)} • E${escapeHtml(episodeNum)} • ${escapeHtml(lang)}</div>
+                <div class="candidate-info" style="flex: 1; min-width: 0;">
+                    <div class="candidate-title" style="font-size: 13px; color: #fff; font-weight: 500; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(release)}">${escapeHtml(titleTxt)}</div>
+                    <div class="candidate-meta" style="font-size: 11px; color: #999; margin-bottom: 2px;">S${escapeHtml(season)} • E${escapeHtml(episodeNum)} • ${escapeHtml(lang)}</div>
+                    <div style="font-size: 10px; color: #888;">${downloads} téléchargements${badge}</div>
                 </div>
             `;
 
             const applyBtn = document.createElement('button');
             applyBtn.className = 'apply-btn';
             applyBtn.type = 'button';
+            applyBtn.style.padding = '6px 12px';
+            applyBtn.style.fontSize = '12px';
             applyBtn.textContent = 'Appliquer';
             applyBtn.addEventListener('click', async () => {
                 try {
@@ -365,6 +436,15 @@ async function showSubtitleModal(candidates, anime) {
                     applyBtn.textContent = 'Appliquer';
                     applyBtn.disabled = false;
                 }
+            });
+            
+            row.addEventListener('mouseenter', () => {
+                row.style.background = 'rgba(255,255,255,0.05)';
+                row.style.borderColor = 'rgba(164,142,229,0.3)';
+            });
+            row.addEventListener('mouseleave', () => {
+                row.style.background = 'rgba(255,255,255,0.02)';
+                row.style.borderColor = 'rgba(255,255,255,0.05)';
             });
 
             row.appendChild(applyBtn);
@@ -410,21 +490,75 @@ async function showSubtitleModal(candidates, anime) {
                     return;
                 }
 
-                // Grouper par saison
-                const seasonMap = new Map();
+                // Fonction pour vérifier si le titre correspond à l'anime recherché
+                function isMatchingAnime(subtitle, targetName) {
+                    const attrs = subtitle.attributes || {};
+                    const feat = attrs.feature_details || {};
+                    
+                    // Récupérer le nom du fichier/release
+                    const release = (attrs.release || '').toLowerCase();
+                    const title = (feat.title || '').toLowerCase();
+                    const movieName = (feat.movie_name || '').toLowerCase();
+                    
+                    // Nettoyer et normaliser le nom cible
+                    const target = targetName.toLowerCase()
+                        .replace(/[:\-]/g, ' ')
+                        .replace(/\s+/g, ' ')
+                        .trim();
+                    
+                    // Vérifier si le nom de l'anime apparaît dans les métadonnées
+                    const allText = `${release} ${title} ${movieName}`;
+                    
+                    // Split target pour vérifier chaque mot clé
+                    const targetWords = target.split(' ').filter(w => w.length > 2);
+                    
+                    // Au moins 70% des mots importants doivent matcher
+                    const matchCount = targetWords.filter(word => allText.includes(word)).length;
+                    const matchRatio = matchCount / targetWords.length;
+                    
+                    return matchRatio >= 0.7;
+                }
+                
+                // Filtrer et grouper par saison puis par épisode
+                const seasonMap = new Map(); // Map<season, Map<episode, subtitle[]>>
+                
+                console.log(`[Full Anime] Total episodes reçus: ${episodes.length}`);
+                
                 episodes.forEach(ep => {
+                    // Vérifier que c'est bien le bon anime
+                    if (!isMatchingAnime(ep, anime.name)) {
+                        return; // Skip si pas le bon anime
+                    }
+                    
                     const attrs = ep.attributes || {};
                     const feat = attrs.feature_details || {};
                     const season = feat.season_number ?? ep.season ?? 1;
+                    const epNum = feat.episode_number ?? ep.episode ?? 0;
                     
                     if (!seasonMap.has(season)) {
-                        seasonMap.set(season, []);
+                        seasonMap.set(season, new Map());
                     }
-                    seasonMap.get(season).push(ep);
+                    
+                    const episodeMap = seasonMap.get(season);
+                    if (!episodeMap.has(epNum)) {
+                        episodeMap.set(epNum, []);
+                    }
+                    
+                    episodeMap.get(epNum).push(ep);
+                });
+                
+                console.log(`[Full Anime] Saisons trouvées: ${seasonMap.size}`);
+                seasonMap.forEach((eps, season) => {
+                    console.log(`  - Saison ${season}: ${eps.size} épisodes`);
                 });
 
                 // Trier les saisons
                 const seasons = Array.from(seasonMap.keys()).sort((a, b) => a - b);
+                
+                if (seasons.length === 0) {
+                    contentArea.innerHTML = '<div class="tab-placeholder">Aucun épisode ne correspond à cet anime après filtrage</div>';
+                    return;
+                }
                 
                 contentArea.innerHTML = '';
                 
@@ -432,7 +566,8 @@ async function showSubtitleModal(candidates, anime) {
                 container.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 8px;';
                 
                 seasons.forEach(seasonNum => {
-                    const seasonEpisodes = seasonMap.get(seasonNum);
+                    const episodeMap = seasonMap.get(seasonNum);
+                    const episodeNumbers = Array.from(episodeMap.keys()).sort((a, b) => a - b);
                     
                     // Season accordion container
                     const seasonBlock = document.createElement('div');
@@ -459,7 +594,7 @@ async function showSubtitleModal(candidates, anime) {
                     seasonHeader.innerHTML = `
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <span style="font-weight: 600; color: #fff;">Saison ${seasonNum}</span>
-                            <span style="font-size: 12px; color: #999;">${seasonEpisodes.length} épisode${seasonEpisodes.length > 1 ? 's' : ''}</span>
+                            <span style="font-size: 12px; color: #999;">${episodeNumbers.length} épisode${episodeNumbers.length > 1 ? 's' : ''}</span>
                         </div>
                         <svg class="season-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition: transform 0.2s ease; color: #A48EE5;">
                             <polyline points="6 9 12 15 18 9"/>
@@ -475,71 +610,240 @@ async function showSubtitleModal(candidates, anime) {
                         transition: max-height 0.3s ease;
                         display: flex;
                         flex-direction: column;
-                        gap: 6px;
+                        gap: 4px;
                         padding: 0 12px;
                     `;
                     
-                    // Sort episodes by episode number
-                    seasonEpisodes.sort((a, b) => {
-                        const aEp = a.attributes?.feature_details?.episode_number ?? a.episode ?? 0;
-                        const bEp = b.attributes?.feature_details?.episode_number ?? b.episode ?? 0;
-                        return aEp - bEp;
-                    });
-                    
-                    seasonEpisodes.forEach(ep => {
-                        const attrs = ep.attributes || {};
-                        const feat = attrs.feature_details || {};
-                        const epNum = feat.episode_number ?? ep.episode ?? '?';
-                        const title = feat.title || attrs.release || `Episode ${epNum}`;
-                        const lang = attrs.language || 'fr';
+                    episodeNumbers.forEach(epNum => {
+                        const variants = episodeMap.get(epNum);
                         
-                        const epRow = document.createElement('div');
-                        epRow.style.cssText = `
-                            padding: 8px 12px;
+                        // Trier les variantes par download_count (meilleur en premier)
+                        variants.sort((a, b) => {
+                            const aCount = a.attributes?.download_count ?? 0;
+                            const bCount = b.attributes?.download_count ?? 0;
+                            return bCount - aCount;
+                        });
+                        
+                        const bestVariant = variants[0];
+                        
+                        // Si une seule variante, affichage simple sans accordéon
+                        if (variants.length === 1) {
+                            const attrs = bestVariant.attributes || {};
+                            const release = attrs.release || 'Unknown';
+                            const downloads = attrs.download_count || 0;
+                            const lang = attrs.language || 'fr';
+                            
+                            const simpleRow = document.createElement('div');
+                            simpleRow.style.cssText = `
+                                padding: 10px 12px;
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                background: rgba(255,255,255,0.02);
+                                border-radius: 6px;
+                                margin: 2px 0;
+                                transition: background 0.15s ease;
+                            `;
+                            
+                            simpleRow.innerHTML = `
+                                <div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
+                                    <div style="font-size: 13px; color: #fff; font-weight: 500;">Épisode ${epNum}</div>
+                                    <div style="font-size: 11px; color: #999; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(release)}">${escapeHtml(release)}</div>
+                                    <div style="font-size: 10px; color: #888; margin-top: 2px;">${downloads} téléchargements • ${lang}</div>
+                                </div>
+                            `;
+                            
+                            const applyBtn = document.createElement('button');
+                            applyBtn.className = 'apply-btn';
+                            applyBtn.style.padding = '6px 12px';
+                            applyBtn.style.fontSize = '12px';
+                            applyBtn.textContent = 'Appliquer';
+                            
+                            applyBtn.addEventListener('click', async () => {
+                                try {
+                                    applyBtn.textContent = 'Chargement...';
+                                    applyBtn.disabled = true;
+                                    const siteOffset = await getStoredOffset();
+                                    await downloadAndApplySubtitle(bestVariant, anime, siteOffset);
+                                    closeModal();
+                                } catch (err) {
+                                    console.error("Erreur application:", err);
+                                    applyBtn.textContent = 'Appliquer';
+                                    applyBtn.disabled = false;
+                                }
+                            });
+                            
+                            simpleRow.addEventListener('mouseenter', () => {
+                                simpleRow.style.background = 'rgba(255,255,255,0.05)';
+                            });
+                            simpleRow.addEventListener('mouseleave', () => {
+                                simpleRow.style.background = 'rgba(255,255,255,0.02)';
+                            });
+                            
+                            simpleRow.appendChild(applyBtn);
+                            episodeList.appendChild(simpleRow);
+                            return; // Skip l'accordéon pour cet épisode
+                        }
+                        
+                        // Si plusieurs variantes, affichage avec accordéon
+                        const episodeBlock = document.createElement('div');
+                        episodeBlock.className = 'episode-block-with-variants';
+                        episodeBlock.style.cssText = `
+                            background: rgba(255,255,255,0.02);
+                            border-radius: 6px;
+                            overflow: hidden;
+                            margin: 2px 0;
+                        `;
+                        
+                        // Episode header
+                        const epHeader = document.createElement('div');
+                        epHeader.style.cssText = `
+                            padding: 10px 12px;
                             display: flex;
                             justify-content: space-between;
                             align-items: center;
-                            background: rgba(255,255,255,0.02);
-                            border-radius: 6px;
-                            transition: all 0.15s ease;
+                            cursor: pointer;
+                            transition: background 0.15s ease;
                         `;
                         
-                        epRow.innerHTML = `
-                            <div style="display: flex; flex-direction: column;">
-                                <div style="font-size: 13px; color: #fff;">Épisode ${epNum}</div>
-                                <div style="font-size: 11px; color: #999; margin-top: 2px;">${escapeHtml(title)}</div>
+                        epHeader.innerHTML = `
+                            <div style="display: flex; flex-direction: column; flex: 1;">
+                                <div style="font-size: 13px; color: #fff; font-weight: 500;">Épisode ${epNum}</div>
+                                <div style="font-size: 11px; color: #999; margin-top: 2px;">${variants.length} versions disponibles</div>
                             </div>
+                            <svg class="episode-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition: transform 0.2s ease; color: #A48EE5;">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
                         `;
                         
-                        const applyBtn = document.createElement('button');
-                        applyBtn.className = 'apply-btn';
-                        applyBtn.style.padding = '6px 10px';
-                        applyBtn.style.fontSize = '12px';
-                        applyBtn.textContent = 'Appliquer';
+                        // Variants list (collapsible)
+                        const variantsList = document.createElement('div');
+                        variantsList.className = 'variants-list';
+                        variantsList.style.cssText = `
+                            max-height: 0;
+                            overflow: hidden;
+                            transition: max-height 0.3s ease;
+                            background: rgba(0,0,0,0.2);
+                            padding: 0 8px;
+                        `;
                         
-                        applyBtn.addEventListener('click', async () => {
-                            try {
-                                applyBtn.textContent = 'Chargement...';
-                                applyBtn.disabled = true;
-                                const siteOffset = await getStoredOffset();
-                                await downloadAndApplySubtitle(ep, anime, siteOffset);
-                                closeModal();
-                            } catch (err) {
-                                console.error("Erreur application:", err);
-                                applyBtn.textContent = 'Appliquer';
-                                applyBtn.disabled = false;
+                        variants.forEach((variant, idx) => {
+                            const attrs = variant.attributes || {};
+                            const release = attrs.release || 'Unknown';
+                            const downloads = attrs.download_count || 0;
+                            const lang = attrs.language || 'fr';
+                            
+                            const variantRow = document.createElement('div');
+                            variantRow.style.cssText = `
+                                padding: 8px 10px;
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                gap: 10px;
+                                transition: background 0.15s ease;
+                                border-radius: 4px;
+                                margin: 4px 0;
+                            `;
+                            
+                            variantRow.innerHTML = `
+                                <div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
+                                    <div style="font-size: 12px; color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(release)}">${escapeHtml(release)}</div>
+                                    <div style="font-size: 10px; color: #888; margin-top: 2px;">
+                                        ${downloads} téléchargements • ${lang}${idx === 0 ? ' • <span style="color: #46d369;">Meilleur</span>' : ''}
+                                    </div>
+                                </div>
+                            `;
+                            
+                            const applyBtn = document.createElement('button');
+                            applyBtn.className = 'apply-btn';
+                            applyBtn.style.padding = '5px 10px';
+                            applyBtn.style.fontSize = '11px';
+                            applyBtn.textContent = 'Appliquer';
+                            
+                            applyBtn.addEventListener('click', async (e) => {
+                                e.stopPropagation();
+                                try {
+                                    applyBtn.textContent = 'Chargement...';
+                                    applyBtn.disabled = true;
+                                    const siteOffset = await getStoredOffset();
+                                    await downloadAndApplySubtitle(variant, anime, siteOffset);
+                                    closeModal();
+                                } catch (err) {
+                                    console.error("Erreur application:", err);
+                                    applyBtn.textContent = 'Appliquer';
+                                    applyBtn.disabled = false;
+                                }
+                            });
+                            
+                            variantRow.addEventListener('mouseenter', () => {
+                                variantRow.style.background = 'rgba(255,255,255,0.05)';
+                            });
+                            variantRow.addEventListener('mouseleave', () => {
+                                variantRow.style.background = 'transparent';
+                            });
+                            
+                            variantRow.appendChild(applyBtn);
+                            variantsList.appendChild(variantRow);
+                        });
+                        
+                        // Toggle episode accordion
+                        episodeBlock.dataset.episodeOpen = 'false';
+                        epHeader.addEventListener('click', () => {
+                            const chevron = epHeader.querySelector('.episode-chevron');
+                            const isCurrentlyOpen = episodeBlock.dataset.episodeOpen === 'true';
+                            
+                            if (isCurrentlyOpen) {
+                                // Fermer cet épisode
+                                episodeBlock.dataset.episodeOpen = 'false';
+                                variantsList.style.maxHeight = '0';
+                                variantsList.style.paddingTop = '0';
+                                variantsList.style.paddingBottom = '0';
+                                chevron.style.transform = 'rotate(0deg)';
+                                epHeader.style.background = 'transparent';
+                            } else {
+                                // Fermer tous les autres épisodes de cette saison
+                                const allEpisodeBlocks = episodeList.querySelectorAll('.episode-block-with-variants');
+                                allEpisodeBlocks.forEach(block => {
+                                    if (block !== episodeBlock && block.dataset.episodeOpen === 'true') {
+                                        const otherVariantsList = block.querySelector('.variants-list');
+                                        const otherChevron = block.querySelector('.episode-chevron');
+                                        const otherHeader = block.querySelector('div[style*="cursor: pointer"]');
+                                        
+                                        block.dataset.episodeOpen = 'false';
+                                        otherVariantsList.style.maxHeight = '0';
+                                        otherVariantsList.style.paddingTop = '0';
+                                        otherVariantsList.style.paddingBottom = '0';
+                                        otherChevron.style.transform = 'rotate(0deg)';
+                                        otherHeader.style.background = 'transparent';
+                                    }
+                                });
+                                
+                                // Ouvrir cet épisode
+                                episodeBlock.dataset.episodeOpen = 'true';
+                                variantsList.style.maxHeight = variantsList.scrollHeight + 'px';
+                                variantsList.style.paddingTop = '4px';
+                                variantsList.style.paddingBottom = '4px';
+                                chevron.style.transform = 'rotate(180deg)';
+                                epHeader.style.background = 'rgba(164,142,229,0.08)';
                             }
                         });
                         
-                        epRow.addEventListener('mouseenter', () => {
-                            epRow.style.background = 'rgba(255,255,255,0.05)';
+                        epHeader.addEventListener('mouseenter', () => {
+                            const isCurrentlyOpen = episodeBlock.dataset.episodeOpen === 'true';
+                            if (!isCurrentlyOpen) {
+                                epHeader.style.background = 'rgba(255,255,255,0.04)';
+                            }
                         });
-                        epRow.addEventListener('mouseleave', () => {
-                            epRow.style.background = 'rgba(255,255,255,0.02)';
+                        epHeader.addEventListener('mouseleave', () => {
+                            const isCurrentlyOpen = episodeBlock.dataset.episodeOpen === 'true';
+                            if (!isCurrentlyOpen) {
+                                epHeader.style.background = 'transparent';
+                            }
                         });
                         
-                        epRow.appendChild(applyBtn);
-                        episodeList.appendChild(epRow);
+                        episodeBlock.appendChild(epHeader);
+                        episodeBlock.appendChild(variantsList);
+                        episodeList.appendChild(episodeBlock);
                     });
                     
                     // Toggle accordion
@@ -549,11 +853,23 @@ async function showSubtitleModal(candidates, anime) {
                         const chevron = seasonHeader.querySelector('.season-chevron');
                         
                         if (isOpen) {
-                            episodeList.style.maxHeight = episodeList.scrollHeight + 'px';
+                            // Force un reflow pour s'assurer que scrollHeight est correct
+                            episodeList.style.display = 'flex';
+                            episodeList.style.maxHeight = 'none';
+                            const height = episodeList.scrollHeight;
+                            episodeList.style.maxHeight = '0';
+                            
+                            // Forcer le navigateur à recalculer
+                            void episodeList.offsetHeight;
+                            
+                            // Puis animer
+                            episodeList.style.maxHeight = height + 'px';
                             episodeList.style.paddingTop = '8px';
                             episodeList.style.paddingBottom = '8px';
                             chevron.style.transform = 'rotate(180deg)';
                             seasonHeader.style.background = 'rgba(164,142,229,0.1)';
+                            
+                            console.log(`[Season ${seasonNum}] Ouvert - hauteur: ${height}px`);
                         } else {
                             episodeList.style.maxHeight = '0';
                             episodeList.style.paddingTop = '0';
