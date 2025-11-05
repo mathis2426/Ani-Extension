@@ -41,18 +41,18 @@ export class OpenSubtitlesManager {
 
         // Try silent re-login with locally saved credentials
         try {
-            const { openSubtitlesCredentials } = await StorageService.get("openSubtitlesCredentials");
+            const openSubtitlesCredentials = await StorageService.get("openSubtitlesCredentials");
             const username = openSubtitlesCredentials?.username;
             const password = openSubtitlesCredentials?.password;
             if (username && password) {
                 await openSubtitlesService.login(username, password);
                 // Save new token back to sync settings
-                const settings = await StorageService.get("settings");
+                const settings = await StorageService.getsync("settings");
                 const s = settings.settings || {};
                 s.openSubtitlesSettings = s.openSubtitlesSettings || {};
                 s.openSubtitlesSettings.token = openSubtitlesService._token;
                 s.openSubtitlesSettings.tokenExpiration = openSubtitlesService._tokenExp;
-                await StorageService.set({ settings: s });
+                await StorageService.setsync({ settings: s });
                 return true;
             }
         } catch (e) {
