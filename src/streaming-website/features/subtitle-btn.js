@@ -608,10 +608,13 @@ async function showSubtitleModal(candidates, anime) {
                         max-height: 0;
                         overflow: hidden;
                         transition: max-height 0.3s ease;
-                        display: flex;
-                        flex-direction: column;
+                        display: flex !important;
+                        flex-direction: column !important;
                         gap: 4px;
                         padding: 0 12px;
+                        box-sizing: border-box !important;
+                        width: 100% !important;
+                        min-height: 0 !important;
                     `;
                     
                     episodeNumbers.forEach(epNum => {
@@ -853,29 +856,26 @@ async function showSubtitleModal(candidates, anime) {
                         const chevron = seasonHeader.querySelector('.season-chevron');
                         
                         if (isOpen) {
-                            // Force un reflow pour s'assurer que scrollHeight est correct
-                            episodeList.style.display = 'flex';
-                            episodeList.style.maxHeight = 'none';
-                            const height = episodeList.scrollHeight;
-                            episodeList.style.maxHeight = '0';
-                            
-                            // Forcer le navigateur à recalculer
-                            void episodeList.offsetHeight;
-                            
-                            // Puis animer
-                            episodeList.style.maxHeight = height + 'px';
+                            // Forcer tous les styles inline pour contrer Netflix
+                            episodeList.style.setProperty('display', 'flex', 'important');
+                            episodeList.style.setProperty('flex-direction', 'column', 'important');
+                            episodeList.style.setProperty('max-height', 'none', 'important');
+                            episodeList.style.setProperty('overflow', 'visible', 'important');
+                            episodeList.style.setProperty('height', 'auto', 'important');
                             episodeList.style.paddingTop = '8px';
                             episodeList.style.paddingBottom = '8px';
+                            
                             chevron.style.transform = 'rotate(180deg)';
                             seasonHeader.style.background = 'rgba(164,142,229,0.1)';
-                            
-                            console.log(`[Season ${seasonNum}] Ouvert - hauteur: ${height}px`);
+                            seasonBlock.dataset.open = 'true';
                         } else {
-                            episodeList.style.maxHeight = '0';
+                            episodeList.style.setProperty('max-height', '0', 'important');
                             episodeList.style.paddingTop = '0';
                             episodeList.style.paddingBottom = '0';
+                            episodeList.style.setProperty('overflow', 'hidden', 'important');
                             chevron.style.transform = 'rotate(0deg)';
                             seasonHeader.style.background = 'rgba(255,255,255,0.02)';
+                            seasonBlock.dataset.open = 'false';
                         }
                     });
                     
