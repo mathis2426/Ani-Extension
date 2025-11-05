@@ -203,18 +203,17 @@ async function showSubtitleModal(candidates, anime) {
 #aniext-subtitle-modal .modal-title { margin:0 0 10px 0; font-size:18px; text-align:center; }
 #aniext-subtitle-modal .menu { display:flex; gap:8px; justify-content:space-between; margin:10px 0 16px 0; }
 #aniext-subtitle-modal .menu button { flex:1; background:none; border:none; padding:10px 12px; border-bottom:2px solid transparent; cursor:pointer; font-size:13px; transition: color .20s ease, border-color .25s ease, transform .12s ease; color:#cfcfcf; outline: none; }
-#aniext-subtitle-modal .menu button.passive { color:#7a7a7a; border-color:transparent; transform: translateY(0); }
-#aniext-subtitle-modal .menu button.active { color:#ffffff; border-color:#afafaf; transform: translateY(0); }
+#aniext-subtitle-modal .menu button.passive { color:#7a7a7a; border-color:transparent; }
 
 /* Hover / focus states for menu buttons */
-#aniext-subtitle-modal .menu button:hover { color:#e6e6e6; border-color:#9b9b9b; transform: translateY(-3px) scale(1.02); }
-#aniext-subtitle-modal .menu button:focus { box-shadow: 0 0 0 4px rgba(164,142,229,0.12); border-radius:4px; }
+#aniext-subtitle-modal .menu button:hover { border-color: #9b9b9b; }
+#aniext-subtitle-modal .menu button:focus { border-color: #9b9b9b; }
 
 /* Content area and list */
 #aniext-subtitle-modal .content-area { min-height:120px; }
 #aniext-subtitle-modal .candidates-list { display:flex; flex-direction:column; gap:10px; margin-top:6px; }
 #aniext-subtitle-modal .candidate { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:10px; display:flex; justify-content:space-between; align-items:center; gap:12px; transition: transform .12s ease, box-shadow .12s ease, background .12s ease; }
-#aniext-subtitle-modal .candidate:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.6); background: rgba(255,255,255,0.04); }
+#aniext-subtitle-modal .candidate:hover { box-shadow: 0 8px 20px rgba(0,0,0,0.6); background: rgba(255,255,255,0.04); }
 
 /* Candidate info */
 #aniext-subtitle-modal .candidate-info { display:flex; flex-direction:column; }
@@ -222,17 +221,13 @@ async function showSubtitleModal(candidates, anime) {
 #aniext-subtitle-modal .candidate-meta { font-size:12px; color:#aaa; margin-top:4px; }
 
 /* Apply button with subtle hover animation */
-#aniext-subtitle-modal .apply-btn { background:#46d369; color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:13px; transition: transform .12s ease, box-shadow .12s ease, background .12s ease; box-shadow: 0 6px 16px rgba(70,211,105,0.12); }
-#aniext-subtitle-modal .apply-btn:hover { transform: translateY(-3px) scale(1.02); background:#3db35b; box-shadow: 0 12px 26px rgba(61,179,91,0.14); }
-#aniext-subtitle-modal .apply-btn:active { transform: translateY(-1px) scale(0.995); }
+#aniext-subtitle-modal .apply-btn { background-color: #323232; color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:13px; transition: box-shadow 0.5s, background-color 0.5s;}
+#aniext-subtitle-modal .apply-btn:hover { box-shadow: 0 0 7px 3px #A48EE5;}
+#aniext-subtitle-modal .apply-btn:active { background-color: #A48EE5; opacity:0.6; }
 
 /* Disabled state */
 #aniext-subtitle-modal .apply-btn[disabled] { opacity:0.75; cursor:default; transform:none; box-shadow:none; }
 
-/* Close button with hover */
-#aniext-subtitle-modal .close-btn { background:#a48ee5; color:#fff; border:none; padding:10px 18px; border-radius:8px; cursor:pointer; display:block; margin:16px auto 0; font-size:14px; transition: transform .12s ease, background .12s ease, box-shadow .12s ease; box-shadow: 0 6px 18px rgba(164,142,229,0.12); }
-#aniext-subtitle-modal .close-btn:hover { transform: translateY(-3px) scale(1.02); background:#8f78d2; box-shadow: 0 12px 28px rgba(143,120,210,0.14); }
-#aniext-subtitle-modal .close-btn:active { transform: translateY(-1px) scale(0.995); }
 
 /* Placeholder text style */
 #aniext-subtitle-modal .tab-placeholder { color:#bdbdbd; font-size:13px; padding:12px 6px; text-align:center; }
@@ -298,14 +293,6 @@ async function showSubtitleModal(candidates, anime) {
     contentArea.className = 'content-area';
     content.appendChild(contentArea);
 
-    // Close button
-    const closeBtn = document.createElement('button');
-    closeBtn.id = 'close-modal';
-    closeBtn.className = 'close-btn';
-    closeBtn.type = 'button';
-    closeBtn.textContent = 'Fermer';
-    content.appendChild(closeBtn);
-
     modal.appendChild(content);
     document.body.appendChild(modal);
 
@@ -314,7 +301,6 @@ async function showSubtitleModal(candidates, anime) {
         const el = document.getElementById('aniext-subtitle-modal');
         if (el) el.remove();
     }
-    closeBtn.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
     function onKey(e) { if (e.key === 'Escape') closeModal(); }
     document.addEventListener('keydown', onKey);
@@ -389,14 +375,455 @@ async function showSubtitleModal(candidates, anime) {
     }
 
     function renderFullAnime() {
-        contentArea.innerHTML = `<div class="tab-placeholder">Chargement de la liste complète de l'anime...</div>`;
-        // Option: here you could call background to get full-anime subtitles if required.
+        contentArea.innerHTML = '';
+        
+        const loadingMsg = document.createElement('div');
+        loadingMsg.className = 'tab-placeholder';
+        loadingMsg.textContent = `Chargement des épisodes pour ${anime.name || '—'}...`;
+        contentArea.appendChild(loadingMsg);
+
+        // Rechercher tous les épisodes de l'anime
+        (async () => {
+            try {
+                // On fait une recherche large pour récupérer plusieurs épisodes/saisons
+                const response = await new Promise((resolve, reject) => {
+                    chrome.runtime.sendMessage({
+                        type: "searchFullAnime",
+                        anime: anime
+                    }, (resp) => {
+                        if (chrome.runtime.lastError) {
+                            reject(new Error(chrome.runtime.lastError.message));
+                        } else {
+                            resolve(resp);
+                        }
+                    });
+                });
+
+                if (!response || !response.success || !response.data) {
+                    throw new Error(response?.error || "Aucune donnée reçue");
+                }
+
+                const episodes = response.data; // Array of subtitle objects with season/episode info
+                
+                if (!Array.isArray(episodes) || episodes.length === 0) {
+                    contentArea.innerHTML = '<div class="tab-placeholder">Aucun épisode trouvé</div>';
+                    return;
+                }
+
+                // Grouper par saison
+                const seasonMap = new Map();
+                episodes.forEach(ep => {
+                    const attrs = ep.attributes || {};
+                    const feat = attrs.feature_details || {};
+                    const season = feat.season_number ?? ep.season ?? 1;
+                    
+                    if (!seasonMap.has(season)) {
+                        seasonMap.set(season, []);
+                    }
+                    seasonMap.get(season).push(ep);
+                });
+
+                // Trier les saisons
+                const seasons = Array.from(seasonMap.keys()).sort((a, b) => a - b);
+                
+                contentArea.innerHTML = '';
+                
+                const container = document.createElement('div');
+                container.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 8px;';
+                
+                seasons.forEach(seasonNum => {
+                    const seasonEpisodes = seasonMap.get(seasonNum);
+                    
+                    // Season accordion container
+                    const seasonBlock = document.createElement('div');
+                    seasonBlock.style.cssText = `
+                        background: rgba(255,255,255,0.03);
+                        border: 1px solid rgba(255,255,255,0.06);
+                        border-radius: 8px;
+                        overflow: hidden;
+                        transition: all 0.2s ease;
+                    `;
+                    
+                    // Season header (clickable)
+                    const seasonHeader = document.createElement('div');
+                    seasonHeader.style.cssText = `
+                        padding: 12px 16px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        cursor: pointer;
+                        background: rgba(255,255,255,0.02);
+                        transition: background 0.2s ease;
+                    `;
+                    
+                    seasonHeader.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-weight: 600; color: #fff;">Saison ${seasonNum}</span>
+                            <span style="font-size: 12px; color: #999;">${seasonEpisodes.length} épisode${seasonEpisodes.length > 1 ? 's' : ''}</span>
+                        </div>
+                        <svg class="season-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition: transform 0.2s ease; color: #A48EE5;">
+                            <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    `;
+                    
+                    // Episode list (collapsible)
+                    const episodeList = document.createElement('div');
+                    episodeList.className = 'episode-list';
+                    episodeList.style.cssText = `
+                        max-height: 0;
+                        overflow: hidden;
+                        transition: max-height 0.3s ease;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+                        padding: 0 12px;
+                    `;
+                    
+                    // Sort episodes by episode number
+                    seasonEpisodes.sort((a, b) => {
+                        const aEp = a.attributes?.feature_details?.episode_number ?? a.episode ?? 0;
+                        const bEp = b.attributes?.feature_details?.episode_number ?? b.episode ?? 0;
+                        return aEp - bEp;
+                    });
+                    
+                    seasonEpisodes.forEach(ep => {
+                        const attrs = ep.attributes || {};
+                        const feat = attrs.feature_details || {};
+                        const epNum = feat.episode_number ?? ep.episode ?? '?';
+                        const title = feat.title || attrs.release || `Episode ${epNum}`;
+                        const lang = attrs.language || 'fr';
+                        
+                        const epRow = document.createElement('div');
+                        epRow.style.cssText = `
+                            padding: 8px 12px;
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            background: rgba(255,255,255,0.02);
+                            border-radius: 6px;
+                            transition: all 0.15s ease;
+                        `;
+                        
+                        epRow.innerHTML = `
+                            <div style="display: flex; flex-direction: column;">
+                                <div style="font-size: 13px; color: #fff;">Épisode ${epNum}</div>
+                                <div style="font-size: 11px; color: #999; margin-top: 2px;">${escapeHtml(title)}</div>
+                            </div>
+                        `;
+                        
+                        const applyBtn = document.createElement('button');
+                        applyBtn.className = 'apply-btn';
+                        applyBtn.style.padding = '6px 10px';
+                        applyBtn.style.fontSize = '12px';
+                        applyBtn.textContent = 'Appliquer';
+                        
+                        applyBtn.addEventListener('click', async () => {
+                            try {
+                                applyBtn.textContent = 'Chargement...';
+                                applyBtn.disabled = true;
+                                const siteOffset = await getStoredOffset();
+                                await downloadAndApplySubtitle(ep, anime, siteOffset);
+                                closeModal();
+                            } catch (err) {
+                                console.error("Erreur application:", err);
+                                applyBtn.textContent = 'Appliquer';
+                                applyBtn.disabled = false;
+                            }
+                        });
+                        
+                        epRow.addEventListener('mouseenter', () => {
+                            epRow.style.background = 'rgba(255,255,255,0.05)';
+                        });
+                        epRow.addEventListener('mouseleave', () => {
+                            epRow.style.background = 'rgba(255,255,255,0.02)';
+                        });
+                        
+                        epRow.appendChild(applyBtn);
+                        episodeList.appendChild(epRow);
+                    });
+                    
+                    // Toggle accordion
+                    let isOpen = false;
+                    seasonHeader.addEventListener('click', () => {
+                        isOpen = !isOpen;
+                        const chevron = seasonHeader.querySelector('.season-chevron');
+                        
+                        if (isOpen) {
+                            episodeList.style.maxHeight = episodeList.scrollHeight + 'px';
+                            episodeList.style.paddingTop = '8px';
+                            episodeList.style.paddingBottom = '8px';
+                            chevron.style.transform = 'rotate(180deg)';
+                            seasonHeader.style.background = 'rgba(164,142,229,0.1)';
+                        } else {
+                            episodeList.style.maxHeight = '0';
+                            episodeList.style.paddingTop = '0';
+                            episodeList.style.paddingBottom = '0';
+                            chevron.style.transform = 'rotate(0deg)';
+                            seasonHeader.style.background = 'rgba(255,255,255,0.02)';
+                        }
+                    });
+                    
+                    seasonHeader.addEventListener('mouseenter', () => {
+                        if (!isOpen) {
+                            seasonHeader.style.background = 'rgba(255,255,255,0.05)';
+                        }
+                    });
+                    seasonHeader.addEventListener('mouseleave', () => {
+                        if (!isOpen) {
+                            seasonHeader.style.background = 'rgba(255,255,255,0.02)';
+                        }
+                    });
+                    
+                    seasonBlock.appendChild(seasonHeader);
+                    seasonBlock.appendChild(episodeList);
+                    container.appendChild(seasonBlock);
+                });
+                
+                contentArea.appendChild(container);
+                
+            } catch (error) {
+                console.error("Erreur chargement full anime:", error);
+                contentArea.innerHTML = `<div class="tab-placeholder" style="color: #dc3545;">Erreur: ${error.message}</div>`;
+            }
+        })();
     }
     function renderOpenSubId() {
-        contentArea.innerHTML = `<div class="tab-placeholder">Historique OpenSubID / OpenSubtitles (non implémenté)</div>`;
+        contentArea.innerHTML = '';
+
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = `
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            margin: 8px 0 4px 0;
+        `;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Entrez un OpenSubtitles file_id (ex: 12345678)';
+        input.autocomplete = 'off';
+        input.inputMode = 'numeric';
+        input.style.cssText = `
+            flex: 1;
+            max-width: 340px;
+            background: #111;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-size: 14px;
+            outline: none;
+            box-shadow: 0 0 0 0 rgba(164,142,229,0);
+            transition: box-shadow .15s ease, border-color .15s ease;
+        `;
+        input.addEventListener('focus', () => {
+            input.style.boxShadow = '0 0 0 3px rgba(164,142,229,0.18)';
+            input.style.borderColor = 'rgba(164,142,229,0.6)';
+        });
+        input.addEventListener('blur', () => {
+            input.style.boxShadow = '0 0 0 0 rgba(164,142,229,0)';
+            input.style.borderColor = 'rgba(255,255,255,0.2)';
+        });
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = 'Entrer';
+        button.className = 'apply-btn';
+
+        const status = document.createElement('div');
+        status.style.cssText = 'text-align:center; font-size: 12px; color:#bdbdbd; margin-top: 10px; min-height: 18px;';
+
+        wrapper.appendChild(input);
+        wrapper.appendChild(button);
+        contentArea.appendChild(wrapper);
+        contentArea.appendChild(status);
+
+        async function handleSubmit() {
+            const raw = (input.value || '').trim();
+            if (!raw) { status.textContent = 'Veuillez entrer un identifiant numérique.'; return; }
+            const id = Number(raw);
+            if (!Number.isFinite(id) || id <= 0) { status.textContent = 'Identifiant invalide.'; return; }
+
+            // Construire un objet "subtitle" minimal pour réutiliser le flux standard
+            const pseudoSubtitle = {
+                attributes: {
+                    files: [{ file_id: id }],
+                    release: `OpenSubtitles #${id}`,
+                    language: 'fr'
+                }
+            };
+
+            try {
+                button.disabled = true;
+                button.textContent = 'Téléchargement...';
+                status.textContent = '';
+
+                // Utilise l'offset actuel mémorisé pour le site
+                const siteOffset = await getStoredOffset();
+                await downloadAndApplySubtitle(pseudoSubtitle, anime, siteOffset);
+                closeModal();
+            } catch (e) {
+                console.error('OpenSubID error:', e);
+                status.textContent = e?.message || 'Erreur lors du téléchargement';
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Entrer';
+            }
+        }
+
+        button.addEventListener('click', handleSubmit);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleSubmit();
+        });
+
+        // Focus auto pour rapidité
+        setTimeout(() => input.focus(), 50);
     }
     function renderFileSection() {
-        contentArea.innerHTML = `<div class="tab-placeholder">Charger un fichier local (non implémenté)</div>`;
+        contentArea.innerHTML = '';
+
+        const dropZone = document.createElement('div');
+        dropZone.style.cssText = `
+            border: 2px dashed rgba(164,142,229,0.5);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            background: rgba(255,255,255,0.02);
+            transition: all 0.3s ease;
+            margin: 16px 0;
+        `;
+
+        const icon = document.createElement('div');
+        icon.innerHTML = `
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto 12px; color: #A48EE5;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+        `;
+
+        const text = document.createElement('div');
+        text.style.cssText = 'font-size: 14px; color: #dcdcdc; margin-bottom: 8px;';
+        text.textContent = 'Glissez-déposez votre fichier de sous-titres';
+
+        const subtext = document.createElement('div');
+        subtext.style.cssText = 'font-size: 12px; color: #999;';
+        subtext.textContent = 'ou cliquez pour sélectionner (.srt, .vtt)';
+
+        const status = document.createElement('div');
+        status.style.cssText = 'margin-top: 16px; font-size: 13px; color: #bdbdbd; min-height: 20px;';
+
+        dropZone.appendChild(icon);
+        dropZone.appendChild(text);
+        dropZone.appendChild(subtext);
+        contentArea.appendChild(dropZone);
+        contentArea.appendChild(status);
+
+        // Hidden file input
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.srt,.vtt';
+        fileInput.style.display = 'none';
+        contentArea.appendChild(fileInput);
+
+        // Hover effect
+        dropZone.addEventListener('mouseenter', () => {
+            dropZone.style.borderColor = 'rgba(164,142,229,0.8)';
+            dropZone.style.background = 'rgba(164,142,229,0.08)';
+        });
+        dropZone.addEventListener('mouseleave', () => {
+            dropZone.style.borderColor = 'rgba(164,142,229,0.5)';
+            dropZone.style.background = 'rgba(255,255,255,0.02)';
+        });
+
+        // Click to open file picker
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // Handle file selection
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files && fileInput.files[0]) {
+                handleFile(fileInput.files[0]);
+            }
+        });
+
+        // Drag and drop handlers
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.style.borderColor = '#A48EE5';
+            dropZone.style.background = 'rgba(164,142,229,0.15)';
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.style.borderColor = 'rgba(164,142,229,0.5)';
+            dropZone.style.background = 'rgba(255,255,255,0.02)';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.style.borderColor = 'rgba(164,142,229,0.5)';
+            dropZone.style.background = 'rgba(255,255,255,0.02)';
+
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        async function handleFile(file) {
+            const validExts = ['.srt', '.vtt'];
+            const fileName = file.name.toLowerCase();
+            const isValid = validExts.some(ext => fileName.endsWith(ext));
+
+            if (!isValid) {
+                status.textContent = 'Fichier invalide. Utilisez .srt ou .vtt';
+                status.style.color = '#dc3545';
+                return;
+            }
+
+            status.textContent = `Lecture de ${file.name}...`;
+            status.style.color = '#A48EE5';
+
+            try {
+                const content = await file.text();
+                
+                if (!content || content.trim().length === 0) {
+                    status.textContent = 'Le fichier est vide';
+                    status.style.color = '#dc3545';
+                    return;
+                }
+
+                status.textContent = `${file.name} chargé — Application...`;
+                status.style.color = '#46d369';
+
+                // Apply subtitle directly (same flow as downloadAndApplySubtitle but without API call)
+                const siteOffset = await getStoredOffset();
+                await setStoredOffset(siteOffset);
+                
+                const subtitleInfo = {
+                    name: file.name,
+                    language: 'fr' // could detect from filename if needed
+                };
+
+                await applySubtitleToVideo(content, subtitleInfo, siteOffset);
+                showNotification(`Sous-titres de ${file.name} appliqués !`, "success");
+                
+                // Show offset control
+                showOffsetControl(content, subtitleInfo, siteOffset);
+                
+                closeModal();
+
+            } catch (error) {
+                console.error('File handling error:', error);
+                status.textContent = `Erreur: ${error.message}`;
+                status.style.color = '#dc3545';
+            }
+        }
     }
 
     // Tab click handler

@@ -149,4 +149,58 @@ export class OpenSubtitlesManager {
             sendResponse({ success: false, error: error.message });
         }
     }
+
+    /**
+     * Handle full anime search (all episodes/seasons)
+     */
+    static async FullAnimeSearch(anime, sendResponse) {
+        try {
+            const ok = await OpenSubtitlesManager.ensureOpenSubtitlesAuth();
+            if (!ok) { 
+                sendResponse({ success: false, error: "Non connecté à OpenSubtitles" }); 
+                return; 
+            }
+
+            // Search for multiple episodes (use large per_page to get many results)
+            let results;
+            try {
+                results = await openSubtitlesService.searchSubtitles({
+                    query: anime.name,
+                    type: "episode",
+                    languages: ["fr"],
+                    per_page: 100, // Max allowed by API
+                    order_by: "download_count"
+                });
+            } catch (e) {
+                // Retry once on auth-related errors
+                if ((e.message || "").includes("401") || (e.message || "").toLowerCase().includes("not authenticated")) {
+                    const reok = await OpenSubtitlesManager.ensureOpenSubtitlesAuth();
+                    if (reok) {
+                        results = await openSubtitlesService.searchSubtitles({
+                            query: anime.name,
+                            type: "episode",
+                            languages: ["fr"],
+                            per_page: 100,
+                            order_by: "download_count"
+                        });
+                    } else {
+                        throw e;
+                    }
+                } else {
+                    throw e;
+                }
+            }
+
+            if (!results || !results.data || results.data.length === 0) {
+                sendResponse({ success: false, error: "Aucun épisode trouvé" });
+                return;
+            }
+
+            sendResponse({ success: true, data: results.data });
+
+        } catch (error) {
+            console.error("Erreur recherche full anime:", error);
+            sendResponse({ success: false, error: error.message });
+        }
+    }
 }

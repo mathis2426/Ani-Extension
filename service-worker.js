@@ -33,6 +33,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // Handle full anime search request (all episodes/seasons)
+  if (message.type === "searchFullAnime") {
+    OpenSubtitlesManager.FullAnimeSearch(message.anime, sendResponse);
+    return true;
+  }
+
 });
 
 

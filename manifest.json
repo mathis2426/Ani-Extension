@@ -66,6 +66,7 @@
                 "content-script.js"
             ],
             "matches": [
+                "*://*/*",
                 "https://v6.voiranime.com/*",
                 "https://*.crunchyroll.com/*",
                 "https://vidmoly.net/*",

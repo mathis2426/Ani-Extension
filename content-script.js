@@ -33,6 +33,13 @@ switch (location.hostname) {
       chrome.runtime.sendMessage({ type: "animeData", data: animeClass });
     });
     break;
+  
+  case "www.google.com":
+  case "www.google.fr":
+    // MODE TEST - anime prédéfini pour les tests
+    createTestSubtitleButton();
+    break;
+  
   default:
     console.log("Site non supporté pour le moment : " + location.hostname);
     break;
@@ -328,4 +335,133 @@ function injectSubtitleStyle() {
 function showOverlayFromVtt(video, vttContent) {
   // minimal parser to show current cue; not necessary if native track works
   // (left here for future implementation if needed)
+}
+
+/* ===========================
+   TEST MODE: Bouton de test avec anime prédéfini
+   =========================== */
+function createTestSubtitleButton() {
+  if (document.getElementById('aniext-subtitle-btn')) return; // Avoid duplicates
+
+  console.log("[TEST MODE] Création du bouton de sous-titres pour test");
+
+  // Attendre que la page soit chargée
+  const waitForBody = setInterval(() => {
+    if (document.body) {
+      clearInterval(waitForBody);
+
+      // Create the button
+      const btn = document.createElement('button');
+      btn.id = 'aniext-subtitle-btn';
+      btn.className = 'aniext-subtitle-btn';
+      btn.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 12h4v2H4v-2zm10 6H4v-2h10v2zm6 0h-4v-2h4v2zm0-4H10v-2h10v2z"/>
+        </svg>
+        <span style="margin-left: 8px; font-size: 12px;">TEST</span>
+      `;
+      btn.title = 'Test AniExt - Recherche Spy x Family';
+
+      // Button styles - position fixe pour être visible partout
+      btn.style.cssText = `
+        position: fixed;
+        bottom: 40px;
+        right: 40px;
+        background: rgba(164, 142, 229, 0.95);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        color: white;
+        cursor: pointer;
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 1;
+        transition: transform 0.2s ease, background 0.2s ease;
+        z-index: 999999;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        font-family: Arial, sans-serif;
+        font-weight: 600;
+      `;
+
+      // Hover effects
+      btn.addEventListener('mouseenter', () => {
+        btn.style.transform = 'scale(1.1)';
+        btn.style.background = 'rgba(143, 120, 210, 0.95)';
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.transform = 'scale(1)';
+        btn.style.background = 'rgba(164, 142, 229, 0.95)';
+      });
+
+      // Button click handler avec anime prédéfini
+      btn.onclick = async () => {
+        await handleTestSubtitleSearch();
+      };
+
+      // Insert the button into the body
+      document.body.appendChild(btn);
+
+      console.log("[TEST MODE] Bouton créé avec succès");
+    }
+  }, 100);
+
+  // Safety timeout
+  setTimeout(() => clearInterval(waitForBody), 5000);
+}
+
+/**
+ * Handle subtitle search in TEST MODE with predefined anime
+ */
+async function handleTestSubtitleSearch() {
+  try {
+    // Anime prédéfini pour les tests - MODIFIABLE ICI
+    const testAnime = {
+      name: "Spy x Family",
+      episode: 1,
+      season: 1,
+      year: 2022,
+      link: "https://www.test.com/spy-x-family" // lien fictif
+    };
+
+    console.log("[TEST MODE] Recherche de sous-titres pour:", testAnime);
+    showNotification(`[TEST] Recherche pour ${testAnime.name} S${testAnime.season}E${testAnime.episode}...`, "info");
+
+    // Send request to background script
+    chrome.runtime.sendMessage({
+      type: "searchSubtitles",
+      anime: testAnime
+    }, (response) => {
+      if (chrome.runtime.lastError) {
+        showNotification("[TEST] Erreur de communication avec l'extension", "error");
+        console.error("[TEST MODE] Runtime error:", chrome.runtime.lastError);
+        return;
+      }
+
+      if (response && response.success) {
+        const results = response.data;
+        console.log("[TEST MODE] Résultats reçus:", results);
+
+        // Utiliser la même UI (onglets, offset, etc.) que le bouton principal
+        const list = Array.isArray(results) ? results : [results];
+        if (list.length > 0) {
+          try {
+            showSubtitleModal(list, testAnime);
+          } catch (e) {
+            console.warn("[TEST MODE] showSubtitleModal indisponible, fallback vers l'ancienne modale.", e);
+            showTestSubtitleModal(list, testAnime);
+          }
+        } else {
+          showNotification("[TEST] Aucun sous-titre trouvé", "error");
+        }
+      } else {
+        showNotification(`[TEST] ${response?.error || "Erreur lors de la recherche"}`, "error");
+        console.error("[TEST MODE] Search error:", response);
+      }
+    });
+
+  } catch (error) {
+    console.error("[TEST MODE] Erreur:", error);
+    showNotification(`[TEST] Erreur: ${error.message}`, "error");
+  }
 }
