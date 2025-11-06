@@ -9,7 +9,16 @@ import { OpenSubtitlesAPIKey } from "../../temp-key-do-not-push.js";
 import { StorageService } from "../services/StorageService.js";
 
 let openSubtitlesService = null;
+let languageCode = null;
 
+// Initialize language code from settings
+async function getLanguageCode() {
+    if (languageCode === null) {
+        const settings = await StorageService.getsync("settings");
+        languageCode = settings?.openSubtitlesSettings?.language || "en";
+    }
+    return languageCode;
+}
 
 
 export class OpenSubtitlesManager {
@@ -70,12 +79,13 @@ export class OpenSubtitlesManager {
             const ok = await OpenSubtitlesManager.ensureOpenSubtitlesAuth();
             if (!ok) { sendResponse({ success: false, error: "Non connecté à OpenSubtitles" }); return; }
 
+            const lang = await getLanguageCode();
             let foundSubtitle;
             try {
                 foundSubtitle = await openSubtitlesService.searchEpisodeSubtitle(
                     anime.name,
                     anime.episode,
-                    ["fr"]
+                    [lang]
                 );
             } catch (e) {
                 // Retry once on auth-related errors
@@ -85,7 +95,7 @@ export class OpenSubtitlesManager {
                         foundSubtitle = await openSubtitlesService.searchEpisodeSubtitle(
                             anime.name,
                             anime.episode,
-                            ["fr"]
+                            [lang]
                         );
                     } else {
                         throw e;
@@ -139,7 +149,7 @@ export class OpenSubtitlesManager {
                 content: subtitleContent,
                 info: {
                     name: subtitle.attributes?.release || "Subtitle",
-                    language: subtitle.attributes?.language || "fr"
+                    language: subtitle.attributes?.language || "unknown"
                 },
                 offsetMs: offsetMs
             });
@@ -161,13 +171,14 @@ export class OpenSubtitlesManager {
                 return; 
             }
 
+            const lang = await getLanguageCode();
             // Search for multiple episodes (use large per_page to get many results)
             let results;
             try {
                 results = await openSubtitlesService.searchSubtitles({
                     query: anime.name,
                     type: "episode",
-                    languages: ["fr"],
+                    languages: [lang],
                     per_page: 100, // Max allowed by API
                     order_by: "download_count"
                 });
@@ -179,7 +190,7 @@ export class OpenSubtitlesManager {
                         results = await openSubtitlesService.searchSubtitles({
                             query: anime.name,
                             type: "episode",
-                            languages: ["fr"],
+                            languages: [lang],
                             per_page: 100,
                             order_by: "download_count"
                         });

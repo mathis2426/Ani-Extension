@@ -634,7 +634,7 @@ async function showSubtitleModal(candidates, anime) {
                             const attrs = bestVariant.attributes || {};
                             const release = attrs.release || 'Unknown';
                             const downloads = attrs.download_count || 0;
-                            const lang = attrs.language || 'fr';
+                            const lang = attrs.language || 'unknown';
                             
                             const simpleRow = document.createElement('div');
                             simpleRow.style.cssText = `
@@ -734,7 +734,7 @@ async function showSubtitleModal(candidates, anime) {
                             const attrs = variant.attributes || {};
                             const release = attrs.release || 'Unknown';
                             const downloads = attrs.download_count || 0;
-                            const lang = attrs.language || 'fr';
+                            const lang = attrs.language || 'unknown';
                             
                             const variantRow = document.createElement('div');
                             variantRow.style.cssText = `

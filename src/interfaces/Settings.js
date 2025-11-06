@@ -16,6 +16,8 @@ class OpenSubtitlesSettings {
     constructor() {
         this.token = "";
         this.tokenExpiration = 0;
+        this.saveCredentials = false; // Default save credentials setting
+        this.language = "en"; // Default language
     }
 }
 class Settings {

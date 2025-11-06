@@ -13,6 +13,7 @@ import { OpenSubtitlesService } from "../../services/OpenSubtitlesService.js";
 let settings;
 let openSubtitlesService = new OpenSubtitlesService(OpenSubtitlesAPIKey);
 
+
 document.addEventListener("DOMContentLoaded", () => {
 
     getOrCreateSettings((settings_data) => {
@@ -137,45 +138,16 @@ function updateSettingsUI(settings) {
 
     // OpenSubtitles language
     if (openSubtitlesLanguageSelect) {
-        openSubtitlesLanguageSelect.value = settings.openSubtitlesSettings.language || "fr";
+        openSubtitlesLanguageSelect.value = settings.openSubtitlesSettings.language;
     }
     // Update flag image for OpenSubtitles language
     const flagImg = document.getElementById("openSubtitlesLanguageFlag");
     if (flagImg && openSubtitlesLanguageSelect) {
-        const code = openSubtitlesLanguageSelect.value || (settings.openSubtitlesSettings.language || "fr");
+        const code = openSubtitlesLanguageSelect.value || settings.openSubtitlesSettings.language;
         const country = getFlagCountryCode(code);
     // use SVG for crisp rendering at any size
     flagImg.src = `https://flagcdn.com/${country}.svg`;
         flagImg.alt = `${code} flag`;
-    }
-
-    // TMDb
-    if (settings.tmdbSettings) {
-        const tmdbApiKeyInput = document.getElementById("tmdbApiKey");
-        const tmdbEnabledCheckbox = document.getElementById("tmdbEnabled");
-        const tmdbLanguageSelect = document.getElementById("tmdbLanguage");
-        const tmdbStatusElement = document.getElementById("tmdbStatus");
-
-        if (tmdbApiKeyInput) {
-            tmdbApiKeyInput.value = settings.tmdbSettings.apiKey || "";
-        }
-        if (tmdbEnabledCheckbox) {
-            tmdbEnabledCheckbox.checked = settings.tmdbSettings.enabled !== false;
-        }
-        if (tmdbLanguageSelect) {
-            tmdbLanguageSelect.value = settings.tmdbSettings.language || "fr-FR";
-        }
-        if (tmdbStatusElement) {
-            if (settings.tmdbSettings.apiKey) {
-                tmdbStatusElement.textContent = "TMDb API Key configured";
-                tmdbStatusElement.classList.remove("alert");
-                tmdbStatusElement.classList.add("success");
-            } else {
-                tmdbStatusElement.textContent = "TMDb API Key not configured";
-                tmdbStatusElement.classList.remove("success");
-                tmdbStatusElement.classList.add("alert");
-            }
-        }
     }
 
     // Crunchyroll
@@ -228,7 +200,10 @@ function setupEventListeners(settings) {
 
             if (email.value && password.value) {
                 try {
-                    await openSubtitlesService.login(email.value, password.value);
+                    const result = await openSubtitlesService.login(email.value, password.value);
+                    if (result.success && !settings.openSubtitlesSettings.saveCredentials) {
+                        showCredentialSaveModal(email.value, password.value);
+                    }
                     email.style.display = "none";
                     password.style.display = "none";
                     let status = document.getElementById("openSubtitlesStatus")
@@ -238,22 +213,7 @@ function setupEventListeners(settings) {
                     settings.openSubtitlesSettings.token = openSubtitlesService._token;
                     settings.openSubtitlesSettings.tokenExpiration = openSubtitlesService._tokenExp;
                     saveSettings(settings);
-
-                    // Optionnel: mémoriser les identifiants en local pour renouveler automatiquement le token
-                    // ATTENTION: stocké en local (machine), pas synchronisé, en clair.
-                    try {
-                        await chrome.storage.local.set({
-                            openSubtitlesCredentials: {
-                                username: email.value,
-                                password: password.value,
-                                savedAt: Date.now()
-                            }
-                        });
-                        console.log("OpenSubtitles credentials saved locally for auto-refresh.");
-                    } catch (e) {
-                        console.warn("Failed to save credentials locally:", e);
-                    }
-
+                    document.getElementById("openSubtitlesConnect").textContent = "Logout";
 
                 } catch (error) {
                     console.error("Error:", error);
@@ -277,6 +237,15 @@ function setupEventListeners(settings) {
         }
     });
 
+    document.getElementById("openSubtitlesLanguage").addEventListener("change", (e) => {
+        settings.openSubtitlesSettings.language = e.target.value;
+        saveSettings(settings);
+        const flagImg = document.getElementById("openSubtitlesLanguageFlag");
+        if (flagImg) {
+            const country = getFlagCountryCode(e.target.value);
+            flagImg.src = `https://flagcdn.com/${country}.svg`;
+        }
+    });
 }
 
 /**
@@ -298,4 +267,101 @@ function getFlagCountryCode(lang) {
         default:
             return 'fr';
     }
+}
+
+
+/**
+ * Show modal asking user if they want to save credentials locally
+ */
+function showCredentialSaveModal(email, password) {
+    settings.openSubtitlesSettings.saveCredentials = true;
+    saveSettings(settings);
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.id = 'credential-save-modal';
+    modal.style.cssText = `
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        font-family: Arial, sans-serif;
+    `;
+
+    // Create modal content
+    const content = document.createElement('div');
+    content.style.cssText = `
+        background: #1e1e1e;
+        color: #fff;
+        border-radius: 8px;
+        padding: 24px;
+        max-width: 450px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    `;
+
+    content.innerHTML = `
+        <h3 style="margin: 0 0 16px 0; font-size: 18px;">Sauvegarder les identifiants ?</h3>
+        <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.5; color: #ccc;">
+            Voulez-vous sauvegarder vos identifiants OpenSubtitles localement ?
+            <br><br>
+            <strong>Avantages :</strong> Reconnexion automatique quand le token expire
+            <br>
+            <strong>Attention :</strong> Les identifiants seront stockés en clair sur votre machine (non synchronisés)
+        </p>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button id="credential-save-no" style="
+                background: #555;
+                color: #fff;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+                transition: background 0.2s;
+            ">Non, merci</button>
+            <button id="credential-save-yes" style="
+                background: #A48EE5;
+                color: #fff;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+                transition: background 0.2s;
+            ">Oui, sauvegarder</button>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    // Handle button clicks
+    document.getElementById('credential-save-yes').addEventListener('click', async () => {
+        try {
+            await chrome.storage.local.set({
+                openSubtitlesCredentials: {
+                    username: email,
+                    password: password,
+                    savedAt: Date.now()
+                }
+            });
+            console.log("OpenSubtitles credentials saved locally for auto-refresh.");
+        } catch (e) {
+            console.warn("Failed to save credentials locally:", e);
+        }
+        modal.remove();
+    });
+
+    document.getElementById('credential-save-no').addEventListener('click', () => {
+        modal.remove();
+    });
+
+    // Close on overlay click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
 }
