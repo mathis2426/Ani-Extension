@@ -7,6 +7,7 @@
  */
 
 let openSubtitlesService = null;
+let infoTimeout = null; // Notification timer
 
 async function getStoredOffset(host = location.hostname) {
     try {
@@ -156,13 +157,21 @@ async function handleSubtitleSearchFromButton() {
             if (response && response.success) {
                 const results = response.data;
 
-                // Si un seul résultat, télécharger directement avec l'offset mémorisé du site
+                // if only one result, download directly with stored site offset
                 if (!Array.isArray(results)) {
                     getStoredOffset().then((siteOffset) => downloadAndApplySubtitle(results, currentAnime, siteOffset));
                 } else if (results.length === 1) {
                     getStoredOffset().then((siteOffset) => downloadAndApplySubtitle(results[0], currentAnime, siteOffset));
                 } else if (results.length > 1) {
-                    // Afficher modal de choix
+                    // Show choice modal - immediately hide notification
+                    if (infoTimeout) {
+                        clearTimeout(infoTimeout);
+                        infoTimeout = null;
+                    }
+                    // Hide all existing notifications
+                    document.querySelectorAll('div[style*="position: fixed"][style*="top: 80px"]').forEach(notif => {
+                        notif.remove();
+                    });
                     showSubtitleModal(results, currentAnime);
                 } else {
                     showNotification("Aucun sous-titre trouvé", "error");
@@ -1369,9 +1378,12 @@ function showNotification(message, type = "info") {
 
     document.body.appendChild(notification);
 
-    setTimeout(() => {
+    // Save the timeout so it can be canceled if needed
+    if (infoTimeout) clearTimeout(infoTimeout);
+    infoTimeout = setTimeout(() => {
         notification.style.opacity = "0";
         notification.style.transition = "opacity 0.3s";
         setTimeout(() => notification.remove(), 300);
+        infoTimeout = null;
     }, 3000);
 }
