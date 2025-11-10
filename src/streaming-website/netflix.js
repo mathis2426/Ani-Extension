@@ -18,6 +18,12 @@ function netflix(animeClass, callback) {
     let targetNode = document.body;
     let config = { childList: true, subtree: true };
     let videoListenersAdded = false; // Flag to ensure listeners are added only once
+    let autoSkipIntro = chrome.storage.sync.get(["settings"], (result) => {
+        return result.netflixSettings?.autoSkip || false;
+    });
+    let autoPlayNext = chrome.storage.sync.get(["settings"], (result) => {
+        return result.netflixSettings?.autoPlayNext || false;
+    });
 
     // Observer to watch for changes in the DOM
     let observerCallback = function (mutationsList, observer) {

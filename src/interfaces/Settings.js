@@ -12,12 +12,23 @@ class VoiranimeSettings {
         this.autoSkipAds = false; // Default auto-skip ads setting
     }
 }
+class NetflixSettings {
+    constructor() {
+        this.autoSkip = false; // Default auto-skip setting
+        this.autoPlayNext = false; // Default auto-play next episode setting
+    }
+}
 class OpenSubtitlesSettings {
     constructor() {
         this.token = "";
         this.tokenExpiration = 0;
         this.saveCredentials = false; // Default save credentials setting
         this.language = "en"; // Default language
+    }
+}
+class PlanningSettings {
+    constructor() {
+        this.syncGoogleCalendar = false; // Default Google Calendar sync setting
     }
 }
 class Settings {
@@ -27,6 +38,8 @@ class Settings {
         this.mailnotificationEnabled = false; // Default mail notification setting
         this.crunchyrollSettings = new CrunchyrollSettings(); // Crunchyroll specific settings
         this.voiranimeSettings = new VoiranimeSettings(); // Voiranime specific settings
+        this.netflixSettings = new NetflixSettings(); // Netflix specific settings
+        this.planningSettings = new PlanningSettings(); // Planning specific settings
         this.openSubtitlesSettings = new OpenSubtitlesSettings(); // OpenSubtitles specific settings
     }
 }

@@ -148,7 +148,9 @@ function srtToVtt(srt, offsetMs = 0) {
     const endMs = timeToMs(endRaw);
     const newStart = msToVttTime(startMs + offsetMs);
     const newEnd = msToVttTime(endMs + offsetMs);
-    const text = lines.slice(idx + 1).join("\n");
+    // Convert custom/ASS-like formatting tags to WebVTT-compatible markup
+    const rawText = lines.slice(idx + 1).join("\n");
+    const text = convertFormattingTags(rawText);
     vtt += `${newStart} --> ${newEnd}\n${text}\n\n`;
   }
   return vtt;
@@ -156,11 +158,13 @@ function srtToVtt(srt, offsetMs = 0) {
 
 function vttApplyOffset(vttText, offsetMs = 0) {
   // Very simple parser: shift all time lines that match X --> Y
-  return vttText.replace(/(\d{2}:\d{2}:\d{2}\.\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}\.\d{3})/g, (m, a, b) => {
+  const shifted = vttText.replace(/(\d{2}:\d{2}:\d{2}\.\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}\.\d{3})/g, (m, a, b) => {
     const aMs = timeToMs(a.replace(".", ",")); // timeToMs accepts both
     const bMs = timeToMs(b.replace(".", ","));
     return `${msToVttTime(aMs + offsetMs)} --> ${msToVttTime(bMs + offsetMs)}`;
   });
+  // Also normalize custom formatting tags after shifting
+  return convertFormattingTags(shifted);
 }
 
 function timeToMs(timeStr) {
@@ -283,4 +287,42 @@ function injectSubtitleStyle() {
 function showOverlayFromVtt(video, vttContent) {
   // minimal parser to show current cue; not necessary if native track works
   // (left here for future implementation if needed)
+}
+
+/* ===========================
+   Formatting conversion helpers
+   - Convert common fansub/ASS-like inline tags to WebVTT-compatible markup.
+   - Supported toggles: italics, bold, underline using both {i}/{/i} and {\i1}/{\i0} forms.
+   - Unknown tags (e.g., {\an8}, {\pos(...)}, {/ang}) are stripped.
+   =========================== */
+function convertFormattingTags(text) {
+  if (!text || typeof text !== "string") return text;
+
+  let out = text;
+
+  // Normalize whitespace inside braces
+  // Handle simple brace tags {i},{/i},{b},{/b},{u},{/u}
+  out = out.replace(/\{\s*i\s*\}/gi, "<i>");
+  out = out.replace(/\{\s*\/\s*i\s*\}/gi, "</i>");
+  out = out.replace(/\{\s*b\s*\}/gi, "<b>");
+  out = out.replace(/\{\s*\/\s*b\s*\}/gi, "</b>");
+  out = out.replace(/\{\s*u\s*\}/gi, "<u>");
+  out = out.replace(/\{\s*\/\s*u\s*\}/gi, "</u>");
+
+  // Handle ASS/SSA style toggles: {\i1}/{\i0}, {\b1}/{\b0}, {\u1}/{\u0}
+  out = out.replace(/\{\\i1\}/gi, "<i>");
+  out = out.replace(/\{\\i0\}/gi, "</i>");
+  out = out.replace(/\{\\b1\}/gi, "<b>");
+  out = out.replace(/\{\\b0\}/gi, "</b>");
+  out = out.replace(/\{\\u1\}/gi, "<u>");
+  out = out.replace(/\{\\u0\}/gi, "</u>");
+
+  // Remove other ASS/SSA control tags (alignment, position, font size, etc.)
+  // Examples: {\an8}, {\pos(100,200)}, {\fs24}, {\bord2}
+  out = out.replace(/\{\\[^}]*\}/g, "");
+
+  // Remove any remaining unknown brace tags like {/ang} or {ang}
+  out = out.replace(/\{\/?[^}]+\}/g, "");
+
+  return out;
 }

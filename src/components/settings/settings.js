@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
         openSubtitlesService._tokenExp = settings.openSubtitlesSettings.tokenExpiration;
     });
 
-    const buttons = document.querySelectorAll(".button");
+    const buttons = document.querySelectorAll(".nav-item");
     const sections = document.querySelectorAll(".section");
 
     function clearActive() {
@@ -84,27 +84,33 @@ function asknotificationPermission() {
     }
     else if (Notification.permission === "granted") {
         const notif = new Notification("Notifications déjà activées", {
-            body: "Vous avez déjà activé les notifications pour l'extension Ani-Extension.",
-            icon: "../logo/logo-128.png",
+            body: "Pour désactiver les notifications, rendez-vous dans les paramètres de l'extension, en cliquant sur cette notification.",
+            icon: "../../../public/logo/logo-128.png",
             vibrate: [200, 100, 200],
-
         });
+        notif.onclick = function (event) {
+                    event.preventDefault();
+                    chrome.tabs.create({
+                        url: "chrome://settings/content/siteDetails?site=chrome-extension://" + chrome.runtime.id
+                    });
+                    notif.close();
+                };
 
         return;
     }
     else {
         Notification.requestPermission().then(function (permission) {
-            const notif = new Notification("Activation des notifications", {
-                body: "Vous venez d'activer les notifications pour l'extension Ani-Extension.",
-                icon: "../logo/logo-128.png",
-                vibrate: [200, 100, 200]
-            });
-            settings.notificationsEnabled = true;
-            saveSettings(settings);
-            updateSettingsUI(settings);
+            if (permission === "granted") {
+                const notif = new Notification("Activation des notifications", {
+                    body: "Vous venez d'activer les notifications pour l'extension Ani-Extension.",
+                    icon: "../../../public/logo/logo-128.png",
+                    vibrate: [200, 100, 200],
+                });
+
+                settings.notificationsEnabled = true;
+                updateSettingsUI(settings);
+            }
         });
-
-
     }
 }
 
@@ -113,8 +119,10 @@ function updateSettingsUI(settings) {
     // Général
     document.getElementById("darkMode").checked = settings.theme === "light";
     document.getElementById("notifications-mail").checked = settings.mailnotificationEnabled;
-    document.getElementById("notifications-status").innerText = Notification.permission === "granted" ? "Notifications enabled" : "Notifications disabled";
-    document.querySelector(".chrome-notifications").classList.add(Notification.permission === "granted" ? "success" : "alert");
+    const notifBtn = document.getElementById("notifications-extension");
+    if (notifBtn) {
+        notifBtn.textContent = Notification.permission === "granted" ? "Disable chrome notifications" : "Enable chrome notifications";
+    }
 
     // OpenSubtitles
     const loginButton = document.getElementById("openSubtitlesConnect");
@@ -124,15 +132,18 @@ function updateSettingsUI(settings) {
         document.getElementById("openSubtitlesEmail").style.display = "none";
         document.getElementById("openSubtitlesPassword").style.display = "none";
         status.textContent = "Connected to OpenSubtitles";
-        status.classList.add("success");
+        status.classList.add("tooltip-ok");
+        document.getElementById("language-block").style.display = "flex";
+        document.getElementById("open-subtitles-create-account").style.display = "none";
         loginButton.textContent = "Logout";
 
     } else {
         document.getElementById("openSubtitlesEmail").style.display = "block";
         document.getElementById("openSubtitlesPassword").style.display = "block";
         status.textContent = "Not connected to OpenSubtitles";
-        status.classList.add("alert");
-
+        status.classList.add("tooltip-not-ok");
+        document.getElementById("language-block").style.display = "none";
+        document.getElementById("open-subtitles-create-account").style.display = "flex";
         loginButton.textContent = "Login";
     }
 
@@ -145,52 +156,131 @@ function updateSettingsUI(settings) {
     if (flagImg && openSubtitlesLanguageSelect) {
         const code = openSubtitlesLanguageSelect.value || settings.openSubtitlesSettings.language;
         const country = getFlagCountryCode(code);
-    // use SVG for crisp rendering at any size
-    flagImg.src = `https://flagcdn.com/${country}.svg`;
+        // use SVG for crisp rendering at any size
+        flagImg.src = `https://flagcdn.com/${country}.svg`;
         flagImg.alt = `${code} flag`;
     }
 
     // Crunchyroll
-    document.getElementById("skipIntroOutro").checked = settings.crunchyrollSettings.autoSkip;
-    document.getElementById("autoNext").checked = settings.crunchyrollSettings.autoPlayNext;
+    document.getElementById("crunchyrollSkipIntro").checked = settings.crunchyrollSettings.autoSkip;
+    document.getElementById("crunchyrollAutoNext").checked = settings.crunchyrollSettings.autoPlayNext;
 
     // Voiranime
     document.getElementById("voiranimeSkipIntro").checked = settings.voiranimeSettings.autoSkip;
     document.getElementById("voiranimeAutoNext").checked = settings.voiranimeSettings.autoPlayNext;
 
+    // Netflix
+    document.getElementById("netflixSkipIntro").checked = settings.netflixSettings.autoSkip;
+    document.getElementById("netflixAutoNext").checked = settings.netflixSettings.autoPlayNext;
+
+    // Planning Integration
+    document.getElementById("syncGoogleCalendar").checked = settings.planningSettings.syncGoogleCalendar;
+
+}
+
+// lightweight toast with throttle to prevent spam
+let __lastToastAt = 0;
+function showToast(message = "Settings saved", type = "success") {
+    const now = Date.now();
+    if (now - __lastToastAt < 1200) return; // throttle
+    __lastToastAt = now;
+    const c = document.getElementById("toast-container");
+    if (!c) return;
+    
+    const el = document.createElement("div");
+    el.className = "toast";
+    
+    // Icon SVG based on type
+    const icons = {
+        success: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        error: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>',
+        info: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg>',
+        warning: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>'
+    };
+    
+    el.innerHTML = `
+        <div class="toast-content">
+            <div class="toast-icon ${type}">
+                ${icons[type] || icons.success}
+            </div>
+            <div class="toast-text">
+                <p class="toast-title">${message}</p>
+            </div>
+        </div>
+        <button class="toast-close" aria-label="Close notification">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    `;
+    
+    c.appendChild(el);
+    
+    // Close button handler
+    const closeBtn = el.querySelector('.toast-close');
+    closeBtn.addEventListener('click', () => {
+        el.style.animation = 'toast-out .2s ease forwards';
+        setTimeout(() => el.remove(), 200);
+    });
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => { 
+        if (el.parentNode) {
+            el.style.animation = 'toast-out .2s ease forwards';
+            setTimeout(() => el.remove(), 200);
+        }
+    }, 3000);
+}
+
+function persist() {
+    saveSettings(settings);
+    showToast();
 }
 
 function setupEventListeners(settings) {
     document.getElementById("darkMode").addEventListener("change", (e) => {
         settings.theme = e.target.checked ? "light" : "dark";
         applyTheme(settings.theme);
-        saveSettings(settings);
+        persist();
     });
     document.getElementById("notifications-extension").addEventListener("click", () => {
+        let textbtn = document.getElementById("notifications-extension").textContent;
         asknotificationPermission();
-        saveSettings(settings);
+        persist();
     });
     document.getElementById("notifications-mail").addEventListener("change", (e) => {
         settings.mailnotificationEnabled = e.target.checked;
-        saveSettings(settings);
+        persist();
     });
 
-    document.getElementById("skipIntroOutro").addEventListener("change", (e) => {
+    document.getElementById("crunchyrollSkipIntro").addEventListener("change", (e) => {
         settings.crunchyrollSettings.autoSkip = e.target.checked;
-        saveSettings(settings);
+        persist();
     });
-    document.getElementById("autoNext").addEventListener("change", (e) => {
+    document.getElementById("crunchyrollAutoNext").addEventListener("change", (e) => {
         settings.crunchyrollSettings.autoPlayNext = e.target.checked;
-        saveSettings(settings);
+        persist();
     });
 
     document.getElementById("voiranimeSkipIntro").addEventListener("change", (e) => {
         settings.voiranimeSettings.autoSkip = e.target.checked;
-        saveSettings(settings);
+        persist();
     });
     document.getElementById("voiranimeAutoNext").addEventListener("change", (e) => {
         settings.voiranimeSettings.autoPlayNext = e.target.checked;
-        saveSettings(settings);
+        persist();
+    });
+    document.getElementById("netflixAutoNext").addEventListener("change", (e) => {
+        settings.netflixSettings.autoPlayNext = e.target.checked;
+        persist();
+    });
+    document.getElementById("netflixSkipIntro").addEventListener("change", (e) => {
+        settings.netflixSettings.autoSkip = e.target.checked;
+        persist();
+    });
+    document.getElementById("syncGoogleCalendar").addEventListener("change", (e) => {
+        settings.planningSettings.syncGoogleCalendar = e.target.checked;
+        persist();
     });
     document.getElementById("openSubtitlesConnect").addEventListener("click", async () => {
 
@@ -217,14 +307,18 @@ function setupEventListeners(settings) {
                     password.style.display = "none";
                     let status = document.getElementById("openSubtitlesStatus")
                     status.textContent = "Connected to OpenSubtitles";
-                    status.classList.remove("alert");
-                    status.classList.add("success");
+                    status.classList.remove("tooltip-not-ok");
+                    status.classList.add("tooltip-ok");
+                    document.getElementById("language-block").style.display = "flex";
+                    document.getElementById("open-subtitles-create-account").style.display = "none";
                     settings.openSubtitlesSettings.token = openSubtitlesService._token;
                     settings.openSubtitlesSettings.tokenExpiration = openSubtitlesService._tokenExp;
+                    showToast("Connected to OpenSubtitles successfully");
                     saveSettings(settings);
                     document.getElementById("openSubtitlesConnect").textContent = "Logout";
 
                 } catch (error) {
+                    showToast("Connection to OpenSubtitles failed", "error");
                     console.error("Error:", error);
                 }
             } else {
@@ -234,21 +328,24 @@ function setupEventListeners(settings) {
             // Logout
             document.getElementById("openSubtitlesEmail").style.display = "block";
             document.getElementById("openSubtitlesPassword").style.display = "block";
+            document.getElementById("language-block").style.display = "none";
+            document.getElementById("open-subtitles-create-account").style.display = "flex";
             let status = document.getElementById("openSubtitlesStatus")
             status.textContent = "Not connected to OpenSubtitles";
-            status.classList.remove("success");
-            status.classList.add("alert");
+            status.classList.remove("tooltip-ok");
+            status.classList.add("tooltip-not-ok");
             settings.openSubtitlesSettings.token = "";
             saveSettings(settings);
+            showToast("Logged out from OpenSubtitles successfully");
             document.getElementById("openSubtitlesConnect").textContent = "Login";
             await openSubtitlesService.logout();
-            try { await chrome.storage.local.remove("openSubtitlesCredentials"); } catch {}
+            try { await chrome.storage.local.remove("openSubtitlesCredentials"); } catch { }
         }
     });
 
     document.getElementById("openSubtitlesLanguage").addEventListener("change", (e) => {
         settings.openSubtitlesSettings.language = e.target.value;
-        saveSettings(settings);
+        persist();
         const flagImg = document.getElementById("openSubtitlesLanguageFlag");
         if (flagImg) {
             const country = getFlagCountryCode(e.target.value);

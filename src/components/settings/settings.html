@@ -1,197 +1,359 @@
 <!--
-    File Name      : settings.html
-    Description    : Settings page for Ani-Extension.
-    Author         : Mathis Gramage, Mathis Cucherat
-    Date           : Last updated 2025-09-29
-    Version        : 1.0.0
+  Refactored Settings Page
+  Modern dashboard styling with grouped sidebar, cards, accessibility improvements.
+  Original authors: Mathis Gramage, Mathis Cucherat
+  Refactor date: 2025-11-10
 -->
-
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <link rel="stylesheet" href="settings.css">
-    <script type="module" src="settings.js"></script>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <title>AniExtension: Settings</title>
+    <link rel="stylesheet" href="settings.css" />
+    <script type="module" src="settings.js"></script>
 </head>
 
 <body>
-    <div class="nav-bar">
-        <div class="logo">Ani-Extension</div>
-        <div class="menu">
-            <div class="title">Menu</div>
-            <div class="buttons">
-                <button class="button" id="home">
-                    <div class="selector"></div>
-                    <div class="icon"></div>
-                    <div class="name">Home</div>
-                </button>
-                <button class="button" id="generalSettings">
-                    <div class="selector"></div>
-                    <div class="icon"></div>
-                    <div class="name">General Settings</div>
-                </button>
-                <button class="button" id="crunchyroll">
-                    <div class="selector"></div>
-                    <div class="icon"></div>
-                    <div class="name">Crunchyroll</div>
-                </button>
-                <button class="button" id="voiranime">
-                    <div class="selector"></div>
-                    <div class="icon"></div>
-                    <div class="name">VoirAnime</div>
-                </button>
-                <button class="button" id="calendar">
-                    <div class="selector"></div>
-                    <div class="icon"></div>
-                    <div class="name">Calendar</div>
-                </button>
-                <button class="button" id="openSubtitles">
-                    <div class="selector"></div>
-                    <div class="icon"></div>
-                    <div class="name">OpenSubtitles</div>
-                </button>
-                <button class="button" id="tmdb">
-                    <div class="selector"></div>
-                    <div class="icon"></div>
-                    <div class="name">TMDb</div>
-                </button>
+    <!-- Sidebar Navigation -->
+    <aside class="nav-bar" role="navigation" aria-label="Settings navigation">
+        <div class="logo" aria-label="Application title">
+            <span class="app-mark" aria-hidden="true">⬣</span>
+            <span class="app-name">AniX</span>
+        </div>
+        <nav class="menu">
+            <!-- Group: General -->
+            <div class="nav-group" aria-label="General">
+                <div class="nav-group-label">General</div>
+                <ul class="nav-list">
+                    <li>
+                        <button class="nav-item" id="home" aria-controls="section-home">
+                            <span class="nav-icon" aria-hidden="true">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 11l9-8 9 8" />
+                                    <path d="M5 12v9h14v-9" />
+                                </svg>
+                            </span>
+                            <span class="nav-label">Home</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="nav-item" id="generalSettings" aria-controls="section-generalSettings">
+                            <span class="nav-icon" aria-hidden="true">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="3" />
+                                    <path
+                                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06c.53.42 1.21.55 1.82.33.61-.2 1-.82 1-1.51V3a2 2 0 0 1 4 0v.09c0 .69.4 1.31 1 1.51.61.22 1.29.09 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.42.53-.55 1.21-.33 1.82.2.61.82 1 1.51 1H21a2 2 0 0 1 0 4h-.09c-.69 0-1.31.4-1.51 1Z" />
+                                </svg>
+                            </span>
+                            <span class="nav-label">General Settings</span>
+                        </button>
+                    </li>
+                </ul>
             </div>
-        </div>
-    </div>
+            <!-- Group: Integrations -->
+            <div class="nav-group" aria-label="Integrations">
+                <div class="nav-group-label">Integrations</div>
+                <ul class="nav-list">
+                    <li>
+                        <button class="nav-item" id="crunchyroll" aria-controls="section-crunchyroll">
+                            <span class="nav-icon" aria-hidden="true">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="5 3 19 12 5 21 5 3" />
+                                </svg>
+                            </span>
+                            <span class="nav-label">Crunchyroll</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="nav-item" id="voiranime" aria-controls="section-voiranime">
+                            <span class="nav-icon" aria-hidden="true">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="4" width="20" height="16" rx="2" ry="2" />
+                                    <path d="M6 4v16" />
+                                    <path d="M18 4v16" />
+                                    <path d="M2 10h20" />
+                                    <path d="M2 14h20" />
+                                </svg>
+                            </span>
+                            <span class="nav-label">VoirAnime</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="nav-item" id="netflix" aria-controls="section-netflix">
+                            <span class="nav-icon" aria-hidden="true">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="3" width="20" height="14" rx="2" />
+                                    <path d="M8 21h8" />
+                                    <path d="M12 17v4" />
+                                </svg>
+                            </span>
+                            <span class="nav-label">Netflix</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="nav-item" id="openSubtitles" aria-controls="section-openSubtitles">
+                            <span class="nav-icon" aria-hidden="true">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 5h18" />
+                                    <path d="M3 19h18" />
+                                    <rect x="3" y="9" width="18" height="6" rx="2" />
+                                    <path d="M7 12h4" />
+                                    <path d="M13 12h4" />
+                                </svg>
+                            </span>
+                            <span class="nav-label">OpenSubtitles</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <!-- Group: Tools -->
+            <div class="nav-group" aria-label="Tools">
+                <div class="nav-group-label">Tools</div>
+                <ul class="nav-list">
+                    <li>
+                        <button class="nav-item" id="calendar" aria-controls="section-calendar">
+                            <span class="nav-icon" aria-hidden="true">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                    <line x1="16" y1="2" x2="16" y2="6" />
+                                    <line x1="8" y1="2" x2="8" y2="6" />
+                                    <line x1="3" y1="10" x2="21" y2="10" />
+                                </svg>
+                            </span>
+                            <span class="nav-label">Calendar</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </aside>
     <div class="content" id="content">
-        <div id="section-home" class="section">
-            <h1>Welcome to Ani-Extension Settings</h1>
-            <p>Select a category from the menu to begin configuring your extension.</p>
-        </div>
+        <section id="section-home" class="section settings-card" tabindex="-1">
+            <header class="card-header">
+                <h1 class="card-title">Welcome to Ani-Extension Settings</h1>
+                <p class="card-description">Select a category from the menu to begin configuring your experience.</p>
+            </header>
+        </section>
         <!-- GENERAL SETTINGS -->
-        <div id="section-generalSettings" class="section">
-            <div class="section-title">Global Settings</div>
-
-
+        <section id="section-generalSettings" class="section settings-card" tabindex="-1">
+            <header class="card-header">
+                <h2 class="card-title">General Settings</h2>
+                <p class="card-description">Theme and global preferences that apply across all integrations.</p>
+            </header>
             <form class="choices">
                 <fieldset>
                     <input type="radio" name="style" id="style-default" value="default" checked>
                     <label class="card" for="style-default">
                         <img class="thumb" src="../../../public/images-extension/Skeleton-extension-classic.png"
-                            alt="Aperçu Default">
+                            alt="Default theme preview">
                         <span class="title">Default</span>
-                        <span class="subtitle">Default black & white</span>
-
+                        <span class="subtitle">Default black & grey</span>
                         <span class="check" aria-hidden="true">✓</span>
                     </label>
-
                     <input type="radio" name="style" id="style-simplified" value="simplified">
                     <label class="card" for="style-simplified">
-                        <img class="thumb" src="" alt="Aperçu Simplified">
-
+                        <img class="thumb" src="" alt="Simplified theme preview">
                         <span class="title">Simplified</span>
                         <span class="subtitle">Minimal and modern.</span>
-
                         <span class="check" aria-hidden="true">✓</span>
                     </label>
                 </fieldset>
             </form>
-
-
-
-
-            <label class="block">
-                Enable white theme
+            <div class="setting-row" role="group" aria-labelledby="darkMode-label">
+                <div class="setting-text">
+                    <span id="darkMode-label" class="setting-label">Enable light theme</span>
+                    <span class="setting-hint">Switch between dark and light appearance.</span>
+                </div>
                 <label class="switch">
-                    <input type="checkbox" id="darkMode">
+                    <input type="checkbox" id="darkMode" aria-checked="false" role="switch">
                     <span class="slider"></span>
                 </label>
-            </label><br>
-            <label class="chrome-notifications">
-                <button class="classic-btn" id="notifications-extension">
-                    Enable chrome notifications </button>
-                <p id="notifications-status"></p>
-            </label><br>
-            <label>
-                <input type="checkbox" id="notifications-mail">
-                Enable mail notifications for future releases <div class="tooltip-not-implemented">Feature not
-                    implemented yet</div>
-            </label>
-        </div>
-
-        <!-- CRUNCHYROLL -->
-        <div id="section-crunchyroll" class="section">
-            <div class="section-title">Crunchyroll Settings</div>
-            <label>
-                <input type="checkbox" id="skipIntroOutro">
-                Auto-skip intro/outro <div class="tooltip-not-implemented">Feature not implemented yet</div>
-            </label><br>
-            <label>
-                <input type="checkbox" id="autoNext">
-                Auto next episode <div class="tooltip-not-implemented">Feature not implemented yet</div>
-            </label>
-        </div>
-
-        <!-- VOIRANIME -->
-        <div id="section-voiranime" class="section">
-            <div class="section-title">VoirAnime Settings</div>
-            <label>
-                <input type="checkbox" id="voiranimeSkipIntro">
-                Auto-skip intro/outro <div class="tooltip-not-implemented">Feature not implemented yet</div>
-            </label><br>
-            <label>
-                <input type="checkbox" id="voiranimeAutoNext">
-                Auto next episode <div class="tooltip-not-implemented">Feature not implemented yet</div>
-            </label>
-        </div>
-
-        <!-- CALENDAR -->
-        <div id="section-calendar" class="section">
-            <div class="section-title">Planning Integration</div>
-            <label>
-                <input type="checkbox" id="syncGoogleCalendar">
-                Sync planning with Google Calendar <div class="tooltip-not-implemented">Feature not implemented yet
+            </div>
+            <hr class="setting-divider" />
+            <div class="setting-row" role="group" aria-labelledby="chromeNotif-label">
+                <div class="setting-text">
+                    <span id="chromeNotif-label" class="setting-label">Browser notifications</span>
+                    <span class="setting-hint">Enable extension push notifications.</span>
                 </div>
-            </label><br>
-            <label>
-                <input type="text" placeholder="Google Calendar API Key" id="calendarApiKey">
-                <div class="tooltip-not-implemented">Feature not implemented yet</div>
-            </label>
-        </div>
+                <button class="classic-btn" id="notifications-extension" type="button">Enable chrome
+                    notifications</button>
+            </div>
+            <hr class="setting-divider" />
+            <div class="setting-row upcoming" role="group" aria-labelledby="mailNotif-label">
+                <div class="setting-text">
+                    <span id="mailNotif-label" class="setting-label">Release email updates</span>
+                    <span class="setting-hint">Get notified when major features launch.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="notifications-mail" aria-checked="false" role="switch">
+                    <span class="slider"></span>
+                </label>
+
+            </div>
+        </section>
+        <!-- CRUNCHYROLL -->
+        <section id="section-crunchyroll" class="section settings-card" tabindex="-1">
+            <header class="card-header">
+                <h2 class="card-title">Crunchyroll</h2>
+                <p class="card-description">Playback automation for Crunchyroll streaming.</p>
+            </header>
+            <div class="setting-row upcoming" role="group" aria-labelledby="cr-skip-label">
+                <div class="setting-text">
+                    <span id="cr-skip-label" class="setting-label">Auto-skip intro/outro</span>
+                    <span class="setting-hint">Jump directly into the episode content.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="crunchyrollSkipIntro" role="switch">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-row upcoming" role="group" aria-labelledby="cr-next-label">
+                <div class="setting-text">
+                    <span id="cr-next-label" class="setting-label">Auto next episode</span>
+                    <span class="setting-hint">Automatically play the next episode.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="crunchyrollAutoNext" role="switch">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </section>
+        <!-- VOIRANIME -->
+        <section id="section-voiranime" class="section settings-card" tabindex="-1">
+            <header class="card-header">
+                <h2 class="card-title">VoirAnime</h2>
+                <p class="card-description">Playback automation for VoirAnime streaming.</p>
+            </header>
+            <div class="setting-row upcoming" role="group" aria-labelledby="va-skip-label">
+                <div class="setting-text">
+                    <span id="va-skip-label" class="setting-label">Auto-skip intro/outro</span>
+                    <span class="setting-hint">Skip intro sequences automatically.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="voiranimeSkipIntro" role="switch">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-row upcoming" role="group" aria-labelledby="va-next-label">
+                <div class="setting-text">
+                    <span id="va-next-label" class="setting-label">Auto next episode</span>
+                    <span class="setting-hint">Queue next episode automatically.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="voiranimeAutoNext" role="switch">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </section>
+
+        <!-- NETFLIX -->
+        <section id="section-netflix" class="section settings-card" tabindex="-1">
+            <header class="card-header">
+                <h2 class="card-title">Netflix</h2>
+                <p class="card-description">Playback automation for Netflix streaming.</p>
+            </header>
+            <div class="setting-row upcoming" role="group" aria-labelledby="nf-skip-label">
+                <div class="setting-text">
+                    <span id="nf-skip-label" class="setting-label">Auto-skip intro/outro</span>
+                    <span class="setting-hint">Skip intros and ending credits.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="netflixSkipIntro" role="switch">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-row upcoming" role="group" aria-labelledby="nf-next-label">
+                <div class="setting-text">
+                    <span id="nf-next-label" class="setting-label">Auto next episode</span>
+                    <span class="setting-hint">Auto play next after end.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="netflixAutoNext" role="switch">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </section>
 
         <!-- OPEN SUBTITLES -->
-        <div id="section-openSubtitles" class="section">
-            <div class="section-title">OpenSubtitles Settings</div>
+        <section id="section-openSubtitles" class="section settings-card openSubtitles" tabindex="-1">
+            <div>
+            <header class="card-header">
+                <h2 class="card-title">OpenSubtitles</h2>
+                <p class="card-description">Configure subtitle language and authentication.</p>
+            </header>
             <div class="open-subtitles-block">
-                    <p id="openSubtitlesStatus"></p>
-                    <!-- Language selector for OpenSubtitles (used for subtitle searches) -->
-                    <label class="block">
-                        <span>Preferred subtitle language</span>
-                            <div class="language-control">
-                                <img id="openSubtitlesLanguageFlag" class="language-flag" src="" alt="flag">
-                                <select id="openSubtitlesLanguage" class="language-select">
-                                    <option value="fr">Français</option>
-                                    <option value="en">English</option>
-                                    <option value="es">Español</option>
-                                    <option value="de">Deutsch</option>
-                                    <option value="it">Italiano</option>
-                                    <option value="ja">日本語</option>
-                                    <option value="pt">Português</option>
-                                    <option value="ru">Русский</option>
-                                </select>
-                            </div>
-                    </label>
+                <p id="openSubtitlesStatus"></p>
+                <label id="language-block" class="block">
+                    <span>Preferred subtitle language</span>
+                    <div class="language-control">
+                        <img id="openSubtitlesLanguageFlag" class="language-flag" src="" alt="flag">
+                        <select id="openSubtitlesLanguage" class="language-select">
+                            <option value="fr">Français</option>
+                            <option value="en">English</option>
+                            <option value="es">Español</option>
+                            <option value="de">Deutsch</option>
+                            <option value="it">Italiano</option>
+                            <option value="ja">日本語</option>
+                            <option value="pt">Português</option>
+                            <option value="ru">Русский</option>
+                        </select>
+                    </div>
+                </label>
                 <label>
                     <input type="text" placeholder="Username" id="openSubtitlesEmail">
                 </label>
                 <label>
                     <input type="password" placeholder="Password" id="openSubtitlesPassword">
                 </label>
-                
                 <div class="actions">
                     <button id="openSubtitlesConnect" class="classic-btn">Login</button>
                 </div>
             </div>
-        </div>
+            </div>
+            <div class="open-subtitles-create-account" id="open-subtitles-create-account">
+                <p>Don't have an account?</p>
+                <p>Please use the following link to <a href="https://www.opensubtitles.com/" target="_blank">create one</a></p>
+            </div>
+        </section>
+
+        <!-- CALENDAR -->
+        <section id="section-calendar" class="section settings-card" tabindex="-1">
+            <header class="card-header">
+                <h2 class="card-title">Calendar Integration</h2>
+                <p class="card-description">Sync upcoming episodes with your calendar.</p>
+            </header>
+            <div class="setting-row upcoming" role="group" aria-labelledby="cal-sync-label">
+                <div class="setting-text">
+                    <span id="cal-sync-label" class="setting-label">Google Calendar sync</span>
+                    <span class="setting-hint">Automatically add releases to calendar.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="syncGoogleCalendar" role="switch">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-row upcoming" role="group" aria-labelledby="cal-api-label">
+                <div class="setting-text">
+                    <span id="cal-api-label" class="setting-label">API Key</span>
+                    <span class="setting-hint">Enter your Google Calendar API key.</span>
+                </div>
+                <input type="text" placeholder="Google Calendar API Key" id="calendarApiKey" aria-disabled="true"
+                    disabled>
+            </div>
+        </section>
+
     </div>
+    <!-- Toast container -->
+    <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
 </body>
 
 </html>
