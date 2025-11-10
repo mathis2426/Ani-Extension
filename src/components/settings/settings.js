@@ -200,8 +200,17 @@ function setupEventListeners(settings) {
 
             if (email.value && password.value) {
                 try {
-                    const result = await openSubtitlesService.login(email.value, password.value);
-                    if (result.success && !settings.openSubtitlesSettings.saveCredentials) {
+                    await openSubtitlesService.login(email.value, password.value);
+                    if (settings.openSubtitlesSettings.saveCredentials == true) {
+                        await chrome.storage.local.set({
+                            openSubtitlesCredentials: {
+                                username: email.value,
+                                password: password.value,
+                                savedAt: Date.now()
+                            }
+                        });
+                    }
+                    else if (settings.openSubtitlesSettings.saveCredentials == false) {
                         showCredentialSaveModal(email.value, password.value);
                     }
                     email.style.display = "none";
