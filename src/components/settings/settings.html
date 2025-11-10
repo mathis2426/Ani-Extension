@@ -61,9 +61,14 @@
                     <li>
                         <button class="nav-item" id="crunchyroll" aria-controls="section-crunchyroll">
                             <span class="nav-icon" aria-hidden="true">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polygon points="5 3 19 12 5 21 5 3" />
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    id="Crunchyroll-Logo--Streamline-Logos" height="18" width="18">
+                                    <path stroke="#a1a1aa" stroke-linejoin="round"
+                                        d="M12 1.5C6.201 1.5 1.5 6.201 1.5 12c0 5.416 4.1 9.874 9.367 10.44A9 9 0 1 1 22.44 10.866C21.873 5.6 17.415 1.5 12 1.5Z"
+                                        stroke-width="2"></path>
+                                    <path stroke="#a1a1aa" stroke-linejoin="round"
+                                        d="M14.5 21a6.5 6.5 0 0 0 6.2 -8.46 3 3 0 1 1 -4.24 -4.24A6.5 6.5 0 1 0 14.5 21Z"
+                                        stroke-width="2"></path>
                                 </svg>
                             </span>
                             <span class="nav-label">Crunchyroll</span>
@@ -286,42 +291,43 @@
         <!-- OPEN SUBTITLES -->
         <section id="section-openSubtitles" class="section settings-card openSubtitles" tabindex="-1">
             <div>
-            <header class="card-header">
-                <h2 class="card-title">OpenSubtitles</h2>
-                <p class="card-description">Configure subtitle language and authentication.</p>
-            </header>
-            <div class="open-subtitles-block">
-                <p id="openSubtitlesStatus"></p>
-                <label id="language-block" class="block">
-                    <span>Preferred subtitle language</span>
-                    <div class="language-control">
-                        <img id="openSubtitlesLanguageFlag" class="language-flag" src="" alt="flag">
-                        <select id="openSubtitlesLanguage" class="language-select">
-                            <option value="fr">Français</option>
-                            <option value="en">English</option>
-                            <option value="es">Español</option>
-                            <option value="de">Deutsch</option>
-                            <option value="it">Italiano</option>
-                            <option value="ja">日本語</option>
-                            <option value="pt">Português</option>
-                            <option value="ru">Русский</option>
-                        </select>
+                <header class="card-header">
+                    <h2 class="card-title">OpenSubtitles</h2>
+                    <p class="card-description">Configure subtitle language and authentication.</p>
+                </header>
+                <div class="open-subtitles-block">
+                    <p id="openSubtitlesStatus"></p>
+                    <label id="language-block" class="block">
+                        <span>Preferred subtitle language</span>
+                        <div class="language-control">
+                            <img id="openSubtitlesLanguageFlag" class="language-flag" src="" alt="flag">
+                            <select id="openSubtitlesLanguage" class="language-select">
+                                <option value="fr">Français</option>
+                                <option value="en">English</option>
+                                <option value="es">Español</option>
+                                <option value="de">Deutsch</option>
+                                <option value="it">Italiano</option>
+                                <option value="ja">日本語</option>
+                                <option value="pt">Português</option>
+                                <option value="ru">Русский</option>
+                            </select>
+                        </div>
+                    </label>
+                    <label>
+                        <input type="text" placeholder="Username" id="openSubtitlesEmail">
+                    </label>
+                    <label>
+                        <input type="password" placeholder="Password" id="openSubtitlesPassword">
+                    </label>
+                    <div class="actions">
+                        <button id="openSubtitlesConnect" class="classic-btn">Login</button>
                     </div>
-                </label>
-                <label>
-                    <input type="text" placeholder="Username" id="openSubtitlesEmail">
-                </label>
-                <label>
-                    <input type="password" placeholder="Password" id="openSubtitlesPassword">
-                </label>
-                <div class="actions">
-                    <button id="openSubtitlesConnect" class="classic-btn">Login</button>
                 </div>
-            </div>
             </div>
             <div class="open-subtitles-create-account" id="open-subtitles-create-account">
                 <p>Don't have an account?</p>
-                <p>Please use the following link to <a href="https://www.opensubtitles.com/" target="_blank">create one</a></p>
+                <p>Please use the following link to <a href="https://www.opensubtitles.com/" target="_blank">create
+                        one</a></p>
             </div>
         </section>
 
