@@ -154,6 +154,16 @@ async function handleSubtitleSearchFromButton() {
                 return;
             }
 
+            // Hide notification before showing modal
+            if (infoTimeout) {
+                clearTimeout(infoTimeout);
+                infoTimeout = null;
+            }
+            // Hide all existing notifications
+            document.querySelectorAll('div[style*="position: fixed"][style*="top: 80px"]').forEach(notif => {
+                notif.remove();
+            });
+
             if (response && response.success) {
                 const results = response.data;
 
@@ -162,22 +172,15 @@ async function handleSubtitleSearchFromButton() {
                     getStoredOffset().then((siteOffset) => downloadAndApplySubtitle(results, currentAnime, siteOffset));
                 } else if (results.length === 1) {
                     getStoredOffset().then((siteOffset) => downloadAndApplySubtitle(results[0], currentAnime, siteOffset));
-                } else if (results.length > 1) {
-                    // Show choice modal - immediately hide notification
-                    if (infoTimeout) {
-                        clearTimeout(infoTimeout);
-                        infoTimeout = null;
-                    }
-                    // Hide all existing notifications
-                    document.querySelectorAll('div[style*="position: fixed"][style*="top: 80px"]').forEach(notif => {
-                        notif.remove();
-                    });
-                    showSubtitleModal(results, currentAnime);
                 } else {
-                    showNotification("Aucun sous-titre trouvé", "error");
+                    // Show modal even if results is empty or has multiple items
+                    // This allows users to try other search methods (OpenSubID, File upload, etc.)
+                    showSubtitleModal(results || [], currentAnime);
                 }
             } else {
-                showNotification(response?.error || "Erreur lors de la recherche", "error");
+                // Even if the search fails or finds nothing, show the modal
+                // This allows users to try other search methods (Full Anime, OpenSubID, File upload, etc.)
+                showSubtitleModal([], currentAnime);
             }
         });
 
@@ -1351,39 +1354,83 @@ function showOffsetControl(subtitleContent, subtitleInfo, initialOffset = 0) {
 /**
  * Show notification overlay on video
  */
-function showNotification(message, type = "info") {
-    const notification = document.createElement("div");
-    const bgColor = type === "error" ? "rgba(220, 53, 69, 0.95)" :
-        type === "success" ? "rgba(70, 211, 105, 0.95)" :
-            "rgba(0, 0, 0, 0.9)";
+function showNotification(message, type = "info", options = {}) {
+    // Options par défaut
+    const {
+        duration = 3000,
+        persist = false, // si true, pas d'auto-dismiss
+        replace = true // si true, remplace la notification précédente
+    } = options;
 
+    // Couleurs selon type
+    const bgColor = type === "error" ? "rgba(220,53,69,0.95)" :
+        type === "success" ? "rgba(70,211,105,0.95)" :
+            "rgba(0,0,0,0.9)";
+
+    // Si on remplace, supprimer toutes les notifications existantes
+    if (replace) {
+        document.querySelectorAll('.aniext-notification').forEach(n => {
+            try { n.remove(); } catch (e) { }
+        });
+        // Nettoyer ancien timer global si présent
+        if (infoTimeout) {
+            clearTimeout(infoTimeout);
+            infoTimeout = null;
+        }
+    }
+
+    // Créer l'élément
+    const notification = document.createElement("div");
+    notification.className = 'aniext-notification';
+    notification.textContent = message;
     notification.style.cssText = `
         position: fixed;
         top: 80px;
         left: 50%;
         transform: translateX(-50%);
         background: ${bgColor};
-        color: white;
-        padding: 16px 24px;
+        color: #fff;
+        padding: 12px 20px;
         border-radius: 8px;
         font-size: 14px;
         z-index: 99999;
         box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-        animation: slideDown 0.3s ease;
         font-family: Arial, sans-serif;
         min-width: 200px;
         text-align: center;
+        opacity: 0;
+        transition: opacity .25s ease, transform .25s ease;
     `;
-    notification.textContent = message;
+
+    // Animation d'entrée
+    requestAnimationFrame(() => {
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateX(-50%) translateY(0)';
+    });
+
+    // Permet de fermer au clic
+    notification.addEventListener('click', () => fadeAndRemove(notification));
 
     document.body.appendChild(notification);
 
-    // Save the timeout so it can be canceled if needed
-    if (infoTimeout) clearTimeout(infoTimeout);
-    infoTimeout = setTimeout(() => {
-        notification.style.opacity = "0";
-        notification.style.transition = "opacity 0.3s";
-        setTimeout(() => notification.remove(), 300);
-        infoTimeout = null;
-    }, 3000);
+    // Timer local pour chaque notification (ne dépend plus d'une variable globale unique)
+    if (!persist) {
+        const removeTimer = setTimeout(() => fadeAndRemove(notification), duration);
+        // Stocker pour éventuelle annulation future
+        notification.dataset.timerId = removeTimer;
+        // Conserver compatibilité avec l'ancien code si nécessaire
+        infoTimeout = removeTimer;
+    }
+}
+
+function fadeAndRemove(el) {
+    if (!el || !el.parentNode) return;
+    try {
+        const tid = el.dataset.timerId;
+        if (tid) clearTimeout(Number(tid));
+    } catch { }
+    el.style.opacity = '0';
+    el.style.pointerEvents = 'none';
+    el.style.transition = 'opacity .25s ease';
+    setTimeout(() => { try { el.remove(); } catch { } }, 280);
 }

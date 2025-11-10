@@ -54,6 +54,7 @@
         {
             "run_at": "document_idle",
             "js": [
+                "src/utils/subtitles/subtitleVideoApplicationUtils.js",
                 "src/streaming-website/features/subtitle-btn.js",
                 "src/utils/videoUtils.js",
                 "src/utils/anilistUtils.js",
