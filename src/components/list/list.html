@@ -1,0 +1,90 @@
+<!--
+  List Page for Ani-Extension
+  Shows saved anime items from storage (popupDataList)
+-->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AniX • Liste</title>
+  <link rel="stylesheet" href="../../../public/assets/assets.css" />
+  <link rel="stylesheet" href="list.css" />
+  <script type="module" src="list.js" defer></script>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar" aria-label="Listes">
+      <h2 class="sidebar-title">Listes</h2>
+      <nav class="lists-nav" id="lists-nav">
+        <button class="nav-item active" data-list="home" aria-label="Home">Home</button>
+        <button class="nav-item" data-list="wishlist" aria-label="Wishlist">Wishlist</button>
+        <button class="nav-item" data-list="inprogress" aria-label="En cours">En cours</button>
+        <button class="nav-item" data-list="finished" aria-label="Terminés">Terminés</button>
+        <button class="nav-item" data-list="all" aria-label="Tous">Tous</button>
+      </nav>
+      <div class="sidebar-actions">
+        <button id="add-item-btn" class="add-btn" aria-haspopup="dialog">+ Ajouter</button>
+      </div>
+    </aside>
+    <section class="content-area">
+      <header class="content-header">
+        <div class="titles">
+          <h1 id="current-list-title" class="title">Wishlist</h1>
+          <p id="current-list-sub" class="subtitle">Animés à regarder plus tard</p>
+        </div>
+        <div class="search-wrap">
+          <input id="search" class="search" type="search" placeholder="Rechercher…" />
+        </div>
+      </header>
+      <!-- Home section (widgets only visible here) -->
+      <section id="home-section" class="home-section">
+        <div class="wg-toolbar" aria-label="Widgets outils">
+          <button id="wg-toggle-edit" class="wg-btn" aria-pressed="false">Mode édition</button>
+          <button id="wg-add-widget" class="wg-btn">+ Ajouter Widget</button>
+          <div class="wg-spacer"></div>
+          <button id="wg-export" class="wg-btn">Exporter</button>
+          <label class="wg-btn wg-import-label">Importer<input type="file" id="wg-import" accept="application/json" hidden /></label>
+        </div>
+        <div id="wg-grid" class="wg-grid" aria-label="Grille widgets" role="grid"></div>
+      </section>
+      <div id="list" class="list"></div>
+      <div id="empty" class="empty" hidden>
+        <p>Aucun élément dans cette liste.</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- Widget Selection Panel -->
+  <div id="wg-panel-overlay" class="wg-panel-overlay"></div>
+  <aside id="wg-panel" class="wg-panel" aria-label="Sélection de widget">
+    <div class="wg-panel-header">
+      <h2 class="wg-panel-title">Widgets</h2>
+      <p class="wg-panel-subtitle">Choisissez un type de widget</p>
+      <button class="wg-panel-close" aria-label="Fermer" id="wg-panel-close"></button>
+    </div>
+    <div class="wg-panel-content" id="wg-panel-content">
+      <!-- Widget types will be populated dynamically based on size -->
+    </div>
+  </aside>
+
+  <!-- Modal Add Item -->
+  <dialog id="add-modal" class="add-modal">
+    <form method="dialog" id="add-form" class="add-form">
+      <h3>Ajouter un anime</h3>
+      <label class="field">
+        <span>Nom</span>
+        <input name="name" id="add-name" required maxlength="120" />
+      </label>
+      <label class="field">
+        <span>Lien (optionnel)</span>
+        <input name="link" id="add-link" placeholder="https://..." />
+      </label>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">Ajouter</button>
+        <button type="button" id="cancel-add" class="btn-secondary">Annuler</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>

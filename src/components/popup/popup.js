@@ -126,7 +126,21 @@ document.addEventListener("DOMContentLoaded", () => {
         // remove active class on buttons
         otherEl.classList.remove("active");
       });
-
+      if (clickedId === "list") {
+        chrome.tabs.query({}, (tabs) => {
+          const alreadyOpen = tabs.find((tab) =>
+            tab.url && tab.url.includes("src/components/list/list.html")
+          );
+          if (alreadyOpen) {
+            chrome.tabs.update(alreadyOpen.id, { active: true });
+          }
+          else {
+            chrome.tabs.create({
+              url: chrome.runtime.getURL("src/components/list/list.html"),
+            });
+          }
+        });
+      }
       // Open settings when settings button is clicked
       if (clickedId === "option") {
         chrome.tabs.query({}, (tabs) => {
