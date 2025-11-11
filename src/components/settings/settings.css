@@ -17,12 +17,13 @@ html {
     width: 100%;
     margin: 0;
     scroll-behavior: smooth;
+    font-size: 15px; /* Base font size increased for better readability at 100% */
 }
 
 .content {
     flex: 1;
     margin-left: 260px; /* match sidebar */
-    padding: 24px 24px 80px;
+    padding: 28px 32px 80px;
 }
 
 .section {
@@ -128,15 +129,16 @@ label {
     background-color: #A48EE5;
     color: white;
     border: none;
-    padding: 8px 12px;
+    padding: 10px 16px;
     text-align: center;
     text-decoration: none;
     display: inline-block;
-    font-size: 1em;
+    font-size: 14px;
     margin-top: 10px;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.3s ease;
+    font-weight: 500;
 }
 
 .classic-btn:hover {
@@ -161,21 +163,23 @@ input[type="checkbox"]:focus {
 }
 
 input[type="text"] {
-    padding: 5px;
-    border-radius: 5px;
+    padding: 8px 12px;
+    border-radius: 8px;
     border: none;
     width: 300px;
     margin-top: 10px;
     background-color: #3a3a3a;
+    font-size: 14px;
 }
 
 input[type="password"] {
-    padding: 5px;
-    border-radius: 5px;
+    padding: 8px 12px;
+    border-radius: 8px;
     border: none;
     width: 300px;
     margin-top: 10px;
     background-color: #3a3a3a;
+    font-size: 14px;
 }
 
 input::placeholder {
@@ -212,22 +216,33 @@ input:focus::placeholder {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 12px;
+    padding: 12px 14px;
     border-radius: 10px;
     color: #eae9f3;
     font-weight: 600;
+    font-size: 16px;
 }
-.nav-bar .app-mark { color: #a78bfa; }
-.nav-bar .app-name { letter-spacing: .2px; }
+.nav-bar .app-mark { 
+    color: #a78bfa; 
+    font-size: 20px; 
+    line-height: 1;
+    display: flex;
+    align-items: center;
+}
+.nav-bar .app-name { 
+    letter-spacing: .2px;
+    line-height: 1;
+}
 
 .menu { overflow: auto; padding: 6px 4px 12px; }
 .nav-group { margin: 8px 0 14px; }
 .nav-group-label {
     color: #9aa0a6;
-    font-size: 11px;
+    font-size: 12px;
     text-transform: uppercase;
     letter-spacing: .08em;
     padding: 6px 12px;
+    font-weight: 600;
 }
 .nav-list { list-style: none; margin: 0; padding: 0; }
 .nav-item {
@@ -235,7 +250,7 @@ input:focus::placeholder {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 12px 8px 10px;
+    padding: 10px 12px 10px 10px;
     color: #d8d6e5;
     background: transparent;
     border: 0;
@@ -244,6 +259,7 @@ input:focus::placeholder {
     cursor: pointer;
     position: relative;
     transition: background .2s ease, color .2s ease;
+    font-size: 14px;
 }
 .nav-item .nav-icon { color: #a1a1aa; display: inline-flex; }
 .nav-item:hover { background: rgba(167,139,250,0.08); }
@@ -534,7 +550,7 @@ a:focus {
     padding: 14px;
     width: 200px;
     border-radius: 14px;
-    background: var(--card);
+    background: transparent;
     border: 2px solid transparent;
     cursor: pointer;
     color: var(--text);
@@ -573,6 +589,7 @@ a:focus {
 .title {
     position: absolute;
     z-index: 1;
+    left: 20px;
     transition: transform .25s ease, opacity .2s ease;
 }
 
@@ -581,7 +598,10 @@ a:focus {
     font-weight: 700;
     font-size: 1.05rem;
 }
-
+.light-card .title
+{
+    color: #222;
+}
 .subtitle {
     bottom: 20px;
     color: var(--muted);
@@ -622,7 +642,7 @@ a:focus {
 
     --secondary-container: var(--accent);
     --primary: #ece5ec;
-    font-size: 11px;
+    font-size: 12px;
     position: relative;
     display: inline-block;
     width: 3.7em;
@@ -682,23 +702,23 @@ input:checked+.slider:before {
     border: 1px solid rgba(255,255,255,0.06);
     box-shadow: 0 6px 24px rgba(0,0,0,0.25);
     border-radius: 14px;
-    padding: 18px 18px 8px;
-    margin: 16px 0 22px;
+    padding: 22px 22px 12px;
+    margin: 18px 0 24px;
 }
-.card-header { margin-bottom: 8px; }
-.card-title { margin: 0 0 6px; font-size: 1.1rem; font-weight: 600; color: #fff; }
-.card-description { margin: 0; color: var(--muted); font-size: 0.92rem; }
+.card-header { margin-bottom: 12px; }
+.card-title { margin: 0 0 8px; font-size: 1.25rem; font-weight: 600; color: #fff; }
+.card-description { margin: 0; color: var(--muted); font-size: 0.98rem; line-height: 1.5; }
 
 .setting-row {
     display: flex;
     align-items: center;
     gap: 16px;
     justify-content: space-between;
-    padding: 10px 0;
+    padding: 12px 0;
 }
-.setting-text { display: flex; flex-direction: column; gap: 4px; }
-.setting-label { font-weight: 600; color: #f5f4ff; }
-.setting-hint { color: #a7a7b3; font-size: 0.9rem; }
+.setting-text { display: flex; flex-direction: column; gap: 5px; }
+.setting-label { font-weight: 600; color: #f5f4ff; font-size: 15px; }
+.setting-hint { color: #a7a7b3; font-size: 13px; line-height: 1.4; }
 .setting-divider { height: 1px; border: 0; background: #3a3a44; margin: 6px 0; }
 
 /* Coming soon badge */
@@ -720,14 +740,15 @@ input:checked+.slider:before {
     background: rgba(172, 172, 172, 0.12);
     color: #dadada;
     border: 1px solid rgba(177, 177, 177, 0.22);
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1;
     z-index: 10;
     border-radius: 999px;
-    padding: 4px 10px;
+    padding: 6px 12px;
     white-space: nowrap;
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
     pointer-events: none;
+    font-weight: 600;
 
 }
 /* Toast */

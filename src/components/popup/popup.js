@@ -107,29 +107,28 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Manage the buttons
-  const buttons = ["home", "calendar", "suggestion", "option"];
+  const buttons = ["home", "calendar", "suggestion", "list", "option"];
 
-  buttons.forEach((btn) => {
-    const buttonElement = document.getElementById(btn);
+  buttons.forEach((btnId) => {
+    const buttonElement = document.getElementById(btnId);
+    if (!buttonElement) return;
     const container = buttonElement.parentElement; // the parent div of the button
 
-    buttonElement.addEventListener("click", (btn) => {
-      buttons.forEach((otherBtn) => {
-        // image change 
-        const suffix = otherBtn === btn ? "-activate" : "";
-        document.getElementById(
-          otherBtn
-        ).style.backgroundImage = `url("../../../public/images-extension/${otherBtn}${suffix}.png")`;
+    buttonElement.addEventListener("click", (ev) => {
+      const clickedId = buttonElement.id; // robust against nested SVG clicks
 
-        // .selected class removal
-        const selectedEl = document
-          .getElementById(otherBtn)
-          .parentElement.querySelector(".selected");
-        if (selectedEl) {
-          selectedEl.classList.remove("active");
-        }
+      // Clear all active indicators
+      buttons.forEach((otherBtn) => {
+        const otherEl = document.getElementById(otherBtn);
+        if (!otherEl) return;
+        const selectedEl = otherEl.parentElement.querySelector(".selected");
+        if (selectedEl) selectedEl.classList.remove("active");
+        // remove active class on buttons
+        otherEl.classList.remove("active");
       });
-      if (btn.target.id === "option") {
+
+      // Open settings when settings button is clicked
+      if (clickedId === "option") {
         chrome.tabs.query({}, (tabs) => {
           const alreadyOpen = tabs.find((tab) =>
             tab.url && tab.url.includes("src/components/settings/settings.html")
@@ -145,11 +144,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
 
-      // Select the current button
+      // Mark current button as selected
       const selected = container.querySelector(".selected");
-      if (selected) {
-        selected.classList.add("active");
-      }
+      if (selected) selected.classList.add("active");
+      // Add active class to clicked button for CSS styling
+      buttonElement.classList.add("active");
     });
   });
   document.getElementById("home").click();

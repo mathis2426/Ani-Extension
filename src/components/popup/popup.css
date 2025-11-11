@@ -37,6 +37,7 @@ body {
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: space-between;
         height: 97%;
         width: 100%;
         border-radius: 9px;
@@ -73,8 +74,9 @@ body {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 35px;
-            margin-top: 35px;
+            justify-content: space-between;
+            height: 76%;
+            margin-bottom: 15px;
 
             button {
                 background-color: transparent;
@@ -88,46 +90,39 @@ body {
                 transform: scale(1.05);
             }
 
-            .home-container {
+            .home-container,
+            .calendar-container,
+            .suggestion-container,
+            .list-container {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-
-                .home {
-                    background-image: url(../../../public/images-extension/home.png);
-                    background-size: cover;
-                    width: 31px;
-                    height: 31px;
-                    border: none;
-                }
             }
 
-            .calendar-container {
+            .home,
+            .calendar,
+            .suggestion,
+            .list {
                 display: flex;
-                justify-content: center;
                 align-items: center;
-
-                .calendar {
-                    background-image: url(../../../public/images-extension/calendar.png);
-                    background-size: cover;
-                    width: 33px;
-                    height: 33px;
-                    border: none;
-                }
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                padding: 0;
             }
 
-            .suggestion-container {
-                display: flex;
-                justify-content: center;
-                align-items: center;
+            .home svg,
+            .calendar svg,
+            .suggestion svg,
+            .list svg {
+                width: 28px;
+                height: 28px;
+                stroke-linejoin: round;
+            }
 
-                .suggestion {
-                    background-image: url(../../../public/images-extension/suggestion.png);
-                    background-size: cover;
-                    width: 25px;
-                    height: 25px;
-                    border: none;
-                }
+            /* Active state: accentuate icon stroke color */
+            button.active svg path {
+                stroke: var(--color-primary-purple);
             }
         }
 
@@ -157,11 +152,17 @@ body {
                 align-items: center;
 
                 .option {
-                    background-image: url(../../../public/images-extension/option.png);
-                    background-size: cover;
-                    width: 23px;
-                    height: 23px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 40px;
+                    height: 40px;
                     border: none;
+                    padding: 0;
+                }
+                /* Active state for settings icon */
+                .option.active svg path {
+                    stroke: var(--color-primary-purple);
                 }
             }
         }
