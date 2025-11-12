@@ -14,6 +14,9 @@ export const state = {
   selected: "home",
   popupData: [],
   aniLists: { wishlist: [], inprogress: [], finished: [] },
+  customLists: [], // Array of { id, name, description }
+  displayMode: 'list',
+  listSort: 'name-asc'
 };
 
 // Track open dropdown to close on outside clicks
@@ -33,4 +36,22 @@ export function setPopupData(data) {
 
 export function setAniLists(lists) {
   state.aniLists = lists;
+}
+
+export function setDisplayMode(mode) {
+  if(mode === 'list' || mode === 'grid') state.displayMode = mode;
+}
+
+export function setListSort(sort) {
+  const allowed = ['name-asc','name-desc','progress','recent'];
+  if(allowed.includes(sort)) state.listSort = sort;
+}
+
+export function setCustomLists(lists) {
+  state.customLists = lists || [];
+}
+
+export function addCustomList(list) {
+  state.customLists.push(list);
+  return list;
 }

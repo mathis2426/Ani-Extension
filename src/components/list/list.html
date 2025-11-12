@@ -4,6 +4,7 @@
 -->
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,39 +13,95 @@
   <link rel="stylesheet" href="list.css" />
   <script type="module" src="list.js" defer></script>
 </head>
+
 <body>
   <div class="layout">
     <aside class="sidebar" aria-label="Listes">
-      <h2 class="sidebar-title">Listes</h2>
+      <div class="logo" aria-label="Application title">
+        <span class="app-mark" aria-hidden="true">⬣</span>
+        <span class="app-name">AniX</span>
+      </div>
+
       <nav class="lists-nav" id="lists-nav">
         <button class="nav-item active" data-list="home" aria-label="Home">Home</button>
-        <button class="nav-item" data-list="wishlist" aria-label="Wishlist">Wishlist</button>
-        <button class="nav-item" data-list="inprogress" aria-label="En cours">En cours</button>
-        <button class="nav-item" data-list="finished" aria-label="Terminés">Terminés</button>
-        <button class="nav-item" data-list="all" aria-label="Tous">Tous</button>
+        <br>
+        <div class="list-header">
+          <h2 class="sidebar-title">Listes</h2> 
+          <button class="add-btn">+</button>
+        </div>
+        <div id="lists-scrollable-container" class="lists-scrollable-container">
+          <button class="nav-item" data-list="wishlist" aria-label="Wishlist">Wishlist</button>
+          <button class="nav-item" data-list="inprogress" aria-label="En cours">En cours</button>
+          <button class="nav-item" data-list="finished" aria-label="Terminés">Terminés</button>
+          <div id="custom-lists-container" class="custom-lists-container"></div>
+        </div>
       </nav>
-      <div class="sidebar-actions">
-        <button id="add-item-btn" class="add-btn" aria-haspopup="dialog">+ Ajouter</button>
-      </div>
     </aside>
     <section class="content-area">
       <header class="content-header">
         <div class="titles">
-          <h1 id="current-list-title" class="title">Wishlist</h1>
+          <div class="title-with-edit">
+            <h1 id="current-list-title" class="title">Wishlist</h1>
+            <button id="edit-list-btn" class="edit-list-btn-header" aria-label="Modifier la liste" hidden>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
+              </svg>
+            </button>
+          </div>
           <p id="current-list-sub" class="subtitle">Animés à regarder plus tard</p>
         </div>
         <div class="search-wrap">
           <input id="search" class="search" type="search" placeholder="Rechercher…" />
         </div>
       </header>
+      <!-- List toolbar (only visible when not on Home) -->
+      <section id="list-section" class="list-section" hidden>
+        <div class="list-toolbar" aria-label="Outils des listes">
+          <div class="lt-group" role="group" aria-label="Disposition">
+            <button id="btn-dispo-list" class="lt-btn" aria-pressed="true" title="Affichage en liste">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="4" y="5" width="16" height="2" rx="1" fill="#ddd"/>
+                <rect x="4" y="11" width="16" height="2" rx="1" fill="#ddd"/>
+                <rect x="4" y="17" width="16" height="2" rx="1" fill="#ddd"/>
+              </svg>
+              Liste
+            </button>
+            <button id="btn-dispo-grid" class="lt-btn" aria-pressed="false" title="Affichage en grille">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="3" y="3" width="8" height="8" rx="1" fill="#ddd"/>
+                <rect x="13" y="3" width="8" height="8" rx="1" fill="#ddd"/>
+                <rect x="3" y="13" width="8" height="8" rx="1" fill="#ddd"/>
+                <rect x="13" y="13" width="8" height="8" rx="1" fill="#ddd"/>
+              </svg>
+              Grille
+            </button>
+          </div>
+          <div class="lt-spacer"></div>
+          <div class="lt-group" aria-label="Tri">
+            <label for="lt-sort" class="lt-label">Trier</label>
+            <select id="lt-sort" class="lt-select">
+              <option value="name-asc">Nom A → Z</option>
+              <option value="name-desc">Nom Z → A</option>
+              <option value="progress">Progression</option>
+              <option value="recent">Récent</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
       <!-- Home section (widgets only visible here) -->
       <section id="home-section" class="home-section">
-        <div class="wg-toolbar" aria-label="Widgets outils">
-          <button id="wg-toggle-edit" class="wg-btn" aria-pressed="false">Mode édition</button>
-          <button id="wg-add-widget" class="wg-btn">+ Ajouter Widget</button>
-          <div class="wg-spacer"></div>
-          <button id="wg-export" class="wg-btn">Exporter</button>
-          <label class="wg-btn wg-import-label">Importer<input type="file" id="wg-import" accept="application/json" hidden /></label>
+        <div class="wg-tools-row">
+          <div id="wg-toolbar" class="wg-toolbar" aria-label="Widgets outils" aria-hidden="true">
+            <button id="wg-toggle-edit" class="wg-btn" aria-pressed="false">Mode édition</button>
+            <button id="wg-add-widget" class="wg-btn">+ Ajouter Widget</button>
+            <div class="wg-spacer"></div>
+            <button id="wg-export" class="wg-btn">Exporter</button>
+            <label class="wg-btn wg-import-label">Importer<input type="file" id="wg-import" accept="application/json" hidden /></label>
+          </div>
+          <div class="wg-tools-spacer" aria-hidden="true"></div>
+          <!-- Toolbar toggle button (always visible) -->
+          <button id="wg-toolbar-toggle" class="wg-toolbar-toggle" aria-label="Afficher les outils" aria-pressed="false" title="Outils widgets">⋮</button>
         </div>
         <div id="wg-grid" class="wg-grid" aria-label="Grille widgets" role="grid"></div>
       </section>
@@ -64,27 +121,33 @@
       <button class="wg-panel-close" aria-label="Fermer" id="wg-panel-close"></button>
     </div>
     <div class="wg-panel-content" id="wg-panel-content">
-      <!-- Widget types will be populated dynamically based on size -->
     </div>
   </aside>
 
-  <!-- Modal Add Item -->
-  <dialog id="add-modal" class="add-modal">
-    <form method="dialog" id="add-form" class="add-form">
-      <h3>Ajouter un anime</h3>
-      <label class="field">
-        <span>Nom</span>
-        <input name="name" id="add-name" required maxlength="120" />
-      </label>
-      <label class="field">
-        <span>Lien (optionnel)</span>
-        <input name="link" id="add-link" placeholder="https://..." />
-      </label>
-      <div class="form-actions">
-        <button type="submit" class="btn-primary">Ajouter</button>
-        <button type="button" id="cancel-add" class="btn-secondary">Annuler</button>
+  <!-- Edit List Modal -->
+  <dialog id="edit-list-modal" class="list-modal" aria-labelledby="edit-list-modal-title">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h2 id="edit-list-modal-title" class="modal-title">Modifier la liste</h2>
+        <button id="edit-list-cancel" class="modal-close" aria-label="Fermer" type="button">×</button>
       </div>
-    </form>
+      <form id="edit-list-form" class="modal-form">
+        <div class="form-field">
+          <label for="edit-list-name">Nom de la liste</label>
+          <input type="text" id="edit-list-name" name="name" placeholder="Ex: À voir" required maxlength="30" />
+        </div>
+        <div class="form-field">
+          <label for="edit-list-description">Description</label>
+          <input type="text" id="edit-list-description" name="description" placeholder="Description de la liste" maxlength="100" />
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="edit-list-cancel-btn" class="modal-btn modal-btn-secondary">Annuler</button>
+          <button type="submit" class="modal-btn modal-btn-primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
   </dialog>
+
 </body>
+
 </html>

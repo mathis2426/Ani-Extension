@@ -1,17 +1,6 @@
 // Widget type selection panel
 
-export const WIDGET_TYPES = {
-  clock: { name: 'Horloge', icon: '🕐', minW: 2, minH: 2, render: (w) => `<div style="font-size:24px;font-weight:600;">${new Date().toLocaleTimeString()}</div>` },
-  calendar: { name: 'Calendrier', icon: '📅', minW: 2, minH: 2, render: (w) => `<div style="font-size:18px;font-weight:600;">${new Date().toLocaleDateString()}</div>` },
-  stats: { name: 'Statistiques', icon: '📊', minW: 4, minH: 2, render: (w) => '<div>Statistiques</div>' },
-  recentAnime: { name: 'Récents', icon: '📺', minW: 2, minH: 2, render: (w) => '<div>Animés récents</div>' },
-  progress: { name: 'Progression', icon: '📈', minW: 3, minH: 2, render: (w) => '<div>Progression</div>' },
-  favorites: { name: 'Favoris', icon: '⭐', minW: 2, minH: 3, render: (w) => '<div>Favoris</div>' },
-  search: { name: 'Recherche', icon: '🔍', minW: 4, minH: 1, render: (w) => '<input type="text" placeholder="Rechercher..." style="width:100%;padding:8px;background:#333;border:1px solid #444;border-radius:6px;color:#fff;">' },
-  quote: { name: 'Citation', icon: '💬', minW: 3, minH: 2, render: (w) => '<div style="font-style:italic;opacity:.8;">"Une citation inspirante"</div>' },
-  weather: { name: 'Météo', icon: '🌤️', minW: 2, minH: 2, render: (w) => '<div>☀️ 22°C</div>' },
-  notes: { name: 'Notes', icon: '📝', minW: 2, minH: 2, render: (w) => '<textarea style="width:100%;height:100%;background:#333;border:1px solid #444;border-radius:6px;color:#fff;padding:8px;resize:none;">Notes...</textarea>' },
-};
+import { WIDGET_TYPES } from './types/index.js';
 
 let currentWidgetForPanel = null;
 

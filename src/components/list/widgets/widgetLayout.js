@@ -48,57 +48,13 @@ export function resolveHwCollisionsCascade(active, hwLayout, moveDir = 'right') 
   }
 }
 
+// Désactivé: on ne veut plus de "packing" automatique qui déplace d'autres widgets
 export function packHwLayout(hwLayout) {
-  // Apple-style packing: left-to-right, top-to-bottom, always stick to left
-  const sorted = [...hwLayout].sort((a, b) => (a.row - b.row) || (a.col - b.col));
-  
-  for (const w of sorted) {
-    let bestPos = { col: w.col, row: w.row };
-    let found = false;
-    
-    // Scan from top-left: row by row, column by column
-    for (let r = 1; r <= w.row && !found; r++) {
-      for (let c = 1; c <= HW_COLS - w.w + 1; c++) {
-        const test = { col: c, row: r, w: w.w, h: w.h };
-        const collides = hwLayout.some(o => o !== w && hwOverlap(test, o));
-        if (!collides) {
-          bestPos = { col: c, row: r };
-          found = true;
-          break;
-        }
-      }
-    }
-    
-    w.col = bestPos.col;
-    w.row = bestPos.row;
-  }
+  return hwLayout;
 }
 
 export function packHwLayoutLive(active, hwLayout) {
-  // Apple-style packing for live preview: same as packHwLayout but excluding active widget
-  const others = hwLayout.filter(x => x !== active);
-  const sorted = [...others].sort((a, b) => (a.row - b.row) || (a.col - b.col));
-  
-  for (const w of sorted) {
-    let bestPos = { col: w.col, row: w.row };
-    let found = false;
-    
-    for (let r = 1; r <= w.row && !found; r++) {
-      for (let c = 1; c <= HW_COLS - w.w + 1; c++) {
-        const test = { col: c, row: r, w: w.w, h: w.h };
-        const collidesWithOthers = others.some(o => o !== w && hwOverlap(test, o));
-        const collidesWithActive = hwOverlap(test, active);
-        if (!collidesWithOthers && !collidesWithActive) {
-          bestPos = { col: c, row: r };
-          found = true;
-          break;
-        }
-      }
-    }
-    
-    w.col = bestPos.col;
-    w.row = bestPos.row;
-  }
+  return hwLayout;
 }
 
 export function findHwFirstSpot(w, h, hwLayout) {

@@ -38,6 +38,10 @@ export function setActiveNav() {
   // toggle home section visibility
   const homeSection = document.getElementById("home-section");
   if (homeSection) homeSection.hidden = state.selected !== "home";
+
+  // toggle list toolbar visibility (only when not on home)
+  const listSection = document.getElementById('list-section');
+  if(listSection) listSection.hidden = state.selected === 'home';
 }
 
 export function renderList() {
@@ -51,7 +55,7 @@ export function renderList() {
     if (emptyEl) emptyEl.hidden = true;
     return;
   }
-
+  console.log("Rendering list:", state.popupData, state.aniLists, state.selected);
   let items = [];
   if (state.selected === "all") {
     items = state.popupData.map((a) => ({
@@ -64,7 +68,14 @@ export function renderList() {
       notif: !!a.notif,
     }));
   } else {
-    items = (state.aniLists[state.selected] || []).map((e) => ({ name: e.name, link: e.link }));
+    items = (state.aniLists[state.selected] || []).map((e) => ({ 
+      name: e.name, 
+      link: e.link,
+      episode: e.episode,
+      saison: e.saison,
+      currentEp: e.currentEp,
+      totalEp: e.totalEp
+    }));
   }
 
   if (term) {
@@ -73,6 +84,25 @@ export function renderList() {
       (a.title || "").toLowerCase().includes(term)
     );
   }
+
+  // Apply sorting based on state.listSort
+  const sort = state.listSort;
+  const nameKey = (obj) => (obj.name || obj.title || '').toLowerCase();
+  if(sort === 'name-asc') items.sort((a,b)=> nameKey(a).localeCompare(nameKey(b)));
+  else if(sort === 'name-desc') items.sort((a,b)=> nameKey(b).localeCompare(nameKey(a)));
+  else if(sort === 'progress') {
+    // Sort descending by progress ratio (only items with duration)
+    items.sort((a,b)=> {
+      const pa = a.duration ? (Number(a.currentTime||0)/Math.max(1,Number(a.duration))) : -1;
+      const pb = b.duration ? (Number(b.currentTime||0)/Math.max(1,Number(b.duration))) : -1;
+      return pb - pa; // highest first
+    });
+  } else if(sort === 'recent') {
+    // We don't have a timestamp; keep original order (fallback)
+  }
+
+  // Update list display mode class
+  listEl.classList.toggle('grid-mode', state.displayMode === 'grid');
 
   if (!items.length) {
     emptyEl.hidden = false;
@@ -93,7 +123,12 @@ function createListItem(anime) {
 
   const progress = anime.duration ? (Number(anime.currentTime || 0) / Math.max(1, Number(anime.duration))) * 100 : null;
   const epText = anime.episode ? (anime.title ? `Ep ${anime.episode} - ${anime.title}` : `Episode ${anime.episode}`) : null;
-  const fake = fakeAnimeInfo(anime.name || anime.title || anime.link || "");
+  
+  // Use real data instead of fake info
+  const hasRealInfo = anime.saison || anime.currentEp || anime.totalEp;
+  const saisonText = anime.saison ? `Saison ${anime.saison}` : null;
+  const epInfoText = (anime.currentEp || anime.totalEp) ? 
+    `${anime.currentEp || 0}/${anime.totalEp || '?'} épisodes` : null;
 
   item.innerHTML = `
     <div class="item-top">
@@ -109,9 +144,11 @@ function createListItem(anime) {
         <div class="dropdown" role="menu" hidden></div>
       </div>
     </div>
-    <div class="item-info">
-      <span>Saisons: <strong>${fake.seasons}</strong> • Épisodes: <strong>${fake.episodes}</strong></span>
-    </div>
+    ${hasRealInfo ? `<div class="item-info">
+      ${saisonText ? `<span>${saisonText}</span>` : ''}
+      ${saisonText && epInfoText ? '<span> • </span>' : ''}
+      ${epInfoText ? `<span>${epInfoText}</span>` : ''}
+    </div>` : ''}
     <div class="item-meta">
       ${epText ? `<span>${epText}</span>` : ""}
       ${progress != null ? `<span>Progression: ${secondsToHMS(anime.currentTime)}/${secondsToHMS(anime.duration)} (${progress.toFixed(0)}%)</span>` : ""}

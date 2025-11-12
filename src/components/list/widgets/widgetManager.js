@@ -1,8 +1,9 @@
 // Main widget manager - orchestrates all widget functionality
 
 import { HW_COLS, computeSquareRowHeight, placeHw, packHwLayout, resolveHwCollisionsCascade, findHwFirstSpot, sanitizeHwLayout, hwApplyDelta } from './widgetLayout.js';
-import { attachHwInteractions, setupLongPress, startHwPointer, onHwPointerMove, onHwPointerUp, onHwPointerCancel, setHwPointer } from './widgetInteractions.js';
-import { WIDGET_TYPES, openWidgetPanel, closeWidgetPanel, bindPanelControls } from './widgetPanel.js';
+import { attachHwInteractions, setupLongPress, startHwPointer, onHwPointerMove, onHwPointerUp, onHwPointerCancel, setHwPointer, forceEndHwDrag } from './widgetInteractions.js';
+import { openWidgetPanel, closeWidgetPanel, bindPanelControls } from './widgetPanel.js';
+import { WIDGET_TYPES } from './types/index.js';
 
 const HW_STORAGE_KEY = 'ani_home_widgets_v1';
 let hwLayout = loadHwLayout() || [];
@@ -31,6 +32,31 @@ export function initHomeWidgets() {
   window.addEventListener('pointermove', (e) => onHwPointerMove(e, hwLayout, updateAllWidgetPositions));
   window.addEventListener('pointerup', (e) => onHwPointerUp(e, hwLayout, updateAllWidgetPositions, saveHwLayout));
   window.addEventListener('pointercancel', onHwPointerCancel);
+  // Fallbacks for missed pointer events (mouse/touch/escape/window blur)
+  window.addEventListener('mouseup', forceEndHwDrag);
+  window.addEventListener('touchend', forceEndHwDrag, { passive: true });
+  window.addEventListener('blur', forceEndHwDrag);
+  window.addEventListener('mouseleave', forceEndHwDrag);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') forceEndHwDrag(); });
+  // Hide toolbar on Escape and exit edit mode
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const sec = document.getElementById('home-section');
+      const t = document.getElementById('wg-toolbar-toggle');
+      const bar = document.getElementById('wg-toolbar');
+      if (sec?.classList.contains('widgets-tools-visible')) {
+        sec.classList.remove('widgets-tools-visible');
+        t?.setAttribute('aria-pressed', 'false');
+        bar?.setAttribute('aria-hidden', 'true');
+        // Exit edit mode when hiding toolbar
+        if (hwEdit) {
+          hwEdit = false;
+          document.getElementById('wg-toggle-edit')?.setAttribute('aria-pressed', 'false');
+          renderHomeWidgets();
+        }
+      }
+    }
+  });
   
   // Listen for delete events
   document.addEventListener('widget-delete', (e) => {
@@ -115,7 +141,14 @@ function createHwNode(w) {
   el.dataset.id = w.id;
   placeHw(el, w);
   
-  let content = `<div class="wg-widget-content" style="${hwEdit ? 'cursor:grab;' : ''}">${w.content || ''}</div>`;
+  // Generate content dynamically based on current widget size
+  let widgetContent = '';
+  if (w.type && w.type !== 'empty' && WIDGET_TYPES[w.type]) {
+    const widgetType = WIDGET_TYPES[w.type];
+    widgetContent = widgetType.render(w);
+  }
+  
+  let content = `<div class="wg-widget-content" style="${hwEdit ? 'cursor:grab;' : ''}">${widgetContent}</div>`;
   
   if (hwEdit) {
     content += `
@@ -173,6 +206,15 @@ function createHwNode(w) {
 }
 
 function handleLongPress(w, el, pressStartX, pressStartY, pressStartEvent) {
+  // Reveal toolbar on long press for immediate edit context
+  const homeSec = document.getElementById('home-section');
+  const toggleBtn = document.getElementById('wg-toolbar-toggle');
+  const bar = document.getElementById('wg-toolbar');
+  if (homeSec && !homeSec.classList.contains('widgets-tools-visible')) {
+    homeSec.classList.add('widgets-tools-visible');
+    toggleBtn?.setAttribute('aria-pressed', 'true');
+    bar?.setAttribute('aria-hidden', 'false');
+  }
   hwEdit = true;
   document.getElementById('wg-toggle-edit').setAttribute('aria-pressed', 'true');
   renderHomeWidgets();
@@ -228,9 +270,12 @@ function selectWidgetType(typeKey, widget) {
   const type = WIDGET_TYPES[typeKey];
   if (!type) return;
   
+  // Store widget type key instead of rendered content
+  // This allows dynamic re-rendering on resize
   widget.type = typeKey;
   widget.title = type.name;
-  widget.content = type.render(widget);
+  // Remove static content storage - will be generated dynamically
+  delete widget.content;
   
   saveHwLayout();
   renderHomeWidgets();
@@ -239,6 +284,10 @@ function selectWidgetType(typeKey, widget) {
 function updateAllWidgetPositions(activeId) {
   const grid = document.getElementById('wg-grid');
   if (!grid) return;
+  // When dragging, avoid re-layout and FLIP to prevent scroll jitter
+  if (activeId) {
+    return;
+  }
   const nodes = Array.from(grid.querySelectorAll('.wg-widget'));
   
   const firstRects = new Map();
@@ -285,6 +334,32 @@ function bindHomeToolbar() {
     if (f) importHwJson(f);
     e.target.value = '';
   });
+  // Toolbar visibility toggle + edit mode activation
+  const toolbarToggle = g('wg-toolbar-toggle');
+  if (toolbarToggle) {
+    toolbarToggle.addEventListener('click', () => {
+      const sec = document.getElementById('home-section');
+      if (!sec) return;
+      const willShow = !sec.classList.contains('widgets-tools-visible');
+      sec.classList.toggle('widgets-tools-visible', willShow);
+      toolbarToggle.setAttribute('aria-pressed', String(willShow));
+      const bar = document.getElementById('wg-toolbar');
+      bar?.setAttribute('aria-hidden', String(!willShow));
+      
+      // Automatically enable edit mode when opening toolbar
+      if (willShow && !hwEdit) {
+        hwEdit = true;
+        g('wg-toggle-edit')?.setAttribute('aria-pressed', 'true');
+        renderHomeWidgets();
+      }
+      // Disable edit mode when closing toolbar
+      if (!willShow && hwEdit) {
+        hwEdit = false;
+        g('wg-toggle-edit')?.setAttribute('aria-pressed', 'false');
+        renderHomeWidgets();
+      }
+    });
+  }
   
   bindPanelControls();
 }
