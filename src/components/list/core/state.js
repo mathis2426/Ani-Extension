@@ -55,3 +55,15 @@ export function addCustomList(list) {
   state.customLists.push(list);
   return list;
 }
+
+export function removeCustomList(listId) {
+  state.customLists = state.customLists.filter(list => list.id !== listId);
+  // Also remove from aniLists if it exists
+  if (state.aniLists[listId]) {
+    delete state.aniLists[listId];
+  }
+  // Remove from labels
+  if (LIST_LABELS[listId]) {
+    delete LIST_LABELS[listId];
+  }
+}

@@ -83,3 +83,10 @@ export function moveItem(fromKey, toKey, link, name) {
   persistAniLists(next);
   renderList();
 }
+
+export function removeListFromAniLists(listId) {
+  const next = { ...state.aniLists };
+  delete next[listId];
+  state.aniLists = next;
+  persistAniLists(next);
+}

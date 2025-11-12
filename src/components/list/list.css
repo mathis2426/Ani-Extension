@@ -1115,4 +1115,14 @@ body {
   background: #3a3a3a;
 }
 
+.modal-btn-danger {
+  background: #c24141;
+  color: #fff;
+  border: 1px solid #a53535;
+}
+
+.modal-btn-danger:hover {
+  background: #d04949;
+}
+
 /* Widgets Section removed */

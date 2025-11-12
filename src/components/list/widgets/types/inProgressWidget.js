@@ -8,13 +8,36 @@ import { state } from '../../core/state.js';
  * @returns {string} HTML string for widget content
  */
 function renderInProgressWidget(w) {
-  const inProgress = state.aniLists?.inprogress || [];
+  const rawInProgress = state.aniLists?.inprogress || [];
+  
+  // Enrich with popupData to get full info (episode, saison, episode, totalEp, etc.)
+  const inProgress = rawInProgress.map(anime => {
+    const fullData = state.popupData?.find(p => 
+      p.link === anime.link || 
+      (p.name && anime.name && p.name.trim().toLowerCase() === anime.name.trim().toLowerCase())
+    );
+    
+    return {
+      name: anime.name,
+      link: anime.link,
+      episode: fullData?.episode || anime.episode,
+      saison: fullData?.saison || anime.saison,
+      episode: fullData?.episode || anime.episode || 0,
+      totalEp: fullData?.totalEp || anime.totalEp || 0
+    };
+  });
+  
   const area = w.w * w.h;
-  const isCompact = w.w === 2 && w.h === 2;
-  const isMedium = (w.w === 3 || w.w === 4) && w.h === 2;
-  const isLarge = area >= 8;
-
-  console.log('Rendering In Progress Widget:', { w, inProgress, isCompact, isMedium, isLarge });
+  
+  // Define layout variants based on width and height
+  const isVeryCompact = w.w === 2 && w.h === 2;           // 2×2: Just counter
+  const isSmallWide = w.w >= 3 && w.h === 1;              // 3×1, 4×1: Horizontal minimal
+  const isNarrow = w.w === 2 && w.h >= 3;                 // 2×3+: Vertical list
+  const isMediumWide = w.w >= 4 && w.h === 2;             // 4×2, 5×2: Horizontal cards
+  const isMedium = w.w === 3 && w.h === 2;                // 3×2: Small vertical cards
+  const isWide = w.w >= 6 && w.h >= 2;                    // 6×2+: Wide horizontal layout
+  const isLarge = area >= 8 && !isWide;                   // 4×3+: Grid (not wide)
+  
   // Empty state
   if (inProgress.length === 0) {
     return `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;opacity:.6;text-align:center;padding:12px;">
@@ -22,52 +45,171 @@ function renderInProgressWidget(w) {
     </div>`;
   }
   
-  // Compact 2×2: show count + first anime title
-  if (isCompact) {
-    const first = inProgress[0];
-    return `<div style="display:flex;flex-direction:column;height:100%;width:100%;padding:8px;">
+  // Very Compact 2×2: Just counter badge + label
+  if (isVeryCompact) {
+    return `<div style="display:flex;flex-direction:column;height:100%;width:100%;padding:8px;justify-content:space-between;">
       <div style="display:flex;align-items:center;gap:6px;font-size:11px;opacity:.7;font-weight:600;justify-content:flex-end;">
         <span style="background:#7b5ac2;padding:2px 6px;border-radius:4px;font-size:10px;">${inProgress.length}</span>
       </div>
-      <div style="flex:1;display:flex;align-items:center;font-size:13px;font-weight:600;line-height:1.3;overflow:hidden;text-overflow:ellipsis;">
-        Anime en cours
+      <div style="display:flex;align-items:center;font-size:13px;font-weight:600;line-height:1.3;">
+        En cours
       </div>
     </div>`;
   }
   
-  // Medium 3×2 or 4×2: show 2-3 anime cards
-  if (isMedium) {
-    const limit = w.w >= 4 ? 3 : 2;
+  // Small Wide 3×1, 4×1: Horizontal minimal chips
+  if (isSmallWide) {
+    const limit = w.w >= 4 ? 2 : 1;
+    const items = inProgress.slice(0, limit);
+    return `<div style="display:flex;height:100%;padding:8px;gap:6px;align-items:center;overflow:hidden;">
+      <div style="background:#7b5ac2;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;">
+        ${inProgress.length}
+      </div>
+      ${items.map(anime => `
+        <div style="flex:1;min-width:0;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:6px 10px;overflow:hidden;">
+          <div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            ${anime.name || 'Anime'}
+          </div>
+        </div>
+      `).join('')}
+    </div>`;
+  }
+  
+  // Narrow 2×3+: Vertical list
+  if (isNarrow) {
+    const limit = Math.min(inProgress.length, Math.floor(w.h * 1.5));
     const items = inProgress.slice(0, limit);
     return `<div style="display:flex;flex-direction:column;height:100%;padding:10px;gap:8px;overflow:hidden;">
       <div style="display:flex;align-items:center;gap:6px;font-size:11px;opacity:.7;font-weight:600;">
-        <span>📺</span>
-        <span>EN COURS (${inProgress.length})</span>
+        <span style="background:#7b5ac2;padding:2px 6px;border-radius:4px;font-size:10px;">${inProgress.length}</span>
       </div>
       <div style="flex:1;display:flex;flex-direction:column;gap:6px;overflow-y:auto;">
-        ${items.map(anime => `
-          <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px;display:flex;align-items:center;gap:8px;min-height:0;">
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+        ${items.map(anime => {
+          const progress = anime.totalEp > 0 ? Math.round((anime.episode / anime.totalEp) * 100) : 0;
+          return `
+            <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px;min-height:0;">
+              <div style="font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:4px;">
                 ${anime.name || 'Anime'}
               </div>
-              <div style="font-size:10px;opacity:.6;margin-top:2px;">
-                ${anime.currentEp || 0}/${anime.totalEp || '?'} épisodes
+              <div style="font-size:9px;opacity:.6;margin-bottom:4px;">
+                ${anime.episode || 0}/${anime.totalEp || '?'}
+              </div>
+              <div style="background:rgba(255,255,255,.1);height:3px;border-radius:2px;overflow:hidden;">
+                <div style="background:#7b5ac2;height:100%;width:${progress}%;"></div>
               </div>
             </div>
-          </div>
-        `).join('')}
+          `;
+        }).join('')}
       </div>
     </div>`;
   }
   
-  // Large 4×3+: detailed grid with progress bars
+  // Medium 3×2: Vertical cards
+  if (isMedium) {
+    const items = inProgress.slice(0, 2);
+    return `<div style="display:flex;flex-direction:column;height:100%;padding:10px;gap:8px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;opacity:.7;font-weight:600;">
+        <span>EN COURS (${inProgress.length})</span>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px;overflow-y:auto;">
+        ${items.map(anime => {
+          const progress = anime.totalEp > 0 ? Math.round((anime.episode / anime.totalEp) * 100) : 0;
+          return `
+            <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:4px;">
+              <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                ${anime.name || 'Anime'}
+              </div>
+              <div style="font-size:10px;opacity:.6;">
+                ${anime.episode || 0}/${anime.totalEp || '?'} épisodes
+              </div>
+              <div style="background:rgba(255,255,255,.1);height:4px;border-radius:2px;overflow:hidden;margin-top:2px;">
+                <div style="background:#7b5ac2;height:100%;width:${progress}%;transition:width .3s;"></div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+  
+  // Medium Wide 4×2, 5×2: Horizontal cards in row
+  if (isMediumWide) {
+    const limit = Math.min(inProgress.length, w.w - 1);
+    const items = inProgress.slice(0, limit);
+    return `<div style="display:flex;flex-direction:column;height:100%;padding:10px;gap:8px;overflow:hidden;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;">
+          <span>En cours</span>
+        </div>
+        <div style="background:#7b5ac2;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;">
+          ${inProgress.length}
+        </div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:row;gap:8px;overflow-x:auto;overflow-y:hidden;">
+        ${items.map(anime => {
+          const progress = anime.totalEp > 0 ? Math.round((anime.episode / anime.totalEp) * 100) : 0;
+          return `
+            <div style="flex:0 0 auto;width:140px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;transition:background .15s;" 
+                 onmouseover="this.style.background='rgba(255,255,255,.08)'" 
+                 onmouseout="this.style.background='rgba(255,255,255,.05)'">
+              <div style="font-size:12px;font-weight:650;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">
+                ${anime.name || 'Anime'}
+              </div>
+              <div style="font-size:10px;opacity:.6;">
+                ${anime.episode || 0} / ${anime.totalEp || '?'}
+              </div>
+              <div style="background:rgba(255,255,255,.1);height:4px;border-radius:2px;overflow:hidden;margin-top:auto;">
+                <div style="background:#7b5ac2;height:100%;width:${progress}%;transition:width .3s;"></div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+  
+  // Wide 6×2+: Full horizontal scrollable layout
+  if (isWide) {
+    const items = inProgress;
+    return `<div style="display:flex;flex-direction:column;height:100%;padding:12px;gap:10px;overflow:hidden;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;">
+          <span>Animés en cours</span>
+        </div>
+        <div style="background:#7b5ac2;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600;">
+          ${inProgress.length}
+        </div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:row;gap:10px;overflow-x:auto;overflow-y:hidden;padding-bottom:4px;">
+        ${items.map(anime => {
+          const progress = anime.totalEp > 0 ? Math.round((anime.episode / anime.totalEp) * 100) : 0;
+          return `
+            <div style="flex:0 0 auto;width:160px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;transition:background .15s,transform .15s;" 
+                 onmouseover="this.style.background='rgba(255,255,255,.08)';this.style.transform='translateY(-2px)'" 
+                 onmouseout="this.style.background='rgba(255,255,255,.05)';this.style.transform=''">
+              <div style="font-size:13px;font-weight:650;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:36px;">
+                ${anime.name || 'Anime'}
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;opacity:.7;">
+                <span>Episode</span>
+                <span style="font-weight:600;">${anime.episode || 0}/${anime.totalEp || '?'}</span>
+              </div>
+              <div style="background:rgba(255,255,255,.1);height:5px;border-radius:3px;overflow:hidden;margin-top:auto;">
+                <div style="background:#7b5ac2;height:100%;width:${progress}%;transition:width .3s;"></div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+  
+  // Large 4×3+: Grid layout (default fallback)
   const limit = Math.min(inProgress.length, Math.floor(area / 2));
   const items = inProgress.slice(0, limit);
   return `<div style="display:flex;flex-direction:column;height:100%;padding:12px;gap:10px;overflow:hidden;">
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;">
-        <span>📺</span>
         <span>Animés en cours</span>
       </div>
       <div style="background:#7b5ac2;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;">
@@ -76,7 +218,7 @@ function renderInProgressWidget(w) {
     </div>
     <div style="flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;overflow-y:auto;align-content:start;">
       ${items.map(anime => {
-        const progress = anime.totalEp > 0 ? Math.round((anime.currentEp / anime.totalEp) * 100) : 0;
+        const progress = anime.totalEp > 0 ? Math.round((anime.episode / anime.totalEp) * 100) : 0;
         return `
           <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;transition:background .15s;" 
                onmouseover="this.style.background='rgba(255,255,255,.08)'" 
@@ -85,7 +227,7 @@ function renderInProgressWidget(w) {
               ${anime.name || 'Anime'}
             </div>
             <div style="font-size:10px;opacity:.6;">
-              ${anime.currentEp || 0} / ${anime.totalEp || '?'}
+              ${anime.episode || 0} / ${anime.totalEp || '?'}
             </div>
             <div style="background:rgba(255,255,255,.1);height:4px;border-radius:2px;overflow:hidden;margin-top:2px;">
               <div style="background:#7b5ac2;height:100%;width:${progress}%;transition:width .3s;"></div>
@@ -100,7 +242,7 @@ function renderInProgressWidget(w) {
 export default {
   key: 'inProgress',
   name: 'En cours',
-  icon: '📺',
+  icon: '▶',
   minW: 2,
   minH: 2,
   render: renderInProgressWidget

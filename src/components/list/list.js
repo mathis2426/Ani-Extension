@@ -1,9 +1,9 @@
 // List page main orchestrator - imports and coordinates all modules
 
-import { state, setSelectedList, setDisplayMode, setListSort, addCustomList, LIST_LABELS } from './core/state.js';
+import { state, setSelectedList, setDisplayMode, setListSort, addCustomList, removeCustomList, LIST_LABELS } from './core/state.js';
 import { loadAllData, setupStorageListener, persistCustomLists } from './core/storage.js';
 import { renderList, setActiveNav, closeOpenDropdown } from './lists/listRenderer.js';
-import { addToList, syncPopupToInprogress } from './lists/listActions.js';
+import { addToList, syncPopupToInprogress, removeListFromAniLists } from './lists/listActions.js';
 import { initHomeWidgets, getHwEdit, setHwEdit, renderHomeWidgets } from './widgets/widgetManager.js';
 
 function createNewList() {
@@ -36,6 +36,27 @@ function createNewList() {
   updateListToolbarUI();
   updateEditButton();
   renderList();
+}
+
+function deleteCustomList(listId) {
+  // Remove from state
+  removeCustomList(listId);
+  
+  // Persist changes
+  persistCustomLists(state.customLists);
+  removeListFromAniLists(listId);
+  
+  // Re-render sidebar
+  renderCustomListsInSidebar();
+  
+  // Navigate back to home if we were on the deleted list
+  if (state.selected === listId) {
+    setSelectedList('home');
+    setActiveNav();
+    updateListToolbarUI();
+    updateEditButton();
+    renderList();
+  }
 }
 
 function renderCustomListsInSidebar() {
@@ -138,6 +159,20 @@ function initUI() {
     if (cancelBtn) {
       cancelBtn.addEventListener("click", () => {
         editModal.close();
+      });
+    }
+
+    // Delete list button
+    const deleteBtn = document.getElementById("delete-list-btn");
+    if (deleteBtn) {
+      deleteBtn.addEventListener("click", () => {
+        const listId = editModal.dataset.listId;
+        const list = state.customLists.find(l => l.id === listId);
+        
+        if (list && confirm(`Voulez-vous vraiment supprimer la liste "${list.name}" ?`)) {
+          deleteCustomList(listId);
+          editModal.close();
+        }
       });
     }
 

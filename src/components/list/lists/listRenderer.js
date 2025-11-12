@@ -68,14 +68,29 @@ export function renderList() {
       notif: !!a.notif,
     }));
   } else {
-    items = (state.aniLists[state.selected] || []).map((e) => ({ 
-      name: e.name, 
-      link: e.link,
-      episode: e.episode,
-      saison: e.saison,
-      currentEp: e.currentEp,
-      totalEp: e.totalEp
-    }));
+    // Get items from aniLists and enrich with popupData
+    const listItems = state.aniLists[state.selected] || [];
+    items = listItems.map((e) => {
+      // Find matching anime in popupData to get full info
+      const fullData = state.popupData.find(p => 
+        p.link === e.link || 
+        (p.name && e.name && p.name.trim().toLowerCase() === e.name.trim().toLowerCase())
+      );
+      
+      // Merge: use popupData info if available, fallback to stored data
+      return {
+        name: e.name,
+        link: e.link,
+        episode: fullData?.episode || e.episode,
+        title: fullData?.title || e.title,
+        saison: fullData?.saison || e.saison,
+        currentEp: fullData?.currentEp || e.currentEp,
+        totalEp: fullData?.totalEp || e.totalEp,
+        currentTime: fullData?.currentTime || e.currentTime,
+        duration: fullData?.duration || e.duration,
+        notif: fullData?.notif || e.notif
+      };
+    });
   }
 
   if (term) {
