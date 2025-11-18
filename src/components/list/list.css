@@ -667,6 +667,40 @@ body {
   padding-right: 50px;
 }
 
+/* ===== Mixte Mode ===== */
+.list.mixte-mode {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+}
+.list.mixte-mode .item {
+  transition: box-shadow .18s, transform .18s, border-color .18s;
+  min-height: 120px;
+}
+.list.mixte-mode .item-top {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+}
+.list.mixte-mode .item-title {
+  font-size: 15px;
+  font-weight: 650;
+}
+.list.mixte-mode .item-meta {
+  font-size: 11px;
+}
+.list.mixte-mode .item-info {
+  margin-top: 8px;
+}
+.list.mixte-mode .item-progress {
+  margin-top: 10px;
+}
+/* Keep kebab visible but compact in mixte mode */
+.list.mixte-mode .item-top-actions {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 .title {
   margin: 0;
   font-size: 22px;
@@ -750,19 +784,132 @@ body {
 
 .item {
   background: #2b2b2b;
-  border: 1px solid #333;
-  border-radius: 14px;
-  padding: 14px 16px 14px;
+  border-radius: 6px;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  align-items: center;
   position: relative;
   transition: box-shadow .18s, border-color .18s, transform .18s;
+  z-index: 1;
+  height: 130px;
 }
 
 .item:hover {
   box-shadow: 0 0 0 2px var(--color-primary-purple, #7b5ac2);
-  transform: translateY(-2px);
+  z-index: 10;
+}
+
+.item-content {
+  flex: 1;
+  padding: 14px 0px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #ff9800;
+  font-weight: 500;
+}
+
+.item-progress-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-right: 80px;
+}
+
+.item-circular-progress {
+  position: relative;
+  width: 70px;
+  height: 70px;
+}
+
+.progress-ring {
+  transform: rotate(-90deg);
+}
+
+.progress-ring-circle-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 6;
+}
+
+.progress-ring-circle {
+  fill: none;
+  stroke: #a78bfa;
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.35s;
+}
+
+.progress-value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  font-weight: 650;
+  color: #fff;
+}
+
+.item-play-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .2s, transform .15s;
+}
+
+.item-play-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
+}
+
+.item-play-btn:active {
+  transform: scale(0.95);
+}
+
+.item-image-container {
+  width: 35%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 6px 0px 0 6px;
+  position: relative;
+  align-self: stretch;
+}
+
+.item-image-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(to left, #2b2b2b 20%, rgba(43, 43, 43, 0.7) 50%, transparent 100%);
+  pointer-events: none;
+}
+
+.item-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .item-top {
@@ -770,6 +917,13 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+}
+
+.item-top-actions {
+  position: absolute !important;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
 }
 
 .item-title {
@@ -804,8 +958,8 @@ body {
 .kebab {
   background: #353535;
   border: 1px solid #444;
-  width: 34px;
-  height: 34px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border-radius: 8px;
   cursor: pointer;
@@ -814,6 +968,7 @@ body {
   justify-content: center;
   color: #cfcfcf;
   position: relative;
+  z-index: 20;
 }
 
 .kebab:hover {
@@ -821,13 +976,13 @@ body {
 }
 
 .kebab svg {
-  width: 18px;
-  height: 18px;
+  width: 12px;
+  height: 12px;
 }
 
 .dropdown {
   position: absolute;
-  top: 40px;
+  top: 25px;
   right: 0;
   background: #2c2c2c;
   border: 1px solid #3d3d3d;
@@ -836,7 +991,7 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 180px;
-  z-index: 20;
+  z-index: 200;
   box-shadow: 0 6px 24px -6px rgba(0, 0, 0, .55);
 }
 

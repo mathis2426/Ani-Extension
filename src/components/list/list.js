@@ -210,8 +210,10 @@ function initUI() {
   }
 
   // List toolbar events
+
   const btnList = document.getElementById('btn-dispo-list');
   const btnGrid = document.getElementById('btn-dispo-grid');
+  const btnMixte = document.getElementById('btn-dispo-mixte');
   const sortSel = document.getElementById('lt-sort');
 
   if (btnList && btnGrid) {
@@ -222,6 +224,11 @@ function initUI() {
     });
     btnGrid.addEventListener('click', () => {
       setDisplayMode('grid');
+      updateListToolbarUI();
+      renderList();
+    });
+    btnMixte.addEventListener('click', () => {
+      setDisplayMode('mixte');
       updateListToolbarUI();
       renderList();
     });
@@ -239,11 +246,12 @@ function initUI() {
 function updateListToolbarUI() {
   const btnList = document.getElementById('btn-dispo-list');
   const btnGrid = document.getElementById('btn-dispo-grid');
+  const btnMixte = document.getElementById('btn-dispo-mixte');
   const sortSel = document.getElementById('lt-sort');
-  if (btnList && btnGrid) {
-    const isGrid = state.displayMode === 'grid';
-    btnList.setAttribute('aria-pressed', String(!isGrid));
-    btnGrid.setAttribute('aria-pressed', String(isGrid));
+  if (btnList && btnGrid && btnMixte) {
+    btnList.setAttribute('aria-pressed', String(state.displayMode === 'list'));
+    btnGrid.setAttribute('aria-pressed', String(state.displayMode === 'grid'));
+    btnMixte.setAttribute('aria-pressed', String(state.displayMode === 'mixte'));
   }
   if (sortSel) {
     sortSel.value = state.listSort;

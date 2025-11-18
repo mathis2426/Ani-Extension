@@ -39,7 +39,7 @@ export function setAniLists(lists) {
 }
 
 export function setDisplayMode(mode) {
-  if(mode === 'list' || mode === 'grid') state.displayMode = mode;
+  if(mode === 'list' || mode === 'grid' || mode === 'mixte') state.displayMode = mode;
 }
 
 export function setListSort(sort) {

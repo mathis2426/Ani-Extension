@@ -10,22 +10,6 @@ export function secondsToHMS(d) {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export function fakeAnimeInfo(name) {
-  const h = hashCode((name || "").toString());
-  const seasons = 1 + (Math.abs(h) % 6); // 1..6
-  const epsPerSeason = 10 + (Math.abs(Math.floor(h / 7)) % 15); // 10..24
-  return { seasons, episodes: seasons * epsPerSeason };
-}
-
-function hashCode(str) {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) {
-    h = (h << 5) - h + str.charCodeAt(i);
-    h |= 0; // 32-bit
-  }
-  return h;
-}
-
 export function setActiveNav() {
   const nav = document.getElementById("lists-nav");
   nav.querySelectorAll(".nav-item").forEach((el) => {
@@ -55,7 +39,6 @@ export function renderList() {
     if (emptyEl) emptyEl.hidden = true;
     return;
   }
-  console.log("Rendering list:", state.popupData, state.aniLists, state.selected);
   let items = [];
   if (state.selected === "all") {
     items = state.popupData.map((a) => ({
@@ -118,6 +101,7 @@ export function renderList() {
 
   // Update list display mode class
   listEl.classList.toggle('grid-mode', state.displayMode === 'grid');
+  listEl.classList.toggle('mixte-mode', state.displayMode === 'mixte');
 
   if (!items.length) {
     emptyEl.hidden = false;
@@ -146,27 +130,58 @@ function createListItem(anime) {
     `${anime.currentEp || 0}/${anime.totalEp || '?'} épisodes` : null;
 
   item.innerHTML = `
-    <div class="item-top">
-      <h2 class="item-title">${anime.name || "Sans titre"}</h2>
-      <div class="item-top-actions" style="position:relative;">
-        <button class="kebab" aria-haspopup="menu" aria-expanded="false" aria-label="Actions">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <circle cx="12" cy="5" r="2" fill="#cfcfcf"/>
-            <circle cx="12" cy="12" r="2" fill="#cfcfcf"/>
-            <circle cx="12" cy="19" r="2" fill="#cfcfcf"/>
+    <div class="item-image-container">
+      <img class="item-image" src="https://s4.anilist.co/file/anilistcdn/media/anime/banner/101922-33MtJGsUSxga.jpg" alt="${anime.name || 'No title'}">
+    </div>
+    <div class="item-content">
+      <div class="item-top">
+        <h2 class="item-title">${anime.name || "Sans titre"}</h2>
+        <div class="item-top-actions" style="position:relative;">
+          <button class="kebab" aria-haspopup="menu" aria-expanded="false" aria-label="Actions">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <circle cx="12" cy="5" r="2" fill="#cfcfcf"/>
+              <circle cx="12" cy="12" r="2" fill="#cfcfcf"/>
+              <circle cx="12" cy="19" r="2" fill="#cfcfcf"/>
+            </svg>
+          </button>
+          <div class="dropdown" role="menu" hidden></div>
+        </div>
+      </div>
+      <div class="item-meta">
+        ${anime.saison ? `<span>Saison ${anime.saison}</span>` : ''}
+        ${anime.saison && anime.episode ? '<span> | </span>' : ''}
+        ${anime.episode ? `<span>Episode ${anime.episode}</span>` : ''}
+      </div>
+      <div class="item-details">
+        ${hasRealInfo ? `<div class="item-info">
+          ${saisonText ? `<span>${saisonText}</span>` : ''}
+          ${saisonText && epInfoText ? '<span> | </span>' : ''}
+          ${epInfoText ? `<span>Episode ${anime.episode || 0}</span>` : ''}
+        </div>` : ''}
+        ${progress != null ? `<div class="item-status-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#ff9800">
+            <circle cx="12" cy="12" r="10"/>
           </svg>
-        </button>
-        <div class="dropdown" role="menu" hidden></div>
+          <span>En cours de visionnage</span>
+        </div>` : ''}
       </div>
     </div>
-    ${hasRealInfo ? `<div class="item-info">
-      ${saisonText ? `<span>${saisonText}</span>` : ''}
-      ${saisonText && epInfoText ? '<span> • </span>' : ''}
-      ${epInfoText ? `<span>${epInfoText}</span>` : ''}
-    </div>` : ''}
-    <div class="item-meta">
-      ${epText ? `<span>${epText}</span>` : ""}
-      ${progress != null ? `<span>Progression: ${secondsToHMS(anime.currentTime)}/${secondsToHMS(anime.duration)} (${progress.toFixed(0)}%)</span>` : ""}
+    <div class="item-progress-container">
+      ${progress != null ? `
+        <div class="item-circular-progress">
+          <svg class="progress-ring" width="70" height="70">
+            <circle class="progress-ring-circle-bg" cx="35" cy="35" r="28" />
+            <circle class="progress-ring-circle" cx="35" cy="35" r="28" 
+              style="stroke-dasharray: ${2 * Math.PI * 28}; stroke-dashoffset: ${2 * Math.PI * 28 * (1 - progress / 100)}" />
+          </svg>
+          <div class="progress-value">${progress.toFixed(0)}%</div>
+        </div>
+        <button class="item-play-btn" aria-label="Lire">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        </button>
+      ` : ''}
     </div>
   `;
 

@@ -25,6 +25,9 @@ document.addEventListener("DOMContentLoaded", () => {
       container.className = "content-list";
       container.setAttribute("data-link", anime.link);
       let episodeName = "";
+      if (anime.saison && anime.title) {
+        episodeName = `Saison ${anime.saison} - Ep ${anime.episode} - ${anime.title}`;
+      }
       if (anime.title) {
         episodeName = `Ep ${anime.episode} - ${anime.title}`;
       }
