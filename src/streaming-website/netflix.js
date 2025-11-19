@@ -17,7 +17,8 @@ function netflix(animeClass, callback) {
     createSubtitleButton();
     let targetNode = document.body;
     let config = { childList: true, subtree: true };
-    let videoListenersAdded = false; // Flag to ensure listeners are added only once
+    let currentVideoElement = null; // Track current video element
+    let currentUrl = location.href; // Track current URL to detect episode changes
     let autoSkipIntro = chrome.storage.sync.get(["settings"], (result) => {
         return result.netflixSettings?.autoSkip || false;
     });
@@ -31,6 +32,15 @@ function netflix(animeClass, callback) {
             if (mutation.type === "childList") {
                 let videoTitleElement = document.querySelector("[data-uia='video-title']");
                 let videoElement = document.querySelector("video");
+
+                // Detect episode change by URL or video element change
+                const urlChanged = location.href !== currentUrl;
+                const videoChanged = videoElement && videoElement !== currentVideoElement;
+
+                if (urlChanged) {
+                    currentUrl = location.href;
+                    currentVideoElement = null; // Reset video tracking on URL change
+                }
 
                 if (videoTitleElement) {
                     let h4Element = videoTitleElement.querySelector("h4");
@@ -51,8 +61,9 @@ function netflix(animeClass, callback) {
                     animeClass.lastUpdate = Date.now();
                 }
 
-                if (videoElement && !videoListenersAdded) {
-                    videoListenersAdded = true; // Mark that listeners have been added
+                // Add listeners to new video element (or if episode changed)
+                if (videoElement && (videoChanged || urlChanged)) {
+                    currentVideoElement = videoElement;
                     
                     animeClass.duration = videoElement.duration;
                     animeClass.currentTime = videoElement.currentTime;
@@ -75,13 +86,11 @@ function netflix(animeClass, callback) {
                             callback();
                         }
                     });
-                }
 
-                // Call callback only once when we have all essential info
-                if (animeClass.name && animeClass.title && animeClass.episode) {
-                    callback();
-                    observer.disconnect();
-                    break;
+                    // Send callback when new episode detected
+                    if (animeClass.name && animeClass.title && animeClass.episode) {
+                        callback();
+                    }
                 }
             }
         }

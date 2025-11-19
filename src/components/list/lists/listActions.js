@@ -11,51 +11,49 @@ export function uniquePush(arr, entry) {
 
 export function isSameEntry(a, b) {
   if (!a || !b) return false;
-  if (a.link && b.link) return a.link === b.link;
-  // fallback to name match (case-insensitive)
-  return (a.name || "").trim().toLowerCase() === (b.name || "").trim().toLowerCase();
+  const nameA = (a.name || "").trim().toLowerCase();
+  const nameB = (b.name || "").trim().toLowerCase();
+  // Same link -> same entry
+  if (a.link && b.link && a.link === b.link) return true;
+  // If names match, consider same even if links differ (AniList vs streaming link)
+  if (nameA && nameB && nameA === nameB) return true;
+  return false;
 }
 
 export function existsInList(listArr, entry) {
   return (listArr || []).some((e) => isSameEntry(e, entry));
 }
 
-// Ensure all popupData anime are present in inprogress (promote from wishlist if needed)
+// Sync inprogress list to exactly match popupDataList (single source of truth)
 export function syncPopupToInprogress() {
-  let changed = false;
-  const next = {
-    wishlist: [...(state.aniLists.wishlist || [])],
-    inprogress: [...(state.aniLists.inprogress || [])],
-    finished: [...(state.aniLists.finished || [])],
-  };
+  // Preserve existing fields (like anilistBanner/anilistImage) when possible
+  const current = state.aniLists.inprogress || [];
 
-  for (const a of state.popupData) {
-    const entry = { name: a.name, link: a.link };
-    const inFinished = existsInList(next.finished, entry);
-    const inProgress = existsInList(next.inprogress, entry);
-    const inWishlist = existsInList(next.wishlist, entry);
+  const byLink = new Map();
+  const byName = new Map();
+  current.forEach(e => {
+    if (e?.link) byLink.set(e.link, e);
+    const n = (e?.name || '').trim().toLowerCase();
+    if (n) byName.set(n, e);
+  });
 
-    // If already finished, don't auto-add to inprogress
-    if (inFinished || inProgress) continue;
-
-    if (inWishlist) {
-      // promote from wishlist to inprogress
-      next.wishlist = next.wishlist.filter((e) => !isSameEntry(e, entry));
-      uniquePush(next.inprogress, entry);
-      changed = true;
-    } else {
-      // add to inprogress
-      uniquePush(next.inprogress, entry);
-      changed = true;
+  const nextInprogress = state.popupData.map(a => {
+    const nameNorm = (a?.name || '').trim().toLowerCase();
+    const existing = (a?.link && byLink.get(a.link)) || byName.get(nameNorm);
+    if (existing) {
+      // Keep existing stored fields (images, etc.) but refresh name/link from popup
+      return { ...existing, name: a.name, link: a.link };
     }
-  }
+    // New entry with minimal fields
+    return { name: a.name, link: a.link };
+  });
 
-  if (changed) {
-    state.aniLists = next;
-    persistAniLists(next);
-    // re-render if viewing inprogress
-    if (state.selected === "inprogress") renderList();
-  }
+  const next = { ...state.aniLists, inprogress: nextInprogress };
+  state.aniLists = next;
+  persistAniLists(next);
+
+  // re-render if viewing inprogress
+  if (state.selected === "inprogress") renderList();
 }
 
 export function addToList(key, entry) {

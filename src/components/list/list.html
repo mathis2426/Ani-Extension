@@ -1,7 +1,3 @@
-<!--
-  List Page for Ani-Extension
-  Shows saved anime items from storage (popupDataList)
--->
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -56,6 +52,20 @@
       </header>
       <!-- List toolbar (only visible when not on Home) -->
       <section id="list-section" class="list-section" hidden>
+        <!-- AniList Search Bar (only for wishlist and finished) -->
+        <div id="anilist-search-bar" class="anilist-search-bar" hidden>
+          <div class="anilist-search-container">
+            <input 
+              id="anilist-search" 
+              class="anilist-search-input" 
+              type="search" 
+              placeholder="Rechercher sur AniList..." 
+              autocomplete="off"
+            />
+            <div id="anilist-search-results" class="anilist-search-results" hidden></div>
+          </div>
+        </div>
+
         <div class="list-toolbar" aria-label="Outils des listes">
           <div class="lt-group" role="group" aria-label="Disposition">
             <button id="btn-dispo-mixte" class="lt-btn" aria-pressed="false" title="Affichage mixte">

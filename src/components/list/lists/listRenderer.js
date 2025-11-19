@@ -2,6 +2,8 @@
 
 import { state, LIST_LABELS, openDropdown, setOpenDropdown } from '../core/state.js';
 import { addToList, removeFromList, moveItem } from './listActions.js';
+import { AnilistService } from '../../../services/AnilistService.js';
+import { persistAniLists } from '../core/storage.js';
 
 export function secondsToHMS(d) {
   d = Number(d || 0);
@@ -28,7 +30,7 @@ export function setActiveNav() {
   if(listSection) listSection.hidden = state.selected === 'home';
 }
 
-export function renderList() {
+export async function renderList() {
   const listEl = document.getElementById("list");
   const emptyEl = document.getElementById("empty");
   const term = document.getElementById("search").value.toLowerCase().trim();
@@ -46,34 +48,78 @@ export function renderList() {
       link: a.link,
       episode: a.episode,
       title: a.title,
+      saison: a.saison,
       currentTime: a.currentTime,
       duration: a.duration,
       notif: !!a.notif,
+      banner: a.anilistBanner || null,
+      image: a.anilistImage || null
     }));
   } else {
     // Get items from aniLists and enrich with popupData
     const listItems = state.aniLists[state.selected] || [];
-    items = listItems.map((e) => {
-      // Find matching anime in popupData to get full info
+    let shouldSaveAniLists = false;
+    
+    const itemPromises = listItems.map(async (e, index) => {
+      // Référence directe à l'objet dans state.aniLists pour persister les modifications
+      const stateItem = state.aniLists[state.selected][index];
+
+      // Trouver un équivalent dans popupData uniquement par nom (on ignore l'épisode)
       const fullData = state.popupData.find(p => 
-        p.link === e.link || 
-        (p.name && e.name && p.name.trim().toLowerCase() === e.name.trim().toLowerCase())
+        p.name && stateItem.name && p.name.trim().toLowerCase() === stateItem.name.trim().toLowerCase()
       );
-      
-      // Merge: use popupData info if available, fallback to stored data
+
+      // Si ni aniLists ni popupData n'ont d'images, alors seulement on va chercher sur l'API
+      const hasAnyImage = Boolean(
+        stateItem?.anilistBanner ||
+        stateItem?.anilistImage ||
+        fullData?.anilistBanner ||
+        fullData?.anilistImage
+      );
+
+      if (!hasAnyImage && stateItem && stateItem.name) {
+        try {
+          const result = await AnilistService.getBannerAndImageByTitle(stateItem.name);
+          if (result) {
+            if (result.banner) {
+              stateItem.anilistBanner = result.banner;
+              shouldSaveAniLists = true;
+            }
+            if (result.image) {
+              stateItem.anilistImage = result.image;
+              shouldSaveAniLists = true;
+            }
+          }
+        } catch (err) {
+          console.warn(`Failed to fetch images for ${stateItem.name}:`, err);
+        }
+      }
+
+      // Plus de récupération du nombre de saisons (désactivé)
+
+      // Merge: on prend les infos de popupData si dispo, sinon celles de aniLists
       return {
-        name: e.name,
-        link: e.link,
-        episode: fullData?.episode || e.episode,
-        title: fullData?.title || e.title,
-        saison: fullData?.saison || e.saison,
-        currentEp: fullData?.currentEp || e.currentEp,
-        totalEp: fullData?.totalEp || e.totalEp,
-        currentTime: fullData?.currentTime || e.currentTime,
-        duration: fullData?.duration || e.duration,
-        notif: fullData?.notif || e.notif
+        name: stateItem.name,
+        link: stateItem.link,
+        episode: fullData?.episode || stateItem.episode,
+        title: fullData?.title || stateItem.title,
+        saison: fullData?.saison || stateItem.saison,
+        currentEp: fullData?.currentEp || stateItem.currentEp,
+        totalEp: fullData?.totalEp || stateItem.totalEp,
+        currentTime: fullData?.currentTime || stateItem.currentTime,
+        duration: fullData?.duration || stateItem.duration,
+        notif: fullData?.notif || stateItem.notif,
+        banner: stateItem.anilistBanner || fullData?.anilistBanner || null,
+        image: stateItem.anilistImage || fullData?.anilistImage || null
       };
     });
+    
+    items = await Promise.all(itemPromises);
+    
+    // Sauvegarder aniLists si des images ont été ajoutées
+    if (shouldSaveAniLists) {
+      persistAniLists(state.aniLists);
+    }
   }
 
   if (term) {
@@ -109,16 +155,100 @@ export function renderList() {
   }
   emptyEl.hidden = true;
 
-  for (const a of items) {
-    const item = createListItem(a);
-    listEl.appendChild(item);
+  // Mode mixte : structure spéciale avec 3 premiers + grille
+  if (state.displayMode === 'mixte' && items.length > 3) {
+    // Ajouter les 3 premiers en mode liste
+    for (let i = 0; i < 3; i++) {
+      const item = createListItem(items[i], 'list');
+      listEl.appendChild(item);
+    }
+    
+    // Créer un container de grille pour le reste
+    const gridContainer = document.createElement('div');
+    gridContainer.className = 'mixte-grid-container';
+    for (let i = 3; i < items.length; i++) {
+      const item = createListItem(items[i], 'grid');
+      gridContainer.appendChild(item);
+    }
+    listEl.appendChild(gridContainer);
+  } else {
+    // Mode liste ou grid normal
+    const displayType = state.displayMode === 'grid' ? 'grid' : 'list';
+    for (const a of items) {
+      const item = createListItem(a, displayType);
+      listEl.appendChild(item);
+    }
   }
+  
+  // Update images when display mode changes
+  updateItemImages();
 }
 
-function createListItem(anime) {
+export function updateItemImages() {
+  const listEl = document.getElementById("list");
+  const items = listEl.querySelectorAll('.item');
+  
+  items.forEach(item => {
+    const img = item.querySelector('.item-image');
+    if (!img) return;
+    
+    const banner = item.dataset.banner || '';
+    const image = item.dataset.image || '';
+    const displayType = item.dataset.displayType || 'list';
+    
+    // Choose image based on display type stored in data attribute
+    const newSrc = displayType === 'grid' ? image : banner;
+    if (img.src !== newSrc) {
+      img.src = newSrc;
+    }
+  });
+}
+
+// Fonction optimisée pour changer de mode sans rebuild (sauf pour mixte)
+export function updateDisplayMode() {
+  const listEl = document.getElementById("list");
+  const currentItems = listEl.querySelectorAll('.item');
+  const itemCount = currentItems.length;
+  
+  // Si passage vers/depuis mixte, on doit rebuild
+  const hasMixteContainer = listEl.querySelector('.mixte-grid-container');
+  const needsMixteContainer = state.displayMode === 'mixte' && itemCount > 3;
+  
+  if (hasMixteContainer || needsMixteContainer) {
+    // Rebuild complet nécessaire pour le mode mixte
+    renderList();
+    return;
+  }
+  
+  // Pour liste <-> grid, juste mettre à jour les classes et images
+  listEl.classList.toggle('grid-mode', state.displayMode === 'grid');
+  listEl.classList.toggle('mixte-mode', false);
+  
+  // Mettre à jour le displayType et les classes de chaque item
+  const newDisplayType = state.displayMode === 'grid' ? 'grid' : 'list';
+  const newBodyClass = state.displayMode === 'grid' ? 'item-body-grid' : 'item-body-list';
+  
+  currentItems.forEach(item => {
+    item.dataset.displayType = newDisplayType;
+    
+    // Changer la classe du item-body
+    const itemBody = item.querySelector('.item-body');
+    if (itemBody) {
+      itemBody.className = `item-body ${newBodyClass}`;
+    }
+  });
+  
+  // Mettre à jour les images
+  updateItemImages();
+}
+
+function createListItem(anime, displayType = 'list') {
   const item = document.createElement("div");
   item.className = "item";
   item.dataset.link = anime.link || "";
+  item.dataset.banner = anime.banner || "";
+  item.dataset.image = anime.image || "";
+  item.dataset.displayType = displayType;
 
   const progress = anime.duration ? (Number(anime.currentTime || 0) / Math.max(1, Number(anime.duration))) * 100 : null;
   const epText = anime.episode ? (anime.title ? `Ep ${anime.episode} - ${anime.title}` : `Episode ${anime.episode}`) : null;
@@ -129,59 +259,73 @@ function createListItem(anime) {
   const epInfoText = (anime.currentEp || anime.totalEp) ? 
     `${anime.currentEp || 0}/${anime.totalEp || '?'} épisodes` : null;
 
+  // Choose image based on display type
+  const imageUrl = displayType === 'grid' ? (anime.image || '') : (anime.banner || '');
+  
+  // Classes pour item-body selon le mode
+  const bodyClass = displayType === 'grid' ? 'item-body item-body-grid' : 'item-body item-body-list';
+
   item.innerHTML = `
     <div class="item-image-container">
-      <img class="item-image" src="https://s4.anilist.co/file/anilistcdn/media/anime/banner/101922-33MtJGsUSxga.jpg" alt="${anime.name || 'No title'}">
+      <img class="item-image" src="${imageUrl}" alt="${anime.name || 'No title'}">
     </div>
-    <div class="item-content">
-      <div class="item-top">
-        <h2 class="item-title">${anime.name || "Sans titre"}</h2>
-        <div class="item-top-actions" style="position:relative;">
-          <button class="kebab" aria-haspopup="menu" aria-expanded="false" aria-label="Actions">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <circle cx="12" cy="5" r="2" fill="#cfcfcf"/>
-              <circle cx="12" cy="12" r="2" fill="#cfcfcf"/>
-              <circle cx="12" cy="19" r="2" fill="#cfcfcf"/>
+    <div class="${bodyClass}">
+      <div class="item-content">
+        <div class="item-top">
+          <h2 class="item-title">${anime.name || "Sans titre"}</h2>
+          <div class="item-top-actions" style="position:relative;">
+            <button class="kebab" aria-haspopup="menu" aria-expanded="false" aria-label="Actions">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="12" cy="5" r="2" fill="#cfcfcf"/>
+                <circle cx="12" cy="12" r="2" fill="#cfcfcf"/>
+                <circle cx="12" cy="19" r="2" fill="#cfcfcf"/>
+              </svg>
+            </button>
+            <div class="dropdown" role="menu" hidden></div>
+          </div>
+        </div>
+        <div class="item-meta">
+          ${anime.saison ? `<span>Saison ${anime.saison}</span>` : ''}
+          ${anime.saison && anime.episode ? '<span> | </span>' : ''}
+          ${anime.episode ? `<span>Episode ${anime.episode}</span>` : ''}
+        </div>
+        <div class="item-details">
+          ${hasRealInfo ? `<div class="item-info">
+            ${saisonText ? `<span>${saisonText}</span>` : ''}
+            ${saisonText && epInfoText ? '<span> | </span>' : ''}
+            ${epInfoText ? `<span>Episode ${anime.episode || 0}</span>` : ''}
+          </div>` : ''}
+          ${progress != null ? `<div class="item-status-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="#ff9800">
+              <circle cx="12" cy="12" r="10"/>
+            </svg>
+            <span>En cours de visionnage</span>
+          </div>` : ''}
+        </div>
+      </div>
+      <div class="item-progress-container">
+        ${progress != null ? `
+          <div class="item-circular-progress">
+            <svg class="progress-ring" width="70" height="70">
+              <circle class="progress-ring-circle-bg" cx="35" cy="35" r="28" />
+              <circle class="progress-ring-circle" cx="35" cy="35" r="28" 
+                style="stroke-dasharray: ${2 * Math.PI * 28}; stroke-dashoffset: ${2 * Math.PI * 28 * (1 - progress / 100)}" />
+            </svg>
+            <div class="progress-value">${progress.toFixed(0)}%</div>
+          </div>
+          <div class="item-linear-progress">
+            <div class="linear-progress-bar">
+              <div class="linear-progress-fill" style="width: ${progress}%"></div>
+            </div>
+            <div class="linear-progress-text">${progress.toFixed(0)}%</div>
+          </div>
+          <button class="item-play-btn" aria-label="Lire">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5v14l11-7z"/>
             </svg>
           </button>
-          <div class="dropdown" role="menu" hidden></div>
-        </div>
+        ` : ''}
       </div>
-      <div class="item-meta">
-        ${anime.saison ? `<span>Saison ${anime.saison}</span>` : ''}
-        ${anime.saison && anime.episode ? '<span> | </span>' : ''}
-        ${anime.episode ? `<span>Episode ${anime.episode}</span>` : ''}
-      </div>
-      <div class="item-details">
-        ${hasRealInfo ? `<div class="item-info">
-          ${saisonText ? `<span>${saisonText}</span>` : ''}
-          ${saisonText && epInfoText ? '<span> | </span>' : ''}
-          ${epInfoText ? `<span>Episode ${anime.episode || 0}</span>` : ''}
-        </div>` : ''}
-        ${progress != null ? `<div class="item-status-badge">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="#ff9800">
-            <circle cx="12" cy="12" r="10"/>
-          </svg>
-          <span>En cours de visionnage</span>
-        </div>` : ''}
-      </div>
-    </div>
-    <div class="item-progress-container">
-      ${progress != null ? `
-        <div class="item-circular-progress">
-          <svg class="progress-ring" width="70" height="70">
-            <circle class="progress-ring-circle-bg" cx="35" cy="35" r="28" />
-            <circle class="progress-ring-circle" cx="35" cy="35" r="28" 
-              style="stroke-dasharray: ${2 * Math.PI * 28}; stroke-dashoffset: ${2 * Math.PI * 28 * (1 - progress / 100)}" />
-          </svg>
-          <div class="progress-value">${progress.toFixed(0)}%</div>
-        </div>
-        <button class="item-play-btn" aria-label="Lire">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M8 5v14l11-7z"/>
-          </svg>
-        </button>
-      ` : ''}
     </div>
   `;
 

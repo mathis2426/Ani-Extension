@@ -2,9 +2,10 @@
 
 import { state, setSelectedList, setDisplayMode, setListSort, addCustomList, removeCustomList, LIST_LABELS } from './core/state.js';
 import { loadAllData, setupStorageListener, persistCustomLists } from './core/storage.js';
-import { renderList, setActiveNav, closeOpenDropdown } from './lists/listRenderer.js';
+import { renderList, setActiveNav, closeOpenDropdown, updateDisplayMode } from './lists/listRenderer.js';
 import { addToList, syncPopupToInprogress, removeListFromAniLists } from './lists/listActions.js';
 import { initHomeWidgets, getHwEdit, setHwEdit, renderHomeWidgets } from './widgets/widgetManager.js';
+import { AnilistService } from '../../services/AnilistService.js';
 
 function createNewList() {
   // Generate unique ID and default name
@@ -35,6 +36,7 @@ function createNewList() {
   setActiveNav();
   updateListToolbarUI();
   updateEditButton();
+  updateAniListSearchVisibility();
   renderList();
 }
 
@@ -55,6 +57,7 @@ function deleteCustomList(listId) {
     setActiveNav();
     updateListToolbarUI();
     updateEditButton();
+    updateAniListSearchVisibility();
     renderList();
   }
 }
@@ -79,6 +82,7 @@ function renderCustomListsInSidebar() {
       setActiveNav();
       updateListToolbarUI();
       updateEditButton();
+      updateAniListSearchVisibility();
       renderList();
     });
     
@@ -116,6 +120,108 @@ function updateEditButton() {
 }
 
 
+// AniList Search functionality
+let anilistSearchTimeout;
+
+function initAniListSearch() {
+  const searchInput = document.getElementById('anilist-search');
+  const searchResults = document.getElementById('anilist-search-results');
+  
+  if (!searchInput || !searchResults) return;
+
+  searchInput.addEventListener('input', (e) => {
+    const query = e.target.value.trim();
+    
+    clearTimeout(anilistSearchTimeout);
+    
+    if (query.length < 2) {
+      searchResults.hidden = true;
+      return;
+    }
+
+    // Show loading
+    searchResults.hidden = false;
+    searchResults.innerHTML = '<div class="anilist-search-loading">Recherche en cours...</div>';
+
+    anilistSearchTimeout = setTimeout(async () => {
+      try {
+        const results = await AnilistService.searchAnimes(query, 8);
+        
+        if (results.length === 0) {
+          searchResults.innerHTML = '<div class="anilist-search-empty">Aucun résultat trouvé</div>';
+          return;
+        }
+
+        searchResults.innerHTML = results.map(anime => `
+          <div class="anilist-search-result-item" data-anime='${JSON.stringify({ 
+            name: anime.title, 
+            link: `https://anilist.co/anime/${anime.id}`,
+            cover: anime.cover
+          })}'>
+            ${anime.cover ? `<img src="${anime.cover}" class="anilist-search-result-cover" alt="${anime.title}">` : ''}
+            <div class="anilist-search-result-info">
+              <div class="anilist-search-result-title">${anime.title}</div>
+              <div class="anilist-search-result-meta">
+                ${anime.status ? `<span>${anime.status}</span>` : ''}
+                ${anime.startDate?.year ? `<span>${anime.startDate.year}</span>` : ''}
+              </div>
+            </div>
+          </div>
+        `).join('');
+
+        // Add click listeners to results
+        searchResults.querySelectorAll('.anilist-search-result-item').forEach(item => {
+          item.addEventListener('click', () => {
+            const animeData = JSON.parse(item.dataset.anime);
+            addAnimeToCurrentList(animeData);
+            searchInput.value = '';
+            searchResults.hidden = true;
+          });
+        });
+      } catch (error) {
+        console.error('AniList search error:', error);
+        searchResults.innerHTML = '<div class="anilist-search-empty">Erreur lors de la recherche</div>';
+      }
+    }, 300);
+  });
+
+  // Close results when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+      searchResults.hidden = true;
+    }
+  });
+}
+
+function addAnimeToCurrentList(anime) {
+  const currentList = state.selected;
+  
+  // Only add to wishlist or finished
+  if (currentList === 'wishlist' || currentList === 'finished') {
+    // Add the anime with cached images from AniList
+    const animeWithImages = {
+      name: anime.name,
+      link: anime.link,
+      anilistBanner: anime.banner || null,
+      anilistImage: anime.cover || null
+    };
+    addToList(currentList, animeWithImages);
+  }
+}
+
+function updateAniListSearchVisibility() {
+  const searchBar = document.getElementById('anilist-search-bar');
+  if (!searchBar) return;
+  
+  // Show only for wishlist and finished
+  if (state.selected === 'wishlist' || state.selected === 'finished') {
+    searchBar.hidden = false;
+  } else {
+    searchBar.hidden = true;
+  }
+}
+
+
 function initUI() {
   // Sidebar nav
   document.querySelectorAll("#lists-nav .nav-item").forEach((btn) => {
@@ -124,12 +230,16 @@ function initUI() {
       setActiveNav();
       updateListToolbarUI();
       updateEditButton();
+      updateAniListSearchVisibility();
       renderList();
     });
   });
 
   // Search
   document.getElementById("search").addEventListener("input", () => renderList());
+
+  // AniList Search (for wishlist and finished lists)
+  initAniListSearch();
 
   // Add list button - creates list directly
   const addBtn = document.querySelector('.add-btn');
@@ -220,17 +330,17 @@ function initUI() {
     btnList.addEventListener('click', () => {
       setDisplayMode('list');
       updateListToolbarUI();
-      renderList();
+      updateDisplayMode();
     });
     btnGrid.addEventListener('click', () => {
       setDisplayMode('grid');
       updateListToolbarUI();
-      renderList();
+      updateDisplayMode();
     });
     btnMixte.addEventListener('click', () => {
       setDisplayMode('mixte');
       updateListToolbarUI();
-      renderList();
+      updateDisplayMode();
     });
   }
 
@@ -263,6 +373,7 @@ window.addEventListener("DOMContentLoaded", () => {
   setActiveNav();
   updateListToolbarUI();
   updateEditButton();
+  updateAniListSearchVisibility();
   
   // Load data first, THEN initialize widgets so they have data to render
   loadAllData(() => {

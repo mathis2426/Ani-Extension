@@ -8,24 +8,15 @@ import { state } from '../../core/state.js';
  * @returns {string} HTML string for widget content
  */
 function renderInProgressWidget(w) {
-  const rawInProgress = state.aniLists?.inprogress || [];
-  
-  // Enrich with popupData to get full info (episode, saison, episode, totalEp, etc.)
-  const inProgress = rawInProgress.map(anime => {
-    const fullData = state.popupData?.find(p => 
-      p.link === anime.link || 
-      (p.name && anime.name && p.name.trim().toLowerCase() === anime.name.trim().toLowerCase())
-    );
-    
-    return {
-      name: anime.name,
-      link: anime.link,
-      episode: fullData?.episode || anime.episode,
-      saison: fullData?.saison || anime.saison,
-      episode: fullData?.episode || anime.episode || 0,
-      totalEp: fullData?.totalEp || anime.totalEp || 0
-    };
-  });
+  // Use popupData as the single source of truth for currently watching anime
+  // This prevents duplication and ensures we show exactly what's being watched
+  const inProgress = (state.popupData || []).map(anime => ({
+    name: anime.name,
+    link: anime.link,
+    episode: anime.episode || 0,
+    saison: anime.saison,
+    totalEp: anime.totalEp || 0
+  }));
   
   const area = w.w * w.h;
   
