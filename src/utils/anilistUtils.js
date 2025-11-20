@@ -41,20 +41,22 @@ async function fetchAllAnimes(animeTitle) {
   };
   
   try {
-    const response = await fetch("https://graphql.anilist.co", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ query, variables }),
+    // Proxy the request to the extension background to avoid CORS blocking in content scripts
+    const result = await new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: 'ANILIST_REQUEST', query, variables }, (response) => {
+        if (!response) return resolve(null);
+        resolve(response);
+      });
     });
 
-    const result = await response.json();
-    const animes = result.data.Page.media;
+    if (!result || !result.ok) {
+      console.error('Erreur lors de la requête Anilist (proxy):', result?.error || result);
+      return [];
+    }
 
+    const json = result.data;
+    const animes = json?.data?.Page?.media || [];
     return animes;
-
   } catch (error) {
     console.error("Erreur lors de la requête Anilist :", error);
     return [];

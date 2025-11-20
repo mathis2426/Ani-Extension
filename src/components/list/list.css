@@ -6,27 +6,29 @@
 .home-section[hidden] {
   display: none !important;
 }
+
 .logo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 14px;
-    border-radius: 10px;
-    color: #eae9f3;
-    font-weight: 600;
-    font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  color: #eae9f3;
+  font-weight: 600;
+  font-size: 16px;
 }
 
-.app-mark { 
-    color: #a78bfa; 
-    font-size: 20px; 
-    line-height: 1;
-    display: flex;
-    align-items: center;
+.app-mark {
+  color: #a78bfa;
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
 }
-.app-name { 
-    letter-spacing: .2px;
-    line-height: 1;
+
+.app-name {
+  letter-spacing: .2px;
+  line-height: 1;
 }
 
 #home-section .wg-toolbar {
@@ -34,19 +36,27 @@
   display: none;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 0; /* wrapped by .wg-tools-row which carries spacing */
-  padding: 10px 14px; /* more breathing room */
+  margin: 0;
+  /* wrapped by .wg-tools-row which carries spacing */
+  padding: 10px 14px;
+  /* more breathing room */
   background: #242424;
   border: 1px solid #2f2f2f;
   border-radius: 14px;
-  flex: 1 1 auto; /* grow to take available width */
+  flex: 1 1 auto;
+  /* grow to take available width */
   width: 100%;
 }
 
-#home-section.widgets-tools-visible .wg-toolbar { display: flex; }
+#home-section.widgets-tools-visible .wg-toolbar {
+  display: flex;
+}
 
 /* Toolbar toggle button (always visible in Home section) */
-#home-section { position: relative; }
+#home-section {
+  position: relative;
+}
+
 .wg-tools-row {
   display: flex;
   align-items: center;
@@ -55,12 +65,14 @@
   margin: 0 0 16px;
 }
 
-.wg-tools-spacer { flex: 1 1 auto; }
+.wg-tools-spacer {
+  flex: 1 1 auto;
+}
 
 .wg-toolbar-toggle {
   flex: 0 0 auto;
   width: 32px;
-  min-width:32px;
+  min-width: 32px;
   height: 32px;
   border-radius: 10px;
   background: #2b2b2b;
@@ -75,9 +87,20 @@
   transition: background .15s, border-color .15s, transform .15s;
   margin-left: 4px;
 }
-.wg-toolbar-toggle:hover { background:#353535; }
-.wg-toolbar-toggle:active { transform: scale(.92); }
-.wg-toolbar-toggle[aria-pressed="true"] { background: var(--color-primary-purple,#7b5ac2); border-color: var(--color-primary-purple,#7b5ac2); color:#fff; }
+
+.wg-toolbar-toggle:hover {
+  background: #353535;
+}
+
+.wg-toolbar-toggle:active {
+  transform: scale(.92);
+}
+
+.wg-toolbar-toggle[aria-pressed="true"] {
+  background: var(--color-primary-purple, #7b5ac2);
+  border-color: var(--color-primary-purple, #7b5ac2);
+  color: #fff;
+}
 
 /* When visible, let toolbar flex-grow; responsive wrapping */
 #home-section.widgets-tools-visible .wg-toolbar {
@@ -85,9 +108,19 @@
 }
 
 @media (max-width: 800px) {
-  .wg-tools-row { flex-wrap: wrap; }
-  #home-section .wg-toolbar { padding: 10px 12px; }
-  .wg-toolbar-toggle { width:30px; height:30px; font-size:15px; }
+  .wg-tools-row {
+    flex-wrap: wrap;
+  }
+
+  #home-section .wg-toolbar {
+    padding: 10px 12px;
+  }
+
+  .wg-toolbar-toggle {
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
+  }
 }
 
 .wg-btn {
@@ -452,7 +485,10 @@ body {
   color: #fff;
 }
 
-html, body { height: 100%; }
+html,
+body {
+  height: 100%;
+}
 
 .layout {
   display: grid;
@@ -543,12 +579,14 @@ html, body { height: 100%; }
 .sidebar-actions {
   margin-top: 14px;
 }
+
 .list-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 10px;
 }
+
 .list-header h2 {
   margin: 0;
   font-size: 16px;
@@ -572,9 +610,11 @@ html, body { height: 100%; }
 }
 
 .content-area {
+  position: relative;
   padding: 18px 22px;
   height: 100vh;
-  min-height: 0; /* allow scrolling within grid container parent */
+  min-height: 0;
+  /* allow scrolling within grid container parent */
   overflow-y: auto;
   overflow-x: hidden;
   /* Prevent layout shift when scrollbar toggles */
@@ -592,13 +632,24 @@ html, body { height: 100%; }
 }
 
 /* ===== List Toolbar ===== */
-.list-section[hidden] { display:none !important; }
+.list-section[hidden] {
+  display: none !important;
+}
 
 /* AniList Search Bar */
 .anilist-search-bar {
-  margin: 0 0 16px;
+  position: sticky;
+  top: 0;
+  margin: -70px auto 20px;
+  z-index: 60;
+  width: 55%;
   display: flex;
   justify-content: center;
+  padding: 15px;
+  backdrop-filter: blur(15px) saturate(180%);
+  -webkit-backdrop-filter: blur(15px) saturate(180%);
+  border-radius: 27px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 .anilist-search-bar[hidden] {
@@ -608,27 +659,91 @@ html, body { height: 100%; }
 .anilist-search-container {
   position: relative;
   width: 100%;
-  max-width: 600px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 .anilist-search-input {
   width: 100%;
-  background: #242424;
-  border: 1px solid #3d3d3d;
+  background: rgba(36, 36, 36, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: #fff;
-  border-radius: 12px;
-  padding: 12px 16px;
+  border-radius: 14px;
+  padding: 12px 18px;
   font-size: 14px;
   outline: none;
-  transition: border-color .2s;
+  transition: all .25s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .anilist-search-input:focus {
   border-color: var(--color-primary-purple, #7b5ac2);
+  background: rgba(36, 36, 36, 0.8);
+  box-shadow: 
+    0 0 0 3px rgba(123, 90, 194, 0.15),
+    0 4px 12px rgba(123, 90, 194, 0.2);
 }
 
 .anilist-search-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Hide native browser search clear icons and ensure consistent appearance */
+.anilist-search-input::-webkit-search-cancel-button,
+.anilist-search-input::-webkit-search-decoration,
+.anilist-search-input::-webkit-search-results-button,
+.anilist-search-input::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  display: none;
+}
+.anilist-search-input::-ms-clear,
+.anilist-search-input::-ms-reveal {
+  display: none;
+  width: 0;
+  height: 0;
+}
+.anilist-search-input {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Custom clear button (purple) positioned inside the search container */
+.anilist-search-clear {
+  position: absolute;
+  right: 62px; /* leave room for filters button */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 0;
+  background: transparent; /* no solid background by default */
+  color: var(--color-primary-purple, #7b5ac2);
+  font-size: 14px; /* smaller cross */
+  font-weight: 600;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, transform .08s ease, box-shadow .15s ease, border .3s ease;
+}
+.anilist-search-clear[hidden] {
+  display: none !important;
+}
+.anilist-search-clear:hover {
+  border: 1px solid var(--color-primary-purple, #7b5ac2);
+  box-shadow: 0 4px 12px rgba(123, 90, 194, 0.2);
+  
+}
+.anilist-search-clear:active {
+  transform: translateY(-50%) scale(.96);
+}
+.anilist-search-clear:focus-visible {
+  outline: 2px solid rgba(123,90,194,0.28);
+  outline-offset: 2px;
 }
 
 .anilist-search-results {
@@ -636,13 +751,18 @@ html, body { height: 100%; }
   top: calc(100% + 8px);
   left: 0;
   right: 0;
-  background: #2c2c2c;
-  border: 1px solid #3d3d3d;
-  border-radius: 12px;
+  background: rgba(44, 44, 44, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
   max-height: 400px;
   overflow-y: auto;
   z-index: 100;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .anilist-search-results[hidden] {
@@ -716,6 +836,147 @@ html, body { height: 100%; }
   opacity: 0.6;
 }
 
+/* AniList Search Filters Button */
+.anilist-search-filters-btn {
+  padding: 10px 12px;
+  background: rgba(36, 36, 36, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.anilist-search-filters-btn:hover {
+  background: rgba(44, 44, 44, 0.7);
+  border-color: var(--color-primary-purple, #7b5ac2);
+  box-shadow: 0 4px 12px rgba(123, 90, 194, 0.2);
+}
+
+.anilist-search-filters-btn[aria-pressed="true"] {
+  background: rgba(123, 90, 194, 0.2);
+  border-color: var(--color-primary-purple, #7b5ac2);
+  box-shadow: 
+    0 0 0 3px rgba(123, 90, 194, 0.15),
+    0 4px 12px rgba(123, 90, 194, 0.3);
+}
+
+/* AniList Search Filters Panel */
+.anilist-search-filters-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: rgba(44, 44, 44, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  min-width: 300px;
+  z-index: 101;
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.anilist-search-filters-panel[hidden] {
+  display: none !important;
+}
+
+.filters-panel-header {
+  padding: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.filters-panel-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.filters-panel-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filter-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.filter-checkbox:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.filter-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--color-primary-purple, #7b5ac2);
+}
+
+.filter-checkbox span {
+  font-size: 14px;
+  color: #fff;
+  user-select: none;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  background: #1e1e1e;
+  border: 1px solid #3d3d3d;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.filter-select:focus {
+  border-color: var(--color-primary-purple, #7b5ac2);
+}
+
+.filter-select option {
+  background: #1e1e1e;
+  color: #fff;
+}
+
+
 .list-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -728,43 +989,70 @@ html, body { height: 100%; }
   border-radius: 12px;
   position: sticky;
   top: 0;
-  z-index: 30;
+  z-index: 40;
   backdrop-filter: blur(8px);
 }
 
-.lt-group { display: inline-flex; gap:8px; align-items: center; }
-.lt-spacer { flex:1; }
-.lt-label { font-size:11px; opacity:.6; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+.lt-group {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.lt-spacer {
+  flex: 1;
+}
+
+.lt-label {
+  font-size: 11px;
+  opacity: .6;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
 
 .lt-btn {
-  background:#333;
-  color:#eaeaea;
-  border:1px solid #444;
-  padding:8px 12px;
-  font-size:12px;
-  border-radius:10px;
-  cursor:pointer;
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  line-height:1;
-  transition:background .18s, border-color .18s, transform .18s;
+  background: #333;
+  color: #eaeaea;
+  border: 1px solid #444;
+  padding: 8px 12px;
+  font-size: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1;
+  transition: background .18s, border-color .18s, transform .18s;
 }
-.lt-btn svg { pointer-events:none; }
-.lt-btn:hover { background:#3a3a3a; }
-.lt-btn[aria-pressed="true"] { background: var(--color-primary-purple,#7b5ac2); border-color: var(--color-primary-purple,#7b5ac2); }
+
+.lt-btn svg {
+  pointer-events: none;
+}
+
+.lt-btn:hover {
+  background: #3a3a3a;
+}
+
+.lt-btn[aria-pressed="true"] {
+  background: var(--color-primary-purple, #7b5ac2);
+  border-color: var(--color-primary-purple, #7b5ac2);
+}
 
 .lt-select {
-  background:#2e2e2e;
-  border:1px solid #3d3d3d;
-  color:#fff;
-  font-size:12px;
-  padding:8px 10px;
-  border-radius:8px;
-  outline:none;
-  min-width:160px;
+  background: #2e2e2e;
+  border: 1px solid #3d3d3d;
+  color: #fff;
+  font-size: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  outline: none;
+  min-width: 160px;
 }
-.lt-select:focus { border-color: var(--color-primary-purple,#7b5ac2); }
+
+.lt-select:focus {
+  border-color: var(--color-primary-purple, #7b5ac2);
+}
 
 /* ===== Display Modes ===== */
 
@@ -794,6 +1082,7 @@ html, body { height: 100%; }
   justify-content: center;
   flex-shrink: 0;
 }
+
 .list.grid-mode .item-image-container img {
   width: 110px;
   height: 110px;
@@ -812,7 +1101,10 @@ html, body { height: 100%; }
 }
 
 /* Keep text from expanding card height in grid */
-.list.grid-mode .item-content { overflow: hidden; }
+.list.grid-mode .item-content {
+  overflow: hidden;
+}
+
 .list.grid-mode .item-title {
   display: -webkit-box;
   line-clamp: 2;
@@ -820,6 +1112,7 @@ html, body { height: 100%; }
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
 .list.grid-mode .item-info,
 .list.grid-mode .item-meta {
   white-space: nowrap;
@@ -986,14 +1279,16 @@ html, body { height: 100%; }
   display: flex;
   align-items: center;
   position: relative;
-  transition: box-shadow .18s, border-color .18s, transform .18s;
+  transition: box-shadow .3s, border-color .18s, transform .18s;
   z-index: 1;
   height: 130px;
+  box-shadow: 0;
 }
 
 .item:hover {
-  box-shadow: 0 0 0 2px var(--color-primary-purple, #7b5ac2);
+  box-shadow: 0 0 7px 3px var(--color-primary-purple);
   z-index: 10;
+  
 }
 
 /* ===== Item Body Layouts ===== */
@@ -1567,3 +1862,12 @@ html, body { height: 100%; }
 }
 
 /* Widgets Section removed */
+
+/* Ensure hover transitions also animate on unhover: add transition to base state
+   for the most common interactive controls so leaving hover is animated. */
+.nav-item,
+.wg-btn,
+.add-btn,
+.kebab {
+  transition: background .15s ease, border-color .15s ease, transform .15s ease, opacity .15s ease;
+}

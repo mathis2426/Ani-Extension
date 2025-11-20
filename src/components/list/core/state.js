@@ -28,6 +28,16 @@ export function setOpenDropdown(dropdown) {
 
 export function setSelectedList(listKey) {
   state.selected = listKey;
+  // When the selected list changes, ensure the main content area scrolls to top
+  try {
+    const content = document.querySelector('.content-area');
+    if (content) {
+      // smooth scroll for better UX
+      content.scrollTo({ top: 0, behavior: 'auto' });
+    }
+  } catch (e) {
+    // ignore if called in non-DOM environment
+  }
 }
 
 export function setPopupData(data) {

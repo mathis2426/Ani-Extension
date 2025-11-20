@@ -39,6 +39,45 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // Handle AniList GraphQL request proxied from content scripts (to avoid CORS)
+  if (message.type === 'ANILIST_REQUEST') {
+    (async () => {
+      try {
+        const res = await fetch('https://graphql.anilist.co', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json'
+          },
+          body: JSON.stringify({ query: message.query, variables: message.variables || {} })
+        });
+
+        const status = res.status;
+        const statusText = res.statusText;
+
+        // Try to parse JSON body, otherwise text
+        let parsed = null;
+        let text = null;
+        try {
+          parsed = await res.json();
+        } catch (e) {
+          text = await res.text().catch(() => null);
+        }
+
+        if (!res.ok) {
+          // Return richer diagnostics to caller
+          sendResponse({ ok: false, status, statusText, data: parsed, text, error: 'HTTP error from AniList' });
+        } else {
+          sendResponse({ ok: true, status, statusText, data: parsed });
+        }
+      } catch (err) {
+        console.warn('Background ANILIST_REQUEST failed', err);
+        sendResponse({ ok: false, error: String(err) });
+      }
+    })();
+    return true; // async
+  }
+
 });
 
 

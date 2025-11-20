@@ -57,29 +57,58 @@ export function syncPopupToInprogress() {
 }
 
 export function addToList(key, entry) {
-  const next = { ...state.aniLists, [key]: [...(state.aniLists[key] || [])] };
-  uniquePush(next[key], { name: entry.name, link: entry.link });
+  const currentList = state.aniLists[key] || [];
+
+  
+  const next = { ...state.aniLists, [key]: [...currentList] };
+  // Préserver tous les champs de l'entrée (images, etc.)
+  const newEntry = {
+    id: entry.id,
+    name: entry.name,
+    chronology: entry.chronology || {},
+    link: entry.link,
+    ...(entry.anilistBanner && { anilistBanner: entry.anilistBanner }),
+    ...(entry.anilistImage && { anilistImage: entry.anilistImage })
+  };
+  uniquePush(next[key], newEntry);
   state.aniLists = next;
   persistAniLists(next);
-  if (state.selected !== "all" && state.selected === key) renderList();
+  
+  // Ne pas re-render, laisser le storage listener s'en charger pour éviter le double-render
+  // if (state.selected !== "all" && state.selected === key) renderList();
 }
 
 export function removeFromList(key, link) {
   const next = { ...state.aniLists, [key]: (state.aniLists[key] || []).filter((e) => e.link !== link) };
   state.aniLists = next;
   persistAniLists(next);
-  renderList();
+  // Ne re-render que si on est sur la liste concernée
+  if (state.selected === key) renderList();
 }
 
 export function moveItem(fromKey, toKey, link, name) {
   if (fromKey === toKey) return;
-  const fromArr = (state.aniLists[fromKey] || []).filter((e) => e.link !== link);
+  
+  // Vérifier si l'élément existe déjà dans la liste de destination
   const toArr = [...(state.aniLists[toKey] || [])];
+  if (existsInList(toArr, { name, link })) {
+    console.log('Entry already exists in destination list, removing from source only');
+    // Juste supprimer de la source si déjà dans la destination
+    const fromArr = (state.aniLists[fromKey] || []).filter((e) => e.link !== link);
+    const next = { ...state.aniLists, [fromKey]: fromArr };
+    state.aniLists = next;
+    persistAniLists(next);
+    renderList();
+    return;
+  }
+  
+  const fromArr = (state.aniLists[fromKey] || []).filter((e) => e.link !== link);
   uniquePush(toArr, { name, link });
   const next = { ...state.aniLists, [fromKey]: fromArr, [toKey]: toArr };
   state.aniLists = next;
   persistAniLists(next);
-  renderList();
+  // Ne re-render que si on est sur l'une des listes concernées
+  if (state.selected === fromKey || state.selected === toKey) renderList();
 }
 
 export function removeListFromAniLists(listId) {

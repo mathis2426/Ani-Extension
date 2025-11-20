@@ -19,23 +19,35 @@ export function loadAllData(callback) {
   });
 }
 
+// Debounce pour éviter les mises à jour trop rapides
+let storageUpdateTimeout = null;
+
 export function setupStorageListener(onPopupDataChange, onAniListsChange) {
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "local") return;
     
-    if (changes.popupDataList) {
-      setPopupData(changes.popupDataList.newValue || []);
-      if (onPopupDataChange) onPopupDataChange();
+    // Annuler la mise à jour précédente si elle arrive trop vite
+    if (storageUpdateTimeout) {
+      clearTimeout(storageUpdateTimeout);
     }
     
-    if (changes.aniLists) {
-      setAniLists(changes.aniLists.newValue || state.aniLists);
-      if (onAniListsChange) onAniListsChange();
-    }
+    storageUpdateTimeout = setTimeout(() => {
+      if (changes.popupDataList) {
+        setPopupData(changes.popupDataList.newValue || []);
+        if (onPopupDataChange) onPopupDataChange();
+      }
+      
+      if (changes.aniLists) {
+        setAniLists(changes.aniLists.newValue || state.aniLists);
+        if (onAniListsChange) onAniListsChange();
+      }
 
-    if (changes.customLists) {
-      setCustomLists(changes.customLists.newValue || []);
-      if (onAniListsChange) onAniListsChange();
-    }
+      if (changes.customLists) {
+        setCustomLists(changes.customLists.newValue || []);
+        if (onAniListsChange) onAniListsChange();
+      }
+      
+      storageUpdateTimeout = null;
+    }, 10); // Attendre seulement 10ms pour un rendu plus fluide
   });
 }

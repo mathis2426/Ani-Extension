@@ -8,39 +8,108 @@ export class AnilistService {
 
   /** Low-level GraphQL request */
   static async request(query, variables = {}) {
-    const res = await fetch(this.ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ query, variables }),
-    });
-    const json = await res.json();
-    if (json.errors) {
-      const msg = json.errors.map(e => e.message).join("; ");
-      throw new Error(`AniList GraphQL error: ${msg}`);
+    // Try direct fetch with a couple of retries for 5xx errors/network issues
+    const maxRetries = 2;
+    let attempt = 0;
+    let lastError = null;
+    while (attempt <= maxRetries) {
+      try {
+        const res = await fetch(this.ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ query, variables }),
+        });
+
+        // If server error, throw to trigger retry logic
+        if (!res.ok) {
+          const text = await res.text().catch(() => null);
+          const errMsg = `HTTP ${res.status} ${res.statusText} - ${text}`;
+          lastError = new Error(`AniList GraphQL error: ${errMsg}`);
+          // Retry only on 5xx
+          if (res.status >= 500 && attempt < maxRetries) {
+            const wait = 200 * Math.pow(2, attempt);
+            await new Promise(r => setTimeout(r, wait));
+            attempt++;
+            continue;
+          } else {
+            throw lastError;
+          }
+        }
+
+        const json = await res.json();
+        if (json.errors) {
+          const msg = json.errors.map(e => e.message).join("; ");
+          throw new Error(`AniList GraphQL error: ${msg}`);
+        }
+        return json.data;
+      } catch (err) {
+        lastError = err;
+        // If fetch/network error or server error, try proxying via background as a fallback
+        // but only after exhausting direct retries
+        if (attempt < maxRetries) {
+          const wait = 200 * Math.pow(2, attempt);
+          await new Promise(r => setTimeout(r, wait));
+          attempt++;
+          continue;
+        }
+
+        // Attempt proxy through extension background
+        try {
+          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+            const response = await new Promise((resolve) => {
+              chrome.runtime.sendMessage({ type: 'ANILIST_REQUEST', query, variables }, (resp) => resolve(resp));
+            });
+            if (response && response.ok && response.data) {
+              const proxyJson = response.data;
+              if (proxyJson.errors) {
+                const msg = proxyJson.errors.map(e => e.message).join("; ");
+                throw new Error(`AniList GraphQL error (proxy): ${msg}`);
+              }
+              return proxyJson.data;
+            } else {
+              // include status/body if provided by the worker
+              const proxyErr = response?.error || `proxy-no-response status:${response?.status}`;
+              throw new Error(`AniList proxy error: ${proxyErr}`);
+            }
+          }
+        } catch (proxErr) {
+          console.warn('AniList proxy attempt failed', proxErr);
+          // Fall through to throw lastError
+        }
+
+        throw lastError;
+      }
     }
-    return json.data;
   }
 
   /** Search anime by title */
-  static async searchAnimes(title, perPage = 10) {
+  static async searchAnimes(title, perPage = 10, filters = {}) {
     const query = `
-      query ($search: String, $perPage: Int) {
+      query ($search: String, $perPage: Int, $format_in: [MediaFormat], $status_in: [MediaStatus], $sort: [MediaSort]) {
         Page(page: 1, perPage: $perPage) {
-          media(search: $search, type: ANIME) {
+          media(search: $search, type: ANIME, format_in: $format_in, status_in: $status_in, sort: $sort) {
             id
             title { romaji english native }
             coverImage { large }
             bannerImage
             status
+            format
             startDate { year month day }
           }
         }
       }
     `;
-    const data = await this.request(query, { search: title, perPage });
+    const variables = { 
+      search: title, 
+      perPage,
+      format_in: filters.formats?.length > 0 ? filters.formats : null,
+      status_in: filters.statuses?.length > 0 ? filters.statuses : null,
+      sort: filters.sort ? [filters.sort] : ['SEARCH_MATCH']
+    };
+    const data = await this.request(query, variables);
     const items = data?.Page?.media || [];
     return items.map(m => this.mapMediaBasic(m)).filter(Boolean);
   }
@@ -105,47 +174,115 @@ export class AnilistService {
   }
 
   /**
-   * Get total number of TV seasons for a franchise by anime title.
-   * Approximates seasons by counting PREQUEL/SEQUEL chain entries with format TV (including self).
-   * @param {string} title
-   * @returns {Promise<number|null>} number of seasons or null if unknown
+   * Traverse PREQUEL/SEQUEL relations starting from a media id and aggregate TV entries.
+   * Returns an object with nodes info, seasonsCount and totalEpisodes.
+   * Uses a simple DFS/BFS with a maxDepth to avoid runaway recursion.
+   * @param {number} id AniList media id
+   * @param {number} maxDepth max recursion depth (default 6)
    */
-  static async getSeasonsCountByTitle(title) {
-    if (!title) return null;
-    const query = `
-      query ($search: String) {
-        Media(search: $search, type: ANIME) {
-          id
-          format
-          relations {
-            edges {
-              relationType
-              node { id type format }
-            }
-          }
+static async getFranchiseInfoById(id, maxDepth = 6, options = {}) {
+  if (!id) return null;
+  const seen = new Set();
+  const tvNodes = new Map();
+
+  const allowedFormats = new Set(options.allowedFormats || ['TV','MOVIE']); // autorise TV_SHORT, ONA si tu veux
+  const query = `
+    query ($id: Int!) {
+      Media(id: $id, type: ANIME) {
+        id
+        title { romaji english native }
+        format
+        episodes
+        season
+        seasonYear
+        siteUrl
+        relations { 
+          edges { 
+            relationType
+            node { 
+              id
+              type
+              format
+              episodes
+              season
+              seasonYear
+              title { romaji english native }
+            } 
+          } 
         }
       }
-    `;
-    const data = await this.request(query, { search: title });
-    const media = data?.Media;
-    if (!media) return null;
+    }
+  `;
 
-    const nodes = [];
-    // include self if TV
-    if (media.format === 'TV') nodes.push({ id: media.id });
-    const edges = media?.relations?.edges || [];
-    edges.forEach(e => {
-      if (!e || !e.node) return;
+  const stack = [{ id: Number(id), depth: 0 }];
+
+  while (stack.length) {
+    const cur = stack.pop();
+    if (!cur || seen.has(cur.id) || cur.depth > maxDepth) continue;
+    seen.add(cur.id);
+
+    let res;
+    try {
+      res = await this.request(query, { id: Number(cur.id) });
+    } catch (err) {
+      console.warn('AniList franchise fetch error for id', cur.id, err);
+      continue;
+    }
+
+    // compatibilité : this.request peut retourner { data: { Media: ... } } ou directement { Media: ... }
+    const m = (res && res.data && res.data.Media) ? res.data.Media : (res && res.Media) ? res.Media : null;
+    if (!m) continue;
+
+    // garde les nodes selon format autorisé
+    if (allowedFormats.has(m.format)) {
+      tvNodes.set(m.id, {
+        id: m.id,
+        title: this.bestTitle ? this.bestTitle(m.title) : (m.title?.romaji || m.title?.english || '(no title)'),
+        episodes: (typeof m.episodes === 'number') ? m.episodes : null,
+        season: m.season || null,
+        seasonYear: m.seasonYear || null,
+        format: m.format,
+        siteUrl: m.siteUrl || null,
+      });
+    }
+
+    const edges = m.relations?.edges || [];
+    for (const e of edges) {
+      if (!e || !e.node) continue;
       const rel = e.relationType;
       const node = e.node;
-      if ((rel === 'PREQUEL' || rel === 'SEQUEL') && node.type === 'ANIME' && node.format === 'TV') {
-        nodes.push({ id: node.id });
+      // suivre uniquement PREQUEL / SEQUEL (ajoute d'autres types si besoin)
+      if ((rel === 'PREQUEL' || rel === 'SEQUEL') && node.type === 'ANIME') {
+        if (!seen.has(node.id)) {
+          stack.push({ id: node.id, depth: cur.depth + 1 });
+        }
       }
-    });
-    // dedupe by id
-    const unique = new Set(nodes.map(n => n.id));
-    return unique.size || null;
+    }
   }
+
+  // transforme en tableau, trie et calcule totaux
+  const nodes = Array.from(tvNodes.values()).sort((a, b) => {
+    // tri : seasonYear asc, season asc, fallback id
+    const ay = a.seasonYear || Infinity;
+    const by = b.seasonYear || Infinity;
+    if (ay !== by) return ay - by;
+    const as = a.season || '';
+    const bs = b.season || '';
+    if (as !== bs) return as.localeCompare(bs);
+    return a.id - b.id;
+  });
+
+  const seasonsCount = nodes.length || 0;
+  const knownEpisodeSum = nodes.reduce((acc, n) => {
+    return acc + (Number.isFinite(n.episodes) ? n.episodes : 0);
+  }, 0);
+  const totalEpisodes = knownEpisodeSum > 0 ? knownEpisodeSum : null;
+
+  return { nodes, seasonsCount, totalEpisodes };
+}
+
+
+
 
   /**
    * Get banner and image by anime title in a single GraphQL request

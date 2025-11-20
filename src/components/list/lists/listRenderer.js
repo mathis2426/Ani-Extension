@@ -95,7 +95,7 @@ export async function renderList() {
         }
       }
 
-      // Plus de récupération du nombre de saisons (désactivé)
+      // Note: franchise info will be fetched on user click to avoid mass requests during render
 
       // Merge: on prend les infos de popupData si dispo, sinon celles de aniLists
       return {
@@ -343,6 +343,35 @@ function createListItem(anime, displayType = 'list') {
   menu.addEventListener('click', (e) => e.stopPropagation());
 
   item.addEventListener("click", () => {
+    (async () => {
+      // On click, fetch franchise info for this item only if it's part of a saved list and missing data
+      try {
+        if (state.selected && state.selected !== 'home' && state.selected !== 'all') {
+          const listArr = state.aniLists[state.selected] || [];
+          const idx = listArr.findIndex(p => p.name && anime.name && p.name.trim().toLowerCase() === anime.name.trim().toLowerCase());
+          if (idx !== -1) {
+            const stateItem = state.aniLists[state.selected][idx];
+            if ((!stateItem.totalEp || !stateItem.seasonsCount) && !stateItem._fetchingFranchise && stateItem.name) {
+              stateItem._fetchingFranchise = true;
+              try {
+                const info = await AnilistService.getFranchiseInfoByTitle(stateItem.name, 5);
+                if (info) {
+                  if (info.totalEpisodes !== null && info.totalEpisodes !== undefined) stateItem.totalEp = info.totalEpisodes;
+                  if (info.seasonsCount !== null && info.seasonsCount !== undefined) stateItem.seasonsCount = info.seasonsCount;
+                  persistAniLists(state.aniLists);
+                }
+              } catch (err) {
+                console.warn('Failed to fetch franchise info for', stateItem.name, err);
+              }
+              delete stateItem._fetchingFranchise;
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Error during franchise fetch on click', e);
+      }
+    })();
+
     if (anime.link) chrome.tabs.create({ url: anime.link });
   });
 
@@ -361,8 +390,12 @@ function buildDropdownMenu(menu, anime) {
       btn.textContent = label;
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
+        // Désactiver le bouton pour éviter les double-clics
+        btn.disabled = true;
         addToList(key, { name: anime.name, link: anime.link });
         closeOpenDropdown();
+        // Réactiver après un court délai
+        setTimeout(() => { btn.disabled = false; }, 300);
       });
       menu.appendChild(btn);
     });
@@ -379,8 +412,12 @@ function buildDropdownMenu(menu, anime) {
       btn.textContent = label;
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
+        // Désactiver le bouton pour éviter les double-clics
+        btn.disabled = true;
         moveItem(state.selected, key, anime.link, anime.name);
         closeOpenDropdown();
+        // Réactiver après un court délai
+        setTimeout(() => { btn.disabled = false; }, 300);
       });
       menu.appendChild(btn);
     });
@@ -391,8 +428,12 @@ function buildDropdownMenu(menu, anime) {
     del.textContent = "Retirer";
     del.addEventListener("click", (e) => {
       e.stopPropagation();
+      // Désactiver le bouton pour éviter les double-clics
+      del.disabled = true;
       removeFromList(state.selected, anime.link);
       closeOpenDropdown();
+      // Réactiver après un court délai
+      setTimeout(() => { del.disabled = false; }, 300);
     });
     menu.appendChild(del);
   }
