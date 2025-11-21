@@ -63,6 +63,7 @@ function netflix(animeClass, callback) {
 
                 // Add listeners to new video element (or if episode changed)
                 if (videoElement && (videoChanged || urlChanged)) {
+                    console.log(videoChanged , urlChanged);
                     currentVideoElement = videoElement;
                     
                     animeClass.duration = videoElement.duration;
@@ -71,6 +72,7 @@ function netflix(animeClass, callback) {
 
                     // Listen to time updates for continuous tracking
                     videoElement.addEventListener("timeupdate", () => {
+                        if(videoElement.currentTime == 0) return;
                         animeClass.currentTime = Math.floor(videoElement.currentTime);
                         animeClass.lastUpdate = Date.now();
                         if (animeClass.title) {

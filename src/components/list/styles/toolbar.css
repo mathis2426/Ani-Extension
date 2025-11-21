@@ -1,0 +1,77 @@
+/* List toolbar and controls */
+.list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  background: #242424;
+  border: 1px solid #2f2f2f;
+  border-radius: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  backdrop-filter: blur(8px);
+}
+
+.lt-group {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.lt-spacer {
+  flex: 1;
+}
+
+.lt-label {
+  font-size: 11px;
+  opacity: .6;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+.lt-btn {
+  background: #333;
+  color: #eaeaea;
+  border: 1px solid #444;
+  padding: 8px 12px;
+  font-size: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1;
+  transition: background .18s, border-color .18s, transform .18s;
+}
+
+.lt-btn svg {
+  pointer-events: none;
+}
+
+.lt-btn:hover {
+  background: #3a3a3a;
+}
+
+.lt-btn[aria-pressed="true"] {
+  background: var(--color-primary-purple, #7b5ac2);
+  border-color: var(--color-primary-purple, #7b5ac2);
+}
+
+.lt-select {
+  background: #2e2e2e;
+  border: 1px solid #3d3d3d;
+  color: #fff;
+  font-size: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  outline: none;
+  min-width: 160px;
+}
+
+.lt-select:focus {
+  border-color: var(--color-primary-purple, #7b5ac2);
+}

@@ -1,3 +1,4 @@
+
 // List page main orchestrator - imports and coordinates all modules
 
 import { state, setSelectedList, setDisplayMode, setListSort, addCustomList, removeCustomList, LIST_LABELS } from './core/state.js';
@@ -6,6 +7,27 @@ import { renderList, setActiveNav, closeOpenDropdown, updateDisplayMode } from '
 import { addToList, syncPopupToInprogress, removeListFromAniLists } from './lists/listActions.js';
 import { initHomeWidgets, getHwEdit, setHwEdit, renderHomeWidgets } from './widgets/widgetManager.js';
 import { AnilistService } from '../../services/AnilistService.js';
+
+/**
+ * Transforme le résultat de getFranchiseInfoById en une chronologie indexée
+ * Chaque entrée contient la saison ou le film, et éventuellement les alternatives
+ * @param {Object} franchiseInfo - résultat de getFranchiseInfoById
+ * @returns {Object} chronology
+ */
+function buildChronology(franchiseInfo) {
+  if (!franchiseInfo || !Array.isArray(franchiseInfo.nodes)) return {};
+  const chronology = {};
+  let idx = 1;
+  for (const node of franchiseInfo.nodes) {
+    // Saison ou film principal
+    chronology[idx] = {
+      ...node,
+      alternatives: Array.isArray(node.alternatives) ? node.alternatives : []
+    };
+    idx++;
+  }
+  return chronology;
+}
 
 function createNewList() {
   // Generate unique ID and default name
@@ -290,30 +312,11 @@ function initAniListSearch() {
           item.addEventListener('click', () => {
             const animeData = JSON.parse(item.dataset.anime);
             AnilistService.getFranchiseInfoById(animeData.id, 5).then(info => {
-              console.log(info);
-              let saisonCount = 1;
-              let movieCount = 1;
-              animeData.chronology = {};
-              info.nodes.forEach(node => {
-                if (node.format == "TV") {
-                  let Key = "s" + saisonCount;
-                  animeData.chronology[Key] = node;
-                  saisonCount++;
-                }
-                else if(node.format == "MOVIE") {
-                  let Key = "movie" + movieCount;
-                  animeData.chronology[Key] = node;
-                  movieCount++;
-                }
-              });
+              animeData.chronology = info ? buildChronology(info) : {};
               addAnimeToCurrentList(animeData);
               searchInput.value = '';
               searchResults.hidden = true;
             });
-
-
-
-
           });
         });
       } catch (error) {

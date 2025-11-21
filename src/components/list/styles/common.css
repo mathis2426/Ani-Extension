@@ -1,0 +1,25 @@
+/* Common small rules shared across components */
+.nav-item,
+.wg-btn,
+.add-btn,
+.kebab {
+  transition: background .15s ease, border-color .15s ease, transform .15s ease, opacity .15s ease;
+}
+
+/* Global custom scrollbars (fallback for pages that import styles/base.css) */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-primary-dark, #1f1f1f);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

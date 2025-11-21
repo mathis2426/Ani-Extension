@@ -1,0 +1,643 @@
+/* Display Modes & Item layouts */
+
+/* ===== Display Modes ===== */
+.list.grid-mode {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Ensure consistent row height so all boxes match */
+  grid-auto-rows: 140px;
+  gap: 16px;
+}
+
+.list.grid-mode .item {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  /* Fill the fixed grid row height */
+  height: 100%;
+  overflow: hidden;
+}
+
+.list.grid-mode .item-image-container {
+  display: flex;
+  width: 150px;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.list.grid-mode .item-image-container img {
+  width: 110px;
+  height: 110px;
+  border-radius: 6px;
+
+}
+
+.list.grid-mode .item-image-container::after {
+  display: none;
+}
+
+.list.grid-mode .item-top-actions {
+  position: absolute !important;
+  top: 12px;
+  right: 12px;
+}
+
+/* Keep text from expanding card height in grid */
+.list.grid-mode .item-content {
+  overflow: hidden;
+}
+
+.list.grid-mode .item-title {
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.list.grid-mode .item-info,
+.list.grid-mode .item-meta {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Smaller play button in grid mode */
+.list.grid-mode .item-play-btn {
+  width: 32px;
+  height: 32px;
+  margin-right: 10px;
+}
+
+
+/* Mixte Mode */
+.list.mixte-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.list.mixte-mode .mixte-grid-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  /* Match grid mode fixed row height */
+  grid-auto-rows: 140px;
+}
+
+.list.mixte-mode .mixte-grid-container .item {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  overflow: hidden;
+}
+
+.list.mixte-mode .mixte-grid-container .item-image-container {
+  display: flex;
+  width: 150px;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.list.mixte-mode .mixte-grid-container .item-image-container img {
+  width: 100px;
+  height: 100px;
+  border-radius: 6px;
+}
+
+.list.mixte-mode .mixte-grid-container .item-image-container::after {
+  display: none;
+}
+
+.list.mixte-mode .mixte-grid-container .item-top {
+  /* follow default layout like grid mode */
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.list.mixte-mode .mixte-grid-container .item-top-actions {
+  position: absolute !important;
+  top: 8px;
+  right: 8px;
+}
+
+/* Smaller play button in mixte grid items */
+.list.mixte-mode .mixte-grid-container .item-play-btn {
+  width: 32px;
+  height: 32px;
+  margin-right: 10px;
+}
+
+/* ===== Page Header ===== */
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 650;
+}
+
+.title-with-edit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.edit-list-btn-header {
+  background: transparent;
+  border: 1px solid transparent;
+  color: rgba(255, 255, 255, 0.4);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, color .15s, border-color .15s, transform .15s;
+  flex-shrink: 0;
+}
+
+.edit-list-btn-header:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: scale(1.05);
+}
+
+.edit-list-btn-header:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+.edit-list-btn-header:disabled:hover {
+  background: transparent;
+  border-color: transparent;
+  transform: none;
+}
+
+.edit-list-btn-header[hidden] {
+  display: none;
+}
+
+.edit-list-btn-header svg {
+  width: 18px;
+  height: 18px;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  opacity: .75;
+}
+
+.search {
+  background: var(--color-secondary-dark, #2b2b2b);
+  border: 1px solid #3d3d3d;
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  outline: none;
+  min-width: 220px;
+}
+
+.search:focus {
+  border-color: var(--color-primary-purple, #7b5ac2);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 40px;
+}
+
+.item {
+  background: #2b2b2b;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  position: relative;
+  transition: box-shadow .3s, border-color .18s, transform .18s;
+  z-index: 1;
+  height: 130px;
+  box-shadow: 0;
+}
+
+.item:hover {
+  box-shadow: 0 0 7px 3px var(--color-primary-purple);
+  z-index: 10;
+  
+}
+
+/* ===== Item Body Layouts ===== */
+
+/* Mode Liste */
+.item-body-list {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex: 1;
+}
+
+.item-body-list .item-content {
+  flex: 1;
+  padding: 14px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item-body-list .item-progress-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-right: 80px;
+}
+
+/* Mode Grid */
+.item-body-grid {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.item-body-grid .item-content {
+  flex: 1;
+  padding: 14px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item-body-grid .item-progress-container {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ===== Item Components ===== */
+
+.item-progress-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #ff9800;
+  font-weight: 500;
+}
+
+.item-circular-progress {
+  position: relative;
+  width: 70px;
+  height: 70px;
+}
+
+.progress-ring {
+  transform: rotate(-90deg);
+}
+
+.progress-ring-circle-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 6;
+}
+
+.progress-ring-circle {
+  fill: none;
+  stroke: #a78bfa;
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.35s;
+}
+
+.progress-value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  font-weight: 650;
+  color: #fff;
+}
+
+/* Linear Progress Bar (for grid mode) */
+.item-linear-progress {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.linear-progress-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.linear-progress-fill {
+  height: 100%;
+  background: #a78bfa;
+  border-radius: 4px;
+  transition: width 0.35s ease;
+}
+
+.linear-progress-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  text-align: right;
+}
+
+/* Show linear progress in grid mode, hide circular */
+.item-body-grid .item-circular-progress {
+  display: none;
+}
+
+.item-body-grid .item-linear-progress {
+  display: flex;
+}
+
+/* Show circular progress in list mode, hide linear */
+.item-body-list .item-circular-progress {
+  display: flex;
+}
+
+.item-body-list .item-linear-progress {
+  display: none;
+}
+
+.item-play-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .2s, transform .15s;
+}
+
+.item-play-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
+}
+
+.item-play-btn:active {
+  transform: scale(0.95);
+}
+
+.item-image-container {
+  width: 35%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 6px 0px 0 6px;
+  position: relative;
+  align-self: stretch;
+}
+
+.item-image-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(to left, #2b2b2b 20%, rgba(43, 43, 43, 0.7) 50%, transparent 100%);
+  pointer-events: none;
+}
+
+.item-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.item-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.item-top-actions {
+  position: absolute !important;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+}
+
+.item-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.item-info {
+  font-size: 12px;
+  opacity: .78;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item-info span {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.item-meta {
+  font-size: 11px;
+  opacity: .65;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.kebab {
+  background: #353535;
+  border: 1px solid #444;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #cfcfcf;
+  position: relative;
+  z-index: 20;
+}
+
+.kebab:hover {
+  background: #404040;
+}
+
+.kebab svg {
+  width: 12px;
+  height: 12px;
+}
+
+.dropdown {
+  position: absolute;
+  top: 25px;
+  right: 0;
+  background: #2c2c2c;
+  border: 1px solid #3d3d3d;
+  border-radius: 10px;
+  padding: 6px 6px;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  z-index: 200;
+  box-shadow: 0 6px 24px -6px rgba(0, 0, 0, .55);
+}
+
+.dropdown[hidden] {
+  display: none !important;
+}
+
+.dropdown button {
+  background: transparent;
+  color: #e4e4e4;
+  border: none;
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.dropdown button:hover {
+  background: #3a3a3a;
+}
+
+.dropdown button.danger {
+  color: #ffb4b4;
+}
+
+.dropdown button.danger:hover {
+  background: #45222a;
+}
+
+.btn {
+  background: #3a3a3a;
+  color: #fff;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn:hover {
+  background: #474747;
+}
+
+.btn-danger {
+  background: #523;
+  border-color: #644;
+}
+
+.btn-danger:hover {
+  background: #734;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  background: #3a3a3a;
+  padding: 3px 6px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.badge.notif {
+  background: var(--color-primary-purple, #7b5ac2);
+}
+
+.empty {
+  text-align: center;
+  margin-top: 15vh;
+  font-size: 14px;
+  opacity: .7;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.field input {
+  background: #2b2b2b;
+  border: 1px solid #3d3d3d;
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  outline: none;
+}
+
+.field input:focus {
+  border-color: var(--color-primary-purple, #7b5ac2);
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.btn-primary {
+  background: var(--color-primary-purple, #7b5ac2);
+  color: #fff;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: #3a3a3a;
+  color: #fff;
+  border: none;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}

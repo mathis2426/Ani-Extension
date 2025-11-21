@@ -1,4 +1,3 @@
-
 /**
  * AnilistService (GraphQL only)
  * Lightweight client around AniList GraphQL API.
@@ -185,7 +184,9 @@ static async getFranchiseInfoById(id, maxDepth = 6, options = {}) {
   const seen = new Set();
   const tvNodes = new Map();
 
-  const allowedFormats = new Set(options.allowedFormats || ['TV','MOVIE']); // autorise TV_SHORT, ONA si tu veux
+  // Ajoute les films dans la chronologie ou comme alternatives
+  const allowedFormats = new Set(options.allowedFormats || ['TV']);
+  const movieFormats = new Set(['MOVIE']);
   const query = `
     query ($id: Int!) {
       Media(id: $id, type: ANIME) {
@@ -207,6 +208,7 @@ static async getFranchiseInfoById(id, maxDepth = 6, options = {}) {
               season
               seasonYear
               title { romaji english native }
+              siteUrl
             } 
           } 
         }
@@ -229,21 +231,23 @@ static async getFranchiseInfoById(id, maxDepth = 6, options = {}) {
       continue;
     }
 
-    // compatibilité : this.request peut retourner { data: { Media: ... } } ou directement { Media: ... }
     const m = (res && res.data && res.data.Media) ? res.data.Media : (res && res.Media) ? res.Media : null;
     if (!m) continue;
 
-    // garde les nodes selon format autorisé
+    // Ajoute le node TV
     if (allowedFormats.has(m.format)) {
-      tvNodes.set(m.id, {
-        id: m.id,
-        title: this.bestTitle ? this.bestTitle(m.title) : (m.title?.romaji || m.title?.english || '(no title)'),
-        episodes: (typeof m.episodes === 'number') ? m.episodes : null,
-        season: m.season || null,
-        seasonYear: m.seasonYear || null,
-        format: m.format,
-        siteUrl: m.siteUrl || null,
-      });
+      if (!tvNodes.has(m.id)) {
+        tvNodes.set(m.id, {
+          id: m.id,
+          title: this.bestTitle ? this.bestTitle(m.title) : (m.title?.romaji || m.title?.english || '(no title)'),
+          episodes: (typeof m.episodes === 'number') ? m.episodes : null,
+          season: m.season || null,
+          seasonYear: m.seasonYear || null,
+          format: m.format,
+          siteUrl: m.siteUrl || null,
+          alternatives: [] // pour les films alternatifs
+        });
+      }
     }
 
     const edges = m.relations?.edges || [];
@@ -251,8 +255,43 @@ static async getFranchiseInfoById(id, maxDepth = 6, options = {}) {
       if (!e || !e.node) continue;
       const rel = e.relationType;
       const node = e.node;
-      // suivre uniquement PREQUEL / SEQUEL (ajoute d'autres types si besoin)
-      if ((rel === 'PREQUEL' || rel === 'SEQUEL') && node.type === 'ANIME') {
+      // Si c'est un film
+      if (movieFormats.has(node.format) && node.type === 'ANIME') {
+        // Si c'est une suite logique (PREQUEL/SEQUEL)
+        if (rel === 'PREQUEL' || rel === 'SEQUEL') {
+          // Ajoute le film dans la chronologie principale
+          if (!tvNodes.has(node.id)) {
+            tvNodes.set(node.id, {
+              id: node.id,
+              title: this.bestTitle ? this.bestTitle(node.title) : (node.title?.romaji || node.title?.english || '(no title)'),
+              episodes: (typeof node.episodes === 'number') ? node.episodes : null,
+              season: node.season || null,
+              seasonYear: node.seasonYear || null,
+              format: node.format,
+              siteUrl: node.siteUrl || null,
+              alternatives: []
+            });
+          }
+          if (!seen.has(node.id)) {
+            stack.push({ id: node.id, depth: cur.depth + 1 });
+          }
+        } else {
+          // Si c'est une alternative, ajoute dans le node TV parent
+          if (allowedFormats.has(m.format) && tvNodes.has(m.id)) {
+            tvNodes.get(m.id).alternatives.push({
+              id: node.id,
+              title: this.bestTitle ? this.bestTitle(node.title) : (node.title?.romaji || node.title?.english || '(no title)'),
+              episodes: (typeof node.episodes === 'number') ? node.episodes : null,
+              season: node.season || null,
+              seasonYear: node.seasonYear || null,
+              format: node.format,
+              siteUrl: node.siteUrl || null,
+              relationType: rel
+            });
+          }
+        }
+      } else if ((rel === 'PREQUEL' || rel === 'SEQUEL') && node.type === 'ANIME') {
+        // Traverse les autres nodes TV
         if (!seen.has(node.id)) {
           stack.push({ id: node.id, depth: cur.depth + 1 });
         }
@@ -260,9 +299,27 @@ static async getFranchiseInfoById(id, maxDepth = 6, options = {}) {
     }
   }
 
+  // Remove any nodes that are present only as alternatives (e.g. movies attached as alternatives)
+  // Collect alternative ids
+  const alternativeIds = new Set();
+  for (const n of tvNodes.values()) {
+    if (Array.isArray(n.alternatives)) {
+      for (const alt of n.alternatives) {
+        if (alt && alt.id) alternativeIds.add(alt.id);
+      }
+    }
+  }
+
+  // If an alternative id exists as a main node AND it's a MOVIE, remove it from main chronology
+  for (const altId of alternativeIds) {
+    const main = tvNodes.get(altId);
+    if (main && main.format === 'MOVIE') {
+      tvNodes.delete(altId);
+    }
+  }
+
   // transforme en tableau, trie et calcule totaux
   const nodes = Array.from(tvNodes.values()).sort((a, b) => {
-    // tri : seasonYear asc, season asc, fallback id
     const ay = a.seasonYear || Infinity;
     const by = b.seasonYear || Infinity;
     if (ay !== by) return ay - by;

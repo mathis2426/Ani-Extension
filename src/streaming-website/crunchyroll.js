@@ -70,6 +70,21 @@ function crunchyroll(animeClass, location, callback) {
     observer.observe(targetNode, config);
   } else if (location.hostname == "static.crunchyroll.com") { // If the page is an iframe
 
+    let video = document.querySelector("video");
+    video.addEventListener("loadedmetadata", () => {
+      window.parent.postMessage(
+        { type: "Duration", data: video.duration }, // Total duration of the video
+        "*"
+      );
+    });
+
+    video.addEventListener("timeupdate", () => {
+      window.parent.postMessage(
+        { type: "Time", data: Math.floor(video.currentTime) }, // Current time of the video
+        "*"
+      );
+    });
+    
     sendRequestFindAnime();
   } else {
     console.log("Hôte non pris en charge");

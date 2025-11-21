@@ -1,0 +1,144 @@
+/* ===== Add List / Generic Modals ===== */
+.list-modal {
+  border: none;
+  border-radius: 16px;
+  background: #1f1f1f;
+  color: #fff;
+  padding: 0;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.list-modal::backdrop {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.modal-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 650;
+  color: #eaeaea;
+}
+
+.modal-close {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.7);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  line-height: 1;
+  transition: background .15s;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.modal-form {
+  padding: 20px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.form-field input {
+  background: #2b2b2b;
+  border: 1px solid #3d3d3d;
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color .2s;
+}
+
+.form-field input:focus {
+  border-color: var(--color-primary-purple, #7b5ac2);
+}
+
+.form-field input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.modal-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background .2s, transform .15s;
+}
+
+.modal-btn:active {
+  transform: scale(0.98);
+}
+
+.modal-btn-primary {
+  background: var(--color-primary-purple, #7b5ac2);
+  color: #fff;
+}
+
+.modal-btn-primary:hover {
+  background: #8d6dd4;
+}
+
+.modal-btn-secondary {
+  background: #333;
+  color: #e4e4e4;
+  border: 1px solid #444;
+}
+
+.modal-btn-secondary:hover {
+  background: #3a3a3a;
+}
+
+.modal-btn-danger {
+  background: #c24141;
+  color: #fff;
+  border: 1px solid #a53535;
+}
+
+.modal-btn-danger:hover {
+  background: #d04949;
+}
