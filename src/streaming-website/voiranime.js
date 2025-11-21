@@ -15,7 +15,7 @@
  * @return void
  */
 async function voiranime(animeClass, callback) {
-
+  const anilistManager = new AnilistManager();
   // Listener for messages from the iframe
   window.addEventListener("message", (event) => {
     if (!event.data) return;
@@ -52,7 +52,7 @@ async function voiranime(animeClass, callback) {
     animeClass.link = link; // Link to the anime
     animeClass.notif = false;
 
-    sendAnimeNameToIframe(animeClass.name);
+    anilistManager.AnimeNameToIframe(animeClass.name);
   }
 
   if (
@@ -60,6 +60,6 @@ async function voiranime(animeClass, callback) {
     location.hostname == "voe.sx" || // voe player
     location.hostname == "my.mail.ru" // FHD1 player
   ) {
-    sendRequestFindAnime();
+    anilistManager.RequestIfAnimeAvailable();
   }
 }

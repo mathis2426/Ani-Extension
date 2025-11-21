@@ -52,6 +52,8 @@
             "run_at": "document_idle",
             "js": [
                 "src/utils/utils.js",
+                "src/utils/anilistUtils.js",
+                "src/core/AnilistManager.js",
                 "src/streaming-website/voiranime.js",
                 "src/streaming-website/crunchyroll.js",
                 "src/interfaces/Anime.js",
