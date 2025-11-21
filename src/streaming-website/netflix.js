@@ -17,8 +17,6 @@ function netflix(animeClass, callback) {
     createSubtitleButton();
     let targetNode = document.body;
     let config = { childList: true, subtree: true };
-    let currentVideoElement = null; // Track current video element
-    let currentUrl = location.href; // Track current URL to detect episode changes
     let autoSkipIntro = chrome.storage.sync.get(["settings"], (result) => {
         return result.netflixSettings?.autoSkip || false;
     });
@@ -32,15 +30,6 @@ function netflix(animeClass, callback) {
             if (mutation.type === "childList") {
                 let videoTitleElement = document.querySelector("[data-uia='video-title']");
                 let videoElement = document.querySelector("video");
-
-                // Detect episode change by URL or video element change
-                const urlChanged = location.href !== currentUrl;
-                const videoChanged = videoElement && videoElement !== currentVideoElement;
-
-                if (urlChanged) {
-                    currentUrl = location.href;
-                    currentVideoElement = null; // Reset video tracking on URL change
-                }
 
                 if (videoTitleElement) {
                     let h4Element = videoTitleElement.querySelector("h4");
@@ -62,9 +51,7 @@ function netflix(animeClass, callback) {
                 }
 
                 // Add listeners to new video element (or if episode changed)
-                if (videoElement && (videoChanged || urlChanged)) {
-                    console.log(videoChanged , urlChanged);
-                    currentVideoElement = videoElement;
+                if (videoElement) {
                     
                     animeClass.duration = videoElement.duration;
                     animeClass.currentTime = videoElement.currentTime;
