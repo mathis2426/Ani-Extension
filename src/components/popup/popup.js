@@ -268,18 +268,38 @@ async function getPopupUserInformation(token) {
   }
 }
 
-// Profile design
+// Profile icon - Open login or show profile info on click
 const profilePicture = document.getElementById("profile-picture");
-profilePicture.addEventListener("click", async () => {
-  if (document.querySelector('.profile-container')) return;
+profilePicture.addEventListener("click", async (event) => {
+  event.stopPropagation();
+  
+  // Check if popup already exists
+  const existingPopup = document.querySelector('.profile-container');
+  if (existingPopup) {
+    // Close existing popup
+    closeProfilePopup();
+    return;
+  }
 
   let token = await getToken();
 
-  const base = document.getElementById("base");
-  const containerProfile = document.createElement("div");
-  containerProfile.className = "profile-container";
+  if (!token) {
+    // No token, open login page
+    chrome.tabs.query({}, (tabs) => {
+      const alreadyOpen = tabs.find((tab) =>
+        tab.url && tab.url.includes("src/components/login/login.html")
+      );
 
-  if (token) {
+      if (alreadyOpen) {
+        chrome.tabs.update(alreadyOpen.id, { active: true });
+      } else {
+        chrome.tabs.create({
+          url: chrome.runtime.getURL("src/components/login/login.html"),
+        });
+      }
+    });
+  } else {
+    // Token exists, show profile popup
     const userData = await getPopupUserInformation(token);
 
     if (!userData) {
@@ -287,29 +307,83 @@ profilePicture.addEventListener("click", async () => {
       return;
     }
 
+    const base = document.getElementById("base");
+    const containerProfile = document.createElement("div");
+    containerProfile.className = "profile-container";
+
     containerProfile.innerHTML = `
         <div class="user-infos">
-          <div class="user-infos-item">
-            <span class="dash"></span>
-            <span>Username : ${userData.username}</span>
+          <div class="box-user-infos">
+            <div class="user-infos-item">
+              <span>Username - ${userData.username}</span>
+            </div>
+            <div class="user-infos-item">
+              <span>UID - ${userData.uid}</span>
+            </div>
           </div>
-          <div class="user-infos-item">
-            <span class="dash"></span>
-            <span>UID : ${userData.uid}</span>
-          </div>
-          <button class="button-profile">voir le profil</button>
           <button class="button-profile" id="deconnexion">Déconnexion</button>
         </div>
       `;
-  } else {
-    containerProfile.innerHTML = `
-        <div class="user-infos">
-          <button class="button-profile" id="connexion">Se connecter</button>
-        </div>
-      `;
-  }
 
-  base.appendChild(containerProfile);
+    base.appendChild(containerProfile);
+    
+    // Trigger animation
+    setTimeout(() => {
+      containerProfile.classList.add("visible");
+    }, 10);
+
+    // Close profile popup when clicking outside
+    setTimeout(() => {
+      document.addEventListener("click", handleClickOutside);
+    }, 100);
+  }
+});
+
+// Handle click outside popup
+function handleClickOutside(event) {
+  const profileContainer = document.querySelector('.profile-container');
+  const profilePicture = document.getElementById("profile-picture");
+  
+  if (profileContainer && 
+      !profileContainer.contains(event.target) && 
+      !profilePicture.contains(event.target)) {
+    closeProfilePopup();
+  }
+}
+
+// Close profile popup function with animation
+function closeProfilePopup() {
+  const profileContainer = document.querySelector('.profile-container');
+  
+  if (profileContainer) {
+    profileContainer.classList.remove("visible");
+    setTimeout(() => {
+      profileContainer.remove();
+      document.removeEventListener("click", handleClickOutside);
+    }, 300);
+  }
+}
+
+// Update tooltip based on connection status
+async function updateProfileTooltip() {
+  let token = await getToken();
+  const profilePicture = document.getElementById("profile-picture");
+  
+  if (token) {
+    profilePicture.setAttribute("data-tooltip", "Profil");
+  } else {
+    profilePicture.setAttribute("data-tooltip", "Se connecter");
+  }
+}
+
+// Update tooltip on page load
+updateProfileTooltip();
+
+// Update tooltip when storage changes (after login/logout)
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes.token) {
+    updateProfileTooltip();
+  }
 });
 
 
