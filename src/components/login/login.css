@@ -8,8 +8,48 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
 
+/* ============================================================================
+   LOADING OVERLAY
+   ============================================================================ */
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.5s ease-out;
+}
+
+.loading-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   PAGE BODY
+   ============================================================================ */
+
 body {
-    background-image: url("../../../public/images-extension/connexion.webp");
     display: flex;
     justify-content: center;
     font-family: 'Roboto', sans-serif;  
@@ -17,6 +57,15 @@ body {
     background-repeat: no-repeat;
     background-attachment: fixed;
     background-position: center center;
+}
+
+.background-video {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    min-width: 100%;
+    min-height: 100%;
+    z-index: -1;
 }
 
 form {
@@ -62,10 +111,6 @@ form p.inscription {
     font-size: 14px;
     margin-bottom: 20px;
     color: #878787;
-}
-
-form p.inscription span {
-    color: #eb7371;
 }
 
 form .deco_cree {
