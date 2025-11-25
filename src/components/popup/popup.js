@@ -238,6 +238,8 @@ document.addEventListener("click", (event) => {
   else if (target.id === "deconnexion") {
     chrome.storage.local.remove("token", () => {
       token = null;
+      // Close profile popup after logout
+      closeProfilePopup();
     });
   }
 });
