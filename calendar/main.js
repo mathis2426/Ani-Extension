@@ -38,38 +38,39 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   filterDropdown.mount(document.getElementById("filter-dropdown"));
 
-  const today = new Date();
-  const startOfWeek = new Date(today);
+  const today = new Date(); // Get today's date
+  const startOfWeek = new Date(today); // Calculate start of the week (Monday)
   const day = today.getDay();
   const diff = day === 0 ? -6 : 1 - day;
   startOfWeek.setDate(today.getDate() + diff);
   startOfWeek.setHours(0, 0, 0, 0);
 
   document.getElementById("prev-week").addEventListener("click", () => {
-    if (currentDate <= startOfWeek) return;
+    if (currentDate <= startOfWeek) return; // Prevent going before current week
 
     currentDate = new Date(currentDate);
     currentDate.setDate(currentDate.getDate() - 7);
-    renderSchedule(animeList, currentDate, currentFilter);
+    renderSchedule(animeList, currentDate, currentFilter); // Re-render schedule with new date
 
     document.getElementById("prev-week").classList.add("inactive");
     document.getElementById("next-week").classList.remove("inactive");
   });
 
   document.getElementById("next-week").addEventListener("click", () => {
-    const maxDate = new Date(startOfWeek);
+    const maxDate = new Date(startOfWeek); // Calculate max date (one week after start of the week)
     maxDate.setDate(maxDate.getDate() + 7);
 
-    if (currentDate >= maxDate) return;
+    if (currentDate >= maxDate) return; // Prevent going beyond one week ahead
 
     currentDate = new Date(currentDate);
     currentDate.setDate(currentDate.getDate() + 7);
-    renderSchedule(animeList, currentDate, currentFilter);
+    renderSchedule(animeList, currentDate, currentFilter); // Re-render schedule with new date
     document.getElementById("next-week").classList.add("inactive");
     document.getElementById("prev-week").classList.remove("inactive");
   });
 
-  window.addEventListener("scroll", () => {
+  // Handle scroll event to modify navigation bar appearance
+  window.addEventListener("scroll", () => { 
     const nav = document.querySelector(".navigation");
     const prevweekBtn = document.getElementById("prev-week");
     const nextweekBtn = document.getElementById("next-week");
@@ -97,6 +98,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 });
 
+
+// Function to hide the loading screen
 function hideLoadingScreen() {
   const loadingScreen = document.getElementById("loading-screen");
   if (loadingScreen) loadingScreen.classList.add("hide");

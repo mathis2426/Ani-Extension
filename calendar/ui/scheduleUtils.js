@@ -1,3 +1,4 @@
+// function to get dates of the week for a given date (Monday to Sunday)
 export function getWeekDates(date) {
   const monday = new Date(date);
   const day = monday.getDay();
@@ -11,6 +12,7 @@ export function getWeekDates(date) {
   });
 }
 
+// function to get active hours from events within the week dates
 export function getActiveHours(events, weekDates) {
   const activeHoursSet = new Set();
   weekDates.forEach((date) => {
