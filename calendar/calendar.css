@@ -64,17 +64,20 @@ body {
   z-index: 1000;
   background: #2a2a2a;
   transition: all 0.3s ease-in-out;
+  height: 50px;
+  min-height: 50px;
 }
 
 .navigation.scrolled {
   background: none;
   transition: all 0.3s ease-in-out;
 }
+
 .navigation button {
   background-color: #a48ee5;
   color: #ffffff;
   border: none;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 6px;
   transition: background-color 0.3s ease, color 0.3s ease, opacity 0.3s ease;
 }
@@ -210,7 +213,7 @@ body {
   grid-column: span 1;
   text-align: center;
   font-weight: bold;
-  background-color: #a48ee5;
+  background-color: #333333;
   color: white;
   position: sticky;
   top: 0;
@@ -317,7 +320,26 @@ body {
 
 /* --- Today highlight --- */
 .today-column {
+  background-color: #444444;
+}
+
+.not-today-indicator {
+  position: absolute;
   background-color: #7f6eb2;
+  width: 100%;
+  height: 1px;
+  border-radius: 3px;
+  bottom: 0;
+}
+
+.today-indicator {
+  position: absolute;
+  background-color: #7f6eb2;
+  width: 100%;
+  height: 2px;
+  border-radius: 3px;
+  bottom: 0;
+  box-shadow: 0 -2px 22px #7f6eb2;
 }
 
 /* --- Hours --- */

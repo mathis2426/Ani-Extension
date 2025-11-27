@@ -43,10 +43,17 @@ export function renderSchedule(animeList, currentDate, currentFilter) {
     header.style.gridRow = `1`;
     header.textContent = `${dayNames[dayIndex]} ${date.getDate()}/${date.getMonth() + 1}`;
 
-
+    const headerSelect = document.createElement("div");
+    
     if (date.toLocaleDateString("fr-CA") === todayStr) {
+      headerSelect.className = "today-indicator";
       header.classList.add("today-column");
+      header.appendChild(headerSelect);
+    } else {
+      headerSelect.className = "not-today-indicator";
+      header.appendChild(headerSelect);
     }
+
 
     scheduleEl.appendChild(header);
   });
