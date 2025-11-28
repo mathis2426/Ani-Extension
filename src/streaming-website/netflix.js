@@ -31,25 +31,7 @@ function netflix(animeClass, callback) {
                 let videoTitleElement = document.querySelector("[data-uia='video-title']");
                 let videoElement = document.querySelector("video");
 
-                if (videoTitleElement) {
-                    let h4Element = videoTitleElement.querySelector("h4");
-                    if (h4Element) {
-                        animeClass.name = h4Element.innerText; // Name of the anime
-                    }
-
-                    let spans = videoTitleElement.querySelectorAll("span");
-                    if (spans.length >= 2) {
-                        // Extract episode number properly (e.g., "E23" -> "23")
-                        const episodeText = spans[0].innerText;
-                        const episodeMatch = episodeText.match(/\d+/);
-                        animeClass.episode = episodeMatch ? parseInt(episodeMatch[0]) : episodeText;
-                        animeClass.title = spans[1].innerText; // Title of the episode
-                    }
-
-                    animeClass.link = location.href;
-                    animeClass.lastUpdate = Date.now();
-                }
-
+                
                 // Add listeners to new video element (or if episode changed)
                 if (videoElement) {
                     
@@ -80,6 +62,29 @@ function netflix(animeClass, callback) {
                     if (animeClass.name && animeClass.title && animeClass.episode) {
                         callback();
                     }
+                }
+
+                if (videoTitleElement) {
+                    
+                    let h4Element = videoTitleElement.querySelector("h4");
+                    if (h4Element) {
+                        animeClass.name = h4Element.innerText; // Name of the anime
+                    }
+
+                    let spans = videoTitleElement.querySelectorAll("span");
+                    if (spans.length >= 2) {
+                        // Extract episode number properly (e.g., "E23" -> "23")
+                        const episodeText = spans[0].innerText;
+                        const episodeMatch = episodeText.match(/\d+/);
+                        animeClass.episode = episodeMatch ? parseInt(episodeMatch[0]) : episodeText;
+                        animeClass.title = spans[1].innerText; // Title of the episode
+                    }
+
+                    animeClass.link = location.href;
+                    animeClass.lastUpdate = Date.now();
+                }
+                if (videoElement && videoTitleElement) {
+                    observer.disconnect(); // Stop observing to prevent multiple triggers
                 }
             }
         }

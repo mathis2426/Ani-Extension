@@ -505,7 +505,11 @@ function showChronology(anime) {
   const overlay = document.createElement('div');
   overlay.id = 'chronology-overlay';
   overlay.className = 'chronology-overlay';
-  overlay.addEventListener('click', () => closeChronologyModal());
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      closeChronologyModal();
+    }
+  });
 
   // panel (dialog)
   const panel = document.createElement('div');
@@ -671,10 +675,19 @@ function showChronology(anime) {
         const groupSpecial = document.createElement('div');
         groupSpecial.className = 'chronology-entry-group-special';
 
-        const sIndex = document.createElement('div');
-        sIndex.className = 'chronology-index special';
-        sIndex.textContent = '';
-        groupSpecial.appendChild(sIndex);
+        if (nextNode) {
+          const sIndex = document.createElement('div');
+          sIndex.className = 'chronology-index special';
+          sIndex.textContent = '';
+          groupSpecial.appendChild(sIndex);
+        }
+        else {
+          const sIndexfinal = document.createElement('div');
+          sIndexfinal.className = 'final-dot';
+          sIndexfinal.textContent = '';
+          groupSpecial.appendChild(sIndexfinal);
+        }
+
 
         specialAlts.forEach(alt => {
 

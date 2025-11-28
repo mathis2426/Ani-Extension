@@ -140,9 +140,7 @@ function renderInProgressWidget(w) {
         ${items.map(anime => {
           const progress = anime.totalEp > 0 ? Math.round((anime.episode / anime.totalEp) * 100) : 0;
           return `
-            <div style="flex:0 0 auto;width:140px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;transition:background .15s;" 
-                 onmouseover="this.style.background='rgba(255,255,255,.08)'" 
-                 onmouseout="this.style.background='rgba(255,255,255,.05)'">
+              <div class="wg-hoverable" style="flex:0 0 auto;width:140px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;transition:background .15s;">
               <div style="font-size:12px;font-weight:650;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">
                 ${anime.name || 'Anime'}
               </div>
@@ -175,9 +173,7 @@ function renderInProgressWidget(w) {
         ${items.map(anime => {
           const progress = anime.totalEp > 0 ? Math.round((anime.episode / anime.totalEp) * 100) : 0;
           return `
-            <div style="flex:0 0 auto;width:160px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;transition:background .15s,transform .15s;" 
-                 onmouseover="this.style.background='rgba(255,255,255,.08)';this.style.transform='translateY(-2px)'" 
-                 onmouseout="this.style.background='rgba(255,255,255,.05)';this.style.transform=''">
+              <div class="wg-hoverable wg-hoverable-transform" style="flex:0 0 auto;width:160px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;transition:background .15s,transform .15s;">
               <div style="font-size:13px;font-weight:650;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;min-height:36px;">
                 ${anime.name || 'Anime'}
               </div>
@@ -211,9 +207,7 @@ function renderInProgressWidget(w) {
       ${items.map(anime => {
         const progress = anime.totalEp > 0 ? Math.round((anime.episode / anime.totalEp) * 100) : 0;
         return `
-          <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;transition:background .15s;" 
-               onmouseover="this.style.background='rgba(255,255,255,.08)'" 
-               onmouseout="this.style.background='rgba(255,255,255,.05)'">
+          <div class="wg-hoverable" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;transition:background .15s;">
             <div style="font-size:12px;font-weight:650;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">
               ${anime.name || 'Anime'}
             </div>
