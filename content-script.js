@@ -29,11 +29,9 @@ switch (location.hostname) {
     break;
   
   case "www.netflix.com":
-    SPADetectChange(() => {
       netflix(animeClass, () => {
         chrome.runtime.sendMessage({ type: "animeData", data: animeClass });
       });
-    });
     break;
   
   default:

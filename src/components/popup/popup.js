@@ -28,8 +28,11 @@ document.addEventListener("DOMContentLoaded", () => {
       if (anime.saison && anime.title) {
         episodeName = `Saison ${anime.saison} - Ep ${anime.episode} - ${anime.title}`;
       }
-      if (anime.title) {
+      else if (anime.title && anime.episode) {
         episodeName = `Ep ${anime.episode} - ${anime.title}`;
+      }
+      else if (anime.title && !anime.episode) {
+        episodeName = `${anime.title}`;
       }
       else {
         episodeName = `Episode ${anime.episode}`;

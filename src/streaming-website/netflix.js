@@ -17,6 +17,8 @@ function netflix(animeClass, callback) {
     createSubtitleButton();
     let targetNode = document.body;
     let config = { childList: true, subtree: true };
+    let currentVideoElement = null; // Track current video element
+    let currentUrl = location.href; // Track current URL to detect episode changes
     let autoSkipIntro = chrome.storage.sync.get(["settings"], (result) => {
         return result.netflixSettings?.autoSkip || false;
     });
@@ -31,10 +33,51 @@ function netflix(animeClass, callback) {
                 let videoTitleElement = document.querySelector("[data-uia='video-title']");
                 let videoElement = document.querySelector("video");
 
+                // Detect episode change by URL or video element change
+                const urlChanged = location.href !== currentUrl;
+                const videoChanged = videoElement && videoElement !== currentVideoElement;
                 
+                if (urlChanged) {
+                    currentUrl = location.href;
+                    currentVideoElement = null; // Reset video tracking on URL change
+                }
+
+                if (videoTitleElement) {
+                    let h4Element = videoTitleElement.querySelector("h4");
+                    if (h4Element) {
+                        animeClass.name = h4Element.innerText; // Name of the anime
+                    }
+
+                    let spans = videoTitleElement.querySelectorAll("span");
+                    if (spans.length >= 2) {
+                        // Extract episode number properly (e.g., "E23" -> "23")
+                        const episodeText = spans[0].innerText;
+                        const episodeMatch = episodeText.match(/\d+/);
+                        animeClass.episode = episodeMatch ? parseInt(episodeMatch[0]) : episodeText;
+                        animeClass.title = spans[1].innerText; // Title of the episode
+                    }
+                    else if (spans.length === 0) {
+                        if (!h4Element) {
+                            try {
+                                const titleParts = videoTitleElement.innerText.split(":");
+                                animeClass.name = titleParts[0];
+                                animeClass.title = titleParts[1] ? titleParts[1].trim() : "";
+                            } catch (error) {
+                                animeClass.name = videoTitleElement.innerText;
+                                animeClass.title = "";
+                            }
+                        }
+                    }
+
+                    animeClass.link = location.href;
+                    animeClass.lastUpdate = Date.now();
+                }
+
                 // Add listeners to new video element (or if episode changed)
-                if (videoElement) {
-                    
+                if (videoElement && (videoChanged || urlChanged)) {
+                    console.log(videoChanged , urlChanged);
+                    currentVideoElement = videoElement;
+
                     animeClass.duration = videoElement.duration;
                     animeClass.currentTime = videoElement.currentTime;
                     animeClass.lastUpdate = Date.now();
@@ -62,29 +105,6 @@ function netflix(animeClass, callback) {
                     if (animeClass.name && animeClass.title && animeClass.episode) {
                         callback();
                     }
-                }
-
-                if (videoTitleElement) {
-                    
-                    let h4Element = videoTitleElement.querySelector("h4");
-                    if (h4Element) {
-                        animeClass.name = h4Element.innerText; // Name of the anime
-                    }
-
-                    let spans = videoTitleElement.querySelectorAll("span");
-                    if (spans.length >= 2) {
-                        // Extract episode number properly (e.g., "E23" -> "23")
-                        const episodeText = spans[0].innerText;
-                        const episodeMatch = episodeText.match(/\d+/);
-                        animeClass.episode = episodeMatch ? parseInt(episodeMatch[0]) : episodeText;
-                        animeClass.title = spans[1].innerText; // Title of the episode
-                    }
-
-                    animeClass.link = location.href;
-                    animeClass.lastUpdate = Date.now();
-                }
-                if (videoElement && videoTitleElement) {
-                    observer.disconnect(); // Stop observing to prevent multiple triggers
                 }
             }
         }
