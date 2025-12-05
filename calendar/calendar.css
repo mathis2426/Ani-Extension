@@ -51,12 +51,26 @@ body {
 .popup-left {
   width: 220px;
   flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
 }
 
 .popup-left img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.popup-left::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 5px;
+  height: 100%;
+  background: linear-gradient(270deg, #2a2a2a 0%, transparent 100%);
+  z-index: 1;
+  pointer-events: none;
 }
 
 .popup-right {
