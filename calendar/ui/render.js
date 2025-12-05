@@ -1,5 +1,7 @@
 import { getWeekDates, getActiveHours } from "./scheduleUtils.js";
 import { renderHourLabels } from "./renderHours.js";
+import { showAnimePopup } from "./popup.js";
+import { getScoreColor } from "../utils/score.js";
 
 export function renderSchedule(animeList, currentDate, currentFilter) {
   const scheduleEl = document.getElementById("schedule"); // Main schedule container
@@ -95,6 +97,12 @@ export function renderSchedule(animeList, currentDate, currentFilter) {
 function buildEventDiv(ev) {
   const evDiv = document.createElement("div");
   evDiv.className = "event";
+  evDiv.style.cursor = "pointer";
+  
+  // Ajouter le clic pour ouvrir la popup
+  evDiv.addEventListener("click", () => {
+    showAnimePopup(ev.title, ev.episode, ev.heure);
+  });
 
   const imgDiv = document.createElement("div");
   imgDiv.className = "event-img";
@@ -119,43 +127,26 @@ function buildEventDiv(ev) {
   // Get color and degrees based on score (0-100)
   const score = ev.score ?? 0;
   const { color, degrees } = getScoreColor(score);
-
-  console.log("color and degrees:", color, degrees);
   
-  // Create circle with donut
+  // Create score donut
   const scoreDiv = document.createElement("div");
   scoreDiv.className = "event-score";
-  scoreDiv.style.position = "relative";
-  scoreDiv.style.boxShadow = `inset 0 0 0 3px #555`;
   
-  // Colored progress bar (fills circle proportionally to score)
+  // Progress bar (dynamic gradient based on score)
   const scoreBar = document.createElement("div");
-  scoreBar.style.position = "absolute";
-  scoreBar.style.width = "100%";
-  scoreBar.style.height = "100%";
-  scoreBar.style.borderRadius = "50%";
+  scoreBar.className = "score-bar";
   scoreBar.style.background = `conic-gradient(${color} 0deg, ${color} ${degrees}deg, #555 ${degrees}deg, #555 360deg)`;
-  scoreBar.style.zIndex = "0";
   scoreDiv.appendChild(scoreBar);
   
-  // Donut center (creates the hole in the middle)
+  // Center hole
   const donutCenter = document.createElement("div");
-  donutCenter.style.position = "absolute";
-  donutCenter.style.top = "50%";
-  donutCenter.style.left = "50%";
-  donutCenter.style.transform = "translate(-50%, -50%)";
-  donutCenter.style.width = "80%";
-  donutCenter.style.height = "80%";
-  donutCenter.style.borderRadius = "50%";
-  donutCenter.style.background = "#383838";
-  donutCenter.style.zIndex = "1";
+  donutCenter.className = "score-center";
   scoreDiv.appendChild(donutCenter);
   
-  // Score text (above everything)
+  // Score value
   const scoreText = document.createElement("span");
+  scoreText.className = "score-text";
   scoreText.textContent = score;
-  scoreText.style.position = "relative";
-  scoreText.style.zIndex = "2";
   scoreDiv.appendChild(scoreText);
   
   middleDiv.appendChild(scoreDiv);
@@ -170,27 +161,4 @@ function buildEventDiv(ev) {
   evDiv.appendChild(txtDiv);
 
   return evDiv;
-}
-
-
-
-function getScoreColor(score) { // switch to utils after architecture update
-  let color;
-  const degrees = Math.max(0, Math.min(100, score)) * 3.6; // 0-100 => 0-360 degrees
-
-  if (score < 50) {
-    color = "#d34848ff"; // Rouge
-  } else if (score < 60) {
-    color = "#fd6d1fff"; // Orange
-  } else if (score < 70) {
-    color = "#edb200ff"; // Jaune
-  } else if (score <= 85) {
-    color = "#4CAF50"; // Vert
-  } else if (score <= 99) {
-    color = "#038808ff"; // Vert fonce
-  } else {
-    color = "#2196F3"; // Bleu
-  }
-  
-  return { color, degrees };
 }

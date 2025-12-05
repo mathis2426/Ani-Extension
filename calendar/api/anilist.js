@@ -66,3 +66,83 @@ export async function fetchTwoWeeksSchedule() {
     };
   });
 }
+
+
+export async function getAnimeSeasonalDetails(animeName) {
+  const query = `
+    query ($search: String) {
+      Page(page: 1, perPage: 50) {
+        pageInfo {
+          currentPage
+          hasNextPage
+        }
+        media(search: $search, type: ANIME) {
+            id
+          title {
+            romaji
+            english
+            native
+          }
+          nextAiringEpisode {
+            airingAt
+            episode
+          }
+          episodes
+          genres
+          averageScore
+          coverImage {
+            large
+          }
+          duration 
+          startDate {
+            year
+            month
+            day
+          }
+          endDate {
+            year
+            month
+            day
+          }
+          studios {
+          nodes {
+            id
+            name
+          }
+          }
+          updatedAt
+          description
+        }
+      }
+    }
+  `;
+
+  let search = animeName;
+  const response = await fetch("https://graphql.anilist.co", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ query, variables: { search } }),
+  });
+
+  const result = await response.json();
+  const media = result.data.Page.media[0];
+  return {
+    id: media.id,
+    title: {
+      romaji: media.title.romaji,
+      english: media.title.english,
+      native: media.title.native,
+    },
+    nextAiringEpisode: media.nextAiringEpisode,
+    episodes: media.episodes,
+    genres: media.genres,
+    averageScore: media.averageScore,
+    poster: media.coverImage,
+    duration: media.duration,
+    startDate: media.startDate,
+    endDate: media.endDate,
+    studios: media.studios,
+    updatedAt: media.updatedAt,
+    description: media.description,
+  };
+}
