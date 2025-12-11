@@ -1286,9 +1286,9 @@ function showOffsetControl(subtitleContent, subtitleInfo, initialOffset = 0) {
         </div>
         <div style="margin-bottom: 8px; display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center;">
             <span style="min-width: 60px;">Offset:</span>
-            <input type="range" id="realtime-offset-slider" min="-10000" max="10000" value="${initialOffset}" step="100" 
+            <input type="range" id="realtime-offset-slider" min="-50000" max="50000" value="${initialOffset}" step="100" 
                    style="width: 100%; cursor: pointer;" />
-            <input type="number" id="realtime-offset-input" min="-10000" max="10000" step="100" value="${initialOffset}"
+            <input type="number" id="realtime-offset-input" min="-50000" max="50000" step="100" value="${initialOffset}"
                    style="width: 90px; background: #111; color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; padding: 6px 8px;" />
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #aaa;">
@@ -1309,7 +1309,7 @@ function showOffsetControl(subtitleContent, subtitleInfo, initialOffset = 0) {
     const snap100 = (v) => Math.round(v / 100) * 100;
 
     async function applyWith(offset) {
-        currentOffset = clamp(snap100(offset), -10000, 10000);
+        currentOffset = clamp(snap100(offset), -50000, 50000);
         slider.value = String(currentOffset);
         input.value = String(currentOffset);
         offsetDisplay.textContent = `${currentOffset} ms`;

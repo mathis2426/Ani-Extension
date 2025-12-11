@@ -208,9 +208,9 @@ function injectSubtitleStyle() {
   ::cue {
   color: #ffffff;
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
-  font-size: 1.1em;
+  font-size: 0.9em;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.2;
   background: transparent;
   padding: 0;
 
@@ -239,38 +239,10 @@ function injectSubtitleStyle() {
     0 -2px 1px rgba(0,0,0,0.88),
     0 2px 1px rgba(0,0,0,0.88);
 }
-  /* fallback overlay style */
-  #aniext-subtitle-overlay {
-    position: absolute;
-    bottom: 6%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 84%;
-    text-align: center;
-    pointer-events: none;
-    z-index: 999999;
-    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
-    font-weight: 700;
-    color: #fff;
-    text-shadow:
-      -2px -2px 0 #000,
-      2px -2px 0 #000,
-      -2px 2px 0 #000,
-      2px 2px 0 #000,
-      -2px 0 0 #000,
-      2px 0 0 #000,
-      0 -2px 0 #000,
-      0 2px 0 #000,
-      0 0 4px rgba(0,0,0,0.8);
-  }
-  #aniext-subtitle-overlay .line {
-    display: block;
-    margin: 2px 0;
-    background: transparent;
-    padding: 0;
-    font-size: 1.1em;
-    line-height: 1.3;
-  }
+  video::-webkit-media-text-track-container {
+  bottom: 5% !important; /* vertical height adjustment */
+}
+
   `;
 
   const style = document.createElement("style");
