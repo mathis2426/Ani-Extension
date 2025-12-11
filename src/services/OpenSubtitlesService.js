@@ -225,43 +225,39 @@ export class OpenSubtitlesService {
  * @param {number|null} providedSeason  // optional: when provided, search only that season
  * @returns {Promise<object|null|object[]>} - single match if season provided, otherwise array of matches
  */
-  async searchEpisodeSubtitle(showName, episodeNumber, languages = ["fr"], providedSeason = null) {
+  async searchEpisodeSubtitle(showName, episodeNumber, languages = ["fr"], providedSeason = null, episodeTitle = null) {
     console.log(`🔍 Recherche sous-titres pour: "${showName}" Episode ${episodeNumber} (season: ${providedSeason ?? "auto"})`);
 
-    // 1) If season provided -> try direct & classic strategies, return first matching subtitle
-    if (providedSeason) {
-      const queries = generateSearchQueries(showName, episodeNumber, providedSeason);
-      console.log("Stratégies (season provided):", queries);
+    if (!episodeNumber) {
+      const queries = generateSearchQueries(showName, null, null, episodeTitle);
+      console.log("Stratégies (no-season, no-episode):", queries);
 
       for (const query of queries) {
         try {
           console.log(`  → Essai: "${query}"`);
           const res = await this.searchSubtitles({
             query,
-            type: "episode",
+            type: "movie",
             languages,
             page: 1,
             per_page: 40
           });
-
           if (res && Array.isArray(res.data) && res.data.length > 0) {
-            const matched = findBestMatch(res.data, showName, episodeNumber);
+            const matched = findBestMatch(res.data, showName, null);
             if (matched) {
               console.log(`  ✅ Trouvé avec: "${query}"`);
-              return matched; // single object
+              return matched;
             }
           }
         } catch (err) {
           console.warn(`  ❌ Échec pour "${query}":`, err);
         }
       }
-
-      console.log("Aucun résultat convaincant pour la saison fournie.");
       return null;
     }
 
-    // 2) If no season provided -> find matches across multiple seasons
-    const baseQueries = generateSearchQueries(showName, episodeNumber, null);
+
+    const baseQueries = generateSearchQueries(showName, episodeNumber, null, episodeTitle);
     console.log("Stratégies (no-season quick):", baseQueries);
 
     const foundCandidates = [];

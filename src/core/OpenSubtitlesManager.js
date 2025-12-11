@@ -85,7 +85,9 @@ export class OpenSubtitlesManager {
                 foundSubtitle = await openSubtitlesService.searchEpisodeSubtitle(
                     anime.name,
                     anime.episode,
-                    [lang]
+                    [lang],
+                    anime.season || null,
+                    anime.title || null
                 );
             } catch (e) {
                 // Retry once on auth-related errors
@@ -95,7 +97,9 @@ export class OpenSubtitlesManager {
                         foundSubtitle = await openSubtitlesService.searchEpisodeSubtitle(
                             anime.name,
                             anime.episode,
-                            [lang]
+                            [lang],
+                            anime.season || null,
+                            anime.title || null
                         );
                     } else {
                         throw e;

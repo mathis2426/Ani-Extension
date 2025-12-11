@@ -50,7 +50,6 @@ function netflix(animeClass, callback) {
 
                     let spans = videoTitleElement.querySelectorAll("span");
                     if (spans.length >= 2) {
-                        // Extract episode number properly (e.g., "E23" -> "23")
                         const episodeText = spans[0].innerText;
                         const episodeMatch = episodeText.match(/\d+/);
                         animeClass.episode = episodeMatch ? parseInt(episodeMatch[0]) : episodeText;
@@ -62,6 +61,7 @@ function netflix(animeClass, callback) {
                                 const titleParts = videoTitleElement.innerText.split(":");
                                 animeClass.name = titleParts[0];
                                 animeClass.title = titleParts[1] ? titleParts[1].trim() : "";
+                                animeClass.episode = "";
                             } catch (error) {
                                 animeClass.name = videoTitleElement.innerText;
                                 animeClass.title = "";
@@ -75,9 +75,8 @@ function netflix(animeClass, callback) {
 
                 // Add listeners to new video element (or if episode changed)
                 if (videoElement && (videoChanged || urlChanged)) {
-                    console.log(videoChanged , urlChanged);
+                    createSubtitleButton();
                     currentVideoElement = videoElement;
-
                     animeClass.duration = videoElement.duration;
                     animeClass.currentTime = videoElement.currentTime;
                     animeClass.lastUpdate = Date.now();
@@ -105,6 +104,7 @@ function netflix(animeClass, callback) {
                     if (animeClass.name && animeClass.title && animeClass.episode) {
                         callback();
                     }
+                    console.log(animeClass);
                 }
             }
         }
