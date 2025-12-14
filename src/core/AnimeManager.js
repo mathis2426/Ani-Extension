@@ -6,7 +6,7 @@ import { StorageService } from "../services/StorageService.js";
  */
 export class AnimeManager {
   static async saveAnime(anime) {
-    const dataList = (await StorageService.get("popupDataList")) || [];
+    const dataList = (await StorageService.getsync("popupDataList")) || [];
 
     const existingIndex = dataList.findIndex(a => a.name === anime.name);
 
@@ -21,6 +21,6 @@ export class AnimeManager {
     // Sauvegarder avec les infos d'images si présentes
     dataList.unshift({ ...anime });
 
-    await StorageService.set("popupDataList", dataList);
+    await StorageService.setsync("popupDataList", dataList);
   }
 }

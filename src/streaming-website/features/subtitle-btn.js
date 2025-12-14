@@ -129,7 +129,7 @@ function createSubtitleButton() {
 async function handleSubtitleSearchFromButton() {
     try {
         // Get current anime info from background/storage
-        const result = await chrome.storage.local.get("popupDataList");
+        const result = await chrome.storage.sync.get("popupDataList");
         const animeList = result.popupDataList || [];
 
         // Find the currently playing anime (the one on Netflix)
@@ -167,16 +167,16 @@ async function handleSubtitleSearchFromButton() {
             if (response && response.success) {
                 const results = response.data;
 
-                // if only one result, download directly with stored site offset
-                if (!Array.isArray(results)) {
-                    getStoredOffset().then((siteOffset) => downloadAndApplySubtitle(results, currentAnime, siteOffset));
-                } else if (results.length === 1) {
-                    getStoredOffset().then((siteOffset) => downloadAndApplySubtitle(results[0], currentAnime, siteOffset));
-                } else {
-                    // Show modal even if results is empty or has multiple items
-                    // This allows users to try other search methods (OpenSubID, File upload, etc.)
+                // // if only one result, download directly with stored site offset
+                // if (!Array.isArray(results)) {
+                //     getStoredOffset().then((siteOffset) => downloadAndApplySubtitle(results, currentAnime, siteOffset));
+                // } else if (results.length === 1) {
+                //     getStoredOffset().then((siteOffset) => downloadAndApplySubtitle(results[0], currentAnime, siteOffset));
+                // } else {
+                //     // Show modal even if results is empty or has multiple items
+                //     // This allows users to try other search methods (OpenSubID, File upload, etc.)
                     showSubtitleModal(results || [], currentAnime);
-                }
+                // }
             } else {
                 // Even if the search fails or finds nothing, show the modal
                 // This allows users to try other search methods (Full Anime, OpenSubID, File upload, etc.)
@@ -194,6 +194,7 @@ async function handleSubtitleSearchFromButton() {
  * Show modal with subtitle candidates (updated: hover animations + entry animations)
  */
 async function showSubtitleModal(candidates, anime) {
+    console.log("Afficher le modal des sous-titres pour:", anime, candidates);
     // Supprime toute modal existante
     const existing = document.getElementById('aniext-subtitle-modal');
     if (existing) existing.remove();

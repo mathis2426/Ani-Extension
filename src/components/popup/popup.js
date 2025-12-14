@@ -11,7 +11,7 @@ let token = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   const listAnime = document.getElementById("content_list");
-  chrome.storage.local.get("popupDataList", (result) => {
+  chrome.storage.sync.get("popupDataList", (result) => {
     const animeList = result.popupDataList || [];
     if (animeList.length === 0) {
       const emptyMessage = document.createElement("div");
@@ -103,10 +103,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const isChecked = checkbox.checked;
 
         // Update the notification status in the storage
-        chrome.storage.local.get("popupDataList", (result) => {
+        chrome.storage.sync.get("popupDataList", (result) => {
           let dataList = result.popupDataList || [];
           dataList[index].notif = isChecked;
-          chrome.storage.local.set({ popupDataList: dataList });
+          chrome.storage.sync.set({ popupDataList: dataList });
         });
       });
     });
@@ -199,7 +199,7 @@ function updateTime(current, total, index) {
 document.addEventListener("DOMContentLoaded", () => {
 
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === "local" && changes.popupDataList) {
+    if (area === "sync" && changes.popupDataList) {
       const oldList = changes.popupDataList.oldValue || [];
       const newList = changes.popupDataList.newValue || [];
       // Détecte d'abord s'il y a eu un vrai changement lié à la lecture

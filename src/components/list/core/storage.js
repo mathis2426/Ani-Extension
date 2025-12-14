@@ -3,15 +3,15 @@
 import { state, setPopupData, setAniLists, setCustomLists } from './state.js';
 
 export function persistAniLists(lists) {
-  chrome.storage.local.set({ aniLists: lists });
+  chrome.storage.sync.set({ aniLists: lists });
 }
 
 export function persistCustomLists(lists) {
-  chrome.storage.local.set({ customLists: lists });
+  chrome.storage.sync.set({ customLists: lists });
 }
 
 export function loadAllData(callback) {
-  chrome.storage.local.get(["popupDataList", "aniLists", "customLists"], (result) => {
+  chrome.storage.sync.get(["popupDataList", "aniLists", "customLists"], (result) => {
     setPopupData(result.popupDataList || []);
     setAniLists(result.aniLists || { wishlist: [], inprogress: [], finished: [] });
     setCustomLists(result.customLists || []);
@@ -24,7 +24,7 @@ let storageUpdateTimeout = null;
 
 export function setupStorageListener(onPopupDataChange, onAniListsChange) {
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area !== "local") return;
+    if (area !== "sync") return;
     
     // Annuler la mise à jour précédente si elle arrive trop vite
     if (storageUpdateTimeout) {
