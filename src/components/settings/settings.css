@@ -419,17 +419,19 @@ html.light-theme {
     flex-direction: column;
 }
 
-.openSubtitles{
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: space-between;
-}
+
 .open-subtitles-create-account {
     width: 50%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+}
+
+.open-subtitles-service {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between;
 }
 
 a{
@@ -852,3 +854,332 @@ input:checked+.slider:before {
 .light-theme .card-description { color: #555; }
 .light-theme .setting-label { color: #111; }
 .light-theme .setting-hint { color: #707070; }
+
+/* Subtitle Customization Section */
+.subtitle-customization-header {
+    margin-top: 24px;
+}
+
+.subtitle-customization-header .classic-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+    justify-content: center;
+}
+
+#toggleSubtitleCustomization{
+    display: none;
+}
+
+.subtitle-customization {
+    background: linear-gradient(135deg, rgba(167, 139, 250, 0.08), rgba(167, 139, 250, 0.04));
+    border: 1px solid rgba(167, 139, 250, 0.2);
+    border-radius: 14px;
+    padding: 22px;
+    margin-top: 24px;
+    backdrop-filter: blur(8px);
+}
+
+.subtitle-customization-title {
+    margin: 0 0 8px;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.subtitle-customization-description {
+    margin: 0 0 20px;
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* Form Layout */
+.subtitle-form {
+    margin-bottom: 20px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #f5f4ff;
+    display: block;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.form-input {
+    padding: 10px 12px;
+    background-color: #3a3a3a;
+    border: 1px solid rgba(167, 139, 250, 0.2);
+    border-radius: 8px;
+    color: #eae9f3;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #a78bfa;
+    box-shadow: 0 0 8px rgba(167, 139, 250, 0.3);
+    background-color: #3f3f47;
+}
+
+.form-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a78bfa' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 20px;
+    padding-right: 32px;
+}
+
+.form-color {
+    width: 50px;
+    height: 40px;
+    padding: 4px;
+    cursor: pointer;
+}
+
+.form-color::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.form-color::-webkit-color-swatch {
+    border: 1px solid rgba(167, 139, 250, 0.2);
+    border-radius: 6px;
+}
+
+.form-range {
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(to right, #a78bfa 0%, #a78bfa 0%, #4a4a52 0%, #4a4a52 100%);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    padding: 0;
+    margin: 0;
+}
+
+.form-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #a78bfa;
+    cursor: pointer;
+}
+
+.form-range::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #a78bfa;
+    cursor: pointer;
+    border: none;
+}
+
+.form-range::-moz-range-track {
+    background: transparent;
+    border: none;
+}
+
+.input-unit {
+    color: #a7a7b3;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    position: absolute;
+    right: 12px;
+}
+
+.form-unit-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 70px !important;
+    padding: 10px 8px !important;
+    background-color: #3a3a3a;
+    border: 1px solid rgba(167, 139, 250, 0.2);
+    border-radius: 8px;
+    color: #eae9f3;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a78bfa' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 4px center;
+    background-size: 16px;
+    padding-right: 24px;
+}
+
+.form-unit-select:focus {
+    outline: none;
+    border-color: #a78bfa;
+    box-shadow: 0 0 8px rgba(167, 139, 250, 0.3);
+}
+
+.light-theme .form-unit-select {
+    background-color: #fff;
+    color: #111;
+    border-color: rgba(167, 139, 250, 0.15);
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b6fcf' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+}
+
+.range-value {
+    color: #a7a7b3;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    min-width: 40px;
+    text-align: right;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 16px 0;
+    border-top: 1px solid rgba(167, 139, 250, 0.1);
+}
+
+.btn-secondary {
+    background-color: #4a4a52;
+    color: #fff;
+}
+
+.btn-secondary:hover {
+    background-color: #5a5a62;
+}
+
+/* Preview Section */
+.subtitle-preview {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(167, 139, 250, 0.15);
+    border-radius: 10px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.subtitle-preview-title {
+    margin: 0 0 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #f5f4ff;
+}
+
+.subtitle-preview-box {
+    background: #1e1e1e;
+    border: 1px solid rgba(167, 139, 250, 0.1);
+    border-radius: 6px;
+    padding: 30px;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.subtitle-text {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: #eae9f3;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* Light theme for subtitle customization */
+.light-theme .subtitle-customization {
+    background: linear-gradient(135deg, rgba(167, 139, 250, 0.12), rgba(167, 139, 250, 0.06));
+    border-color: rgba(167, 139, 250, 0.25);
+}
+
+.light-theme .subtitle-customization-title {
+    color: #111;
+}
+
+.light-theme .subtitle-customization-description {
+    color: #555;
+}
+
+.light-theme .form-label {
+    color: #222;
+}
+
+.light-theme .form-input {
+    background-color: #fff;
+    color: #111;
+    border-color: rgba(167, 139, 250, 0.15);
+}
+
+.light-theme .form-input:focus {
+    background-color: #f9f9fb;
+    border-color: #a78bfa;
+    box-shadow: 0 0 8px rgba(167, 139, 250, 0.25);
+}
+
+.light-theme .form-select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b6fcf' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+}
+
+.light-theme .input-unit,
+.light-theme .range-value {
+    color: #707070;
+}
+
+.light-theme .form-actions {
+    border-top-color: rgba(167, 139, 250, 0.12);
+}
+
+.light-theme .btn-secondary {
+    background-color: #e5e5e5;
+    color: #111;
+}
+
+.light-theme .btn-secondary:hover {
+    background-color: #d5d5d5;
+}
+
+.light-theme .subtitle-preview {
+    background: rgba(167, 139, 250, 0.05);
+    border-color: rgba(167, 139, 250, 0.2);
+}
+
+.light-theme .subtitle-preview-title {
+    color: #222;
+}
+
+.light-theme .subtitle-preview-box {
+    background: #f3f4f6;
+    border-color: rgba(167, 139, 250, 0.15);
+}
+
+.light-theme .subtitle-text {
+    color: #333;
+}

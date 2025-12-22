@@ -177,7 +177,8 @@
                     </label>
                     <input type="radio" name="style" id="style-simplified" value="simplified">
                     <label class="card light-card" for="style-simplified">
-                        <img class="thumb" src="../../../public/images-extension/Skeleton-extension-light.png" alt="Light theme preview">
+                        <img class="thumb" src="../../../public/images-extension/Skeleton-extension-light.png"
+                            alt="Light theme preview">
                         <span class="title">Light</span>
                         <span class="subtitle">Light theme</span>
                         <span class="check" aria-hidden="true">✓</span>
@@ -300,45 +301,158 @@
         </section>
 
         <!-- OPEN SUBTITLES -->
-        <section id="section-openSubtitles" class="section settings-card openSubtitles" tabindex="-1">
-            <div>
-                <header class="card-header">
-                    <h2 class="card-title">OpenSubtitles</h2>
-                    <p class="card-description">Configure subtitle language and authentication.</p>
-                </header>
-                <div class="open-subtitles-block">
-                    <p id="openSubtitlesStatus"></p>
-                    <label id="language-block" class="block">
-                        <span>Preferred subtitle language</span>
-                        <div class="language-control">
-                            <img id="openSubtitlesLanguageFlag" class="language-flag" src="" alt="flag">
-                            <select id="openSubtitlesLanguage" class="language-select">
-                                <option value="fr">Français</option>
-                                <option value="en">English</option>
-                                <option value="es">Español</option>
-                                <option value="de">Deutsch</option>
-                                <option value="it">Italiano</option>
-                                <option value="ja">日本語</option>
-                                <option value="pt">Português</option>
-                                <option value="ru">Русский</option>
-                            </select>
+        <section id="section-openSubtitles" class="section settings-card" tabindex="-1">
+            <div class="open-subtitles-service">
+                <div>
+                    <header class="card-header">
+                        <h2 class="card-title">OpenSubtitles</h2>
+                        <p class="card-description">Configure subtitle language and authentication.</p>
+                    </header>
+                    <div class="open-subtitles-block">
+                        <p id="openSubtitlesStatus"></p>
+                        <label id="language-block" class="block">
+                            <span>Preferred subtitle language</span>
+                            <div class="language-control">
+                                <img id="openSubtitlesLanguageFlag" class="language-flag" src="" alt="flag">
+                                <select id="openSubtitlesLanguage" class="language-select">
+                                    <option value="fr">Français</option>
+                                    <option value="en">English</option>
+                                    <option value="es">Español</option>
+                                    <option value="de">Deutsch</option>
+                                    <option value="it">Italiano</option>
+                                    <option value="ja">日本語</option>
+                                    <option value="pt">Português</option>
+                                    <option value="ru">Русский</option>
+                                </select>
+                            </div>
+                        </label>
+                        <label>
+                            <input type="text" placeholder="Username" id="openSubtitlesEmail">
+                        </label>
+                        <label>
+                            <input type="password" placeholder="Password" id="openSubtitlesPassword">
+                        </label>
+                        <div class="actions">
+                            <button id="openSubtitlesConnect" class="classic-btn">Login</button>
+
+                            <button type="button" id="toggleSubtitleCustomization" class="classic-btn">Subtitle Customization</button>
                         </div>
-                    </label>
-                    <label>
-                        <input type="text" placeholder="Username" id="openSubtitlesEmail">
-                    </label>
-                    <label>
-                        <input type="password" placeholder="Password" id="openSubtitlesPassword">
-                    </label>
-                    <div class="actions">
-                        <button id="openSubtitlesConnect" class="classic-btn">Login</button>
                     </div>
                 </div>
+                <div class="open-subtitles-create-account" id="open-subtitles-create-account">
+                    <p>Don't have an account?</p>
+                    <p>Please use the following link to <a href="https://www.opensubtitles.com/" target="_blank">create
+                            one</a></p>
+                </div>
             </div>
-            <div class="open-subtitles-create-account" id="open-subtitles-create-account">
-                <p>Don't have an account?</p>
-                <p>Please use the following link to <a href="https://www.opensubtitles.com/" target="_blank">create
-                        one</a></p>
+
+            <!-- Subtitle Customization Toggle Button -->
+
+
+            <div class="subtitle-customization" id="subtitleCustomizationSection" style="display: none;">
+                <h3 class="subtitle-customization-title">Subtitle Customization</h3>
+                <p class="subtitle-customization-description">Personalize subtitle appearance and behavior.</p>
+
+                <!-- Customization Form -->
+                <form class="subtitle-form" id="subtitleCustomizationForm">
+                    <div class="form-grid">
+                        <!-- Font Size -->
+                        <div class="form-group">
+                            <label for="subtitleFontSize" class="form-label">Font Size</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="subtitleFontSize" name="fontSize" min="0.5" max="5" step="0.1"
+                                    value="0.9" class="form-input">
+                                <select id="subtitleFontSizeUnit" name="fontSizeUnit" class="form-unit-select">
+                                    <option value="em" selected>em</option>
+                                    <option value="px">px</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Font Weight -->
+                        <div class="form-group">
+                            <label for="subtitleFontWeight" class="form-label">Font Weight</label>
+                            <select id="subtitleFontWeight" name="fontWeight" class="form-input form-select">
+                                <option value="300">Light (300)</option>
+                                <option value="400">Normal (400)</option>
+                                <option value="500">Medium (500)</option>
+                                <option value="600">Semi-bold (600)</option>
+                                <option value="700" selected>Bold (700)</option>
+                                <option value="800">Extra-bold (800)</option>
+                                <option value="900">Black (900)</option>
+                            </select>
+                        </div>
+
+                        <!-- Font Family -->
+                        <div class="form-group">
+                            <label for="subtitleFontFamily" class="form-label">Font Family</label>
+                            <select id="subtitleFontFamily" name="fontFamily" class="form-input form-select">
+                                <option value='Arial, "Helvetica Neue", Helvetica, sans-serif' selected>Arial
+                                    (Helvetica)</option>
+                                <option value="Arial, sans-serif">Arial</option>
+                                <option value="'Helvetica Neue', Helvetica, sans-serif">Helvetica</option>
+                                <option value="'Times New Roman', Times, serif">Times New Roman</option>
+                                <option value="'Courier New', monospace">Courier New</option>
+                                <option value="Verdana, sans-serif">Verdana</option>
+                                <option value="Georgia, serif">Georgia</option>
+                                <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                                <option value="custom">Custom Font</option>
+                            </select>
+                        </div>
+
+                        <!-- Custom Font Family (hidden by default) -->
+                        <div class="form-group" id="customFontGroup" style="display: none;">
+                            <label for="subtitleCustomFont" class="form-label">Enter Font Name</label>
+                            <div class="input-wrapper">
+                                <input type="text" id="subtitleCustomFont" name="customFont"
+                                    placeholder="e.g., 'My Font', sans-serif" class="form-input">
+                            </div>
+                        </div>
+
+                        <!-- Text Color -->
+                        <div class="form-group">
+                            <label for="subtitleColor" class="form-label">Text Color</label>
+                            <div class="input-wrapper">
+                                <input type="color" id="subtitleColor" name="color" value="#ffffff"
+                                    class="form-input form-color">
+                            </div>
+                        </div>
+
+                        <!-- Background Color -->
+                        <div class="form-group">
+                            <label for="subtitleBackground" class="form-label">Background Color</label>
+                            <div class="input-wrapper">
+                                <input type="color" id="subtitleBackground" name="background" value="#000000"
+                                    class="form-input form-color">
+                            </div>
+                        </div>
+
+                        <!-- Background Opacity -->
+                        <div class="form-group">
+                            <label for="subtitleBackgroundOpacity" class="form-label">Background Opacity (%)</label>
+                            <div class="input-wrapper">
+                                <input type="range" id="subtitleBackgroundOpacity" name="backgroundOpacity" min="0"
+                                    max="100" value="0" class="form-input form-range">
+                                <span class="range-value" id="opacityValue">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" id="resetSubtitleDefaults" class="classic-btn btn-secondary">Reset to
+                            Defaults</button>
+                        <button type="button" id="applySubtitleSettings" class="classic-btn">Apply Settings</button>
+                    </div>
+                </form>
+
+                <!-- Preview Section -->
+                <div class="subtitle-preview">
+                    <h4 class="subtitle-preview-title">Live Preview</h4>
+                    <div class="subtitle-preview-box" id="subtitlePreviewBox">
+                        <p class="subtitle-text" id="subtitlePreviewText">This is a preview of your subtitle settings.
+                        </p>
+                    </div>
+                </div>
             </div>
         </section>
 

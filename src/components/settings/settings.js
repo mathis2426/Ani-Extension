@@ -23,6 +23,9 @@ document.addEventListener("DOMContentLoaded", () => {
         setupEventListeners(settings);
         openSubtitlesService._token = settings.openSubtitlesSettings.token;
         openSubtitlesService._tokenExp = settings.openSubtitlesSettings.tokenExpiration;
+        
+        // Initialize subtitle customization
+        initializeSubtitleCustomization();
     });
 
     const buttons = document.querySelectorAll(".nav-item");
@@ -136,6 +139,7 @@ function updateSettingsUI(settings) {
         document.getElementById("language-block").style.display = "flex";
         document.getElementById("open-subtitles-create-account").style.display = "none";
         loginButton.textContent = "Logout";
+        document.getElementById("toggleSubtitleCustomization").style.display = "block";
 
     } else {
         document.getElementById("openSubtitlesEmail").style.display = "block";
@@ -145,6 +149,7 @@ function updateSettingsUI(settings) {
         document.getElementById("language-block").style.display = "none";
         document.getElementById("open-subtitles-create-account").style.display = "flex";
         loginButton.textContent = "Login";
+        document.getElementById("toggleSubtitleCustomization").style.display = "none";
     }
 
     // OpenSubtitles language
@@ -316,6 +321,7 @@ function setupEventListeners(settings) {
                     showToast("Connected to OpenSubtitles successfully");
                     saveSettings(settings);
                     document.getElementById("openSubtitlesConnect").textContent = "Logout";
+                    document.getElementById("toggleSubtitleCustomization").style.display = "block";
 
                 } catch (error) {
                     showToast("Connection to OpenSubtitles failed", "error");
@@ -338,6 +344,7 @@ function setupEventListeners(settings) {
             saveSettings(settings);
             showToast("Logged out from OpenSubtitles successfully");
             document.getElementById("openSubtitlesConnect").textContent = "Login";
+            document.getElementById("toggleSubtitleCustomization").style.display = "none";
             await openSubtitlesService.logout();
             try { await chrome.storage.local.remove("openSubtitlesCredentials"); } catch { }
         }
@@ -470,4 +477,178 @@ function showCredentialSaveModal(email, password) {
             modal.remove();
         }
     });
+}
+
+/* ===========================
+   Subtitle Customization Functions
+   =========================== */
+function initializeSubtitleCustomization() {
+    const form = document.getElementById('subtitleCustomizationForm');
+    const applyBtn = document.getElementById('applySubtitleSettings');
+    const resetBtn = document.getElementById('resetSubtitleDefaults');
+    const opacityInput = document.getElementById('subtitleBackgroundOpacity');
+    const opacityValue = document.getElementById('opacityValue');
+    const previewText = document.getElementById('subtitlePreviewText');
+    const toggleBtn = document.getElementById('toggleSubtitleCustomization');
+    const customizationSection = document.getElementById('subtitleCustomizationSection');
+
+    if (!form) return;
+
+    // Toggle subtitle customization section
+    toggleBtn.addEventListener('click', () => {
+        if (customizationSection.style.display === 'none') {
+            customizationSection.style.display = 'block';
+            toggleBtn.textContent = 'Hide Subtitle Customization';
+        } else {
+            customizationSection.style.display = 'none';
+            toggleBtn.textContent = 'Show Subtitle Customization';
+        }
+    });
+
+    // Load saved settings into form
+    function loadCustomizationSettings() {
+        if (settings && settings.subtitleCustomization) {
+            const config = settings.subtitleCustomization;
+            document.getElementById('subtitleFontSize').value = config.fontSize || 0.9;
+            document.getElementById('subtitleFontSizeUnit').value = config.fontSizeUnit || 'em';
+            document.getElementById('subtitleFontWeight').value = config.fontWeight || 700;
+            document.getElementById('subtitleFontFamily').value = config.fontFamily || 'Arial, "Helvetica Neue", Helvetica, sans-serif';
+            document.getElementById('subtitleColor').value = config.color || '#ffffff';
+            document.getElementById('subtitleBackground').value = config.background || '#000000';
+            document.getElementById('subtitleBackgroundOpacity').value = config.backgroundOpacity || 0;
+            document.getElementById('subtitleCustomFont').value = config.customFont || '';
+            
+            // Show/hide custom font input
+            if (config.fontFamily === 'custom') {
+                document.getElementById('customFontGroup').style.display = 'flex';
+            }
+            updateOpacityDisplay();
+        }
+    }
+
+    // Update live preview
+    function updatePreview() {
+        const fontSize = document.getElementById('subtitleFontSize').value;
+        const fontSizeUnit = document.getElementById('subtitleFontSizeUnit').value;
+        const fontWeight = document.getElementById('subtitleFontWeight').value;
+        const fontFamily = document.getElementById('subtitleFontFamily').value;
+        const customFont = document.getElementById('subtitleCustomFont').value;
+        const color = document.getElementById('subtitleColor').value;
+        const background = document.getElementById('subtitleBackground').value;
+        const opacity = document.getElementById('subtitleBackgroundOpacity').value;
+
+        previewText.style.fontSize = fontSize + fontSizeUnit;
+        previewText.style.fontWeight = fontWeight;
+        previewText.style.fontFamily = fontFamily === 'custom' ? (customFont || 'Arial, sans-serif') : fontFamily;
+        previewText.style.color = color;
+
+        // Convert hex to RGB for opacity
+        const rgb = hexToRgb(background);
+        if (rgb) {
+            previewText.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity / 100})`;
+        }
+    }
+
+    // Hex to RGB converter
+    function hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+
+    // Update opacity display
+    function updateOpacityDisplay() {
+        const value = opacityInput.value;
+        opacityValue.textContent = value + '%';
+        // Update slider fill
+        const percentage = value;
+        opacityInput.style.background = `linear-gradient(to right, #a78bfa 0%, #a78bfa ${percentage}%, #4a4a52 ${percentage}%, #4a4a52 100%)`;
+    }
+
+    // Apply settings
+    applyBtn.addEventListener('click', () => {
+        const newConfig = {
+            fontSize: parseFloat(document.getElementById('subtitleFontSize').value),
+            fontSizeUnit: document.getElementById('subtitleFontSizeUnit').value,
+            fontWeight: parseInt(document.getElementById('subtitleFontWeight').value),
+            fontFamily: document.getElementById('subtitleFontFamily').value,
+            customFont: document.getElementById('subtitleCustomFont').value,
+            color: document.getElementById('subtitleColor').value,
+            background: document.getElementById('subtitleBackground').value,
+            backgroundOpacity: parseInt(document.getElementById('subtitleBackgroundOpacity').value)
+        };
+
+        settings.subtitleCustomization = newConfig;
+        saveSettings(settings, () => {
+            showToast('Subtitle settings applied', 'Settings saved successfully', 'success');
+        });
+    });
+
+    // Reset to defaults
+    resetBtn.addEventListener('click', () => {
+        const defaults = {
+            fontSize: 0.9,
+            fontSizeUnit: 'em',
+            fontWeight: 700,
+            fontFamily: 'Arial, "Helvetica Neue", Helvetica, sans-serif',
+            customFont: '',
+            color: '#ffffff',
+            background: '#000000',
+            backgroundOpacity: 0
+        };
+
+        document.getElementById('subtitleFontSize').value = defaults.fontSize;
+        document.getElementById('subtitleFontSizeUnit').value = defaults.fontSizeUnit;
+        document.getElementById('subtitleFontWeight').value = defaults.fontWeight;
+        document.getElementById('subtitleFontFamily').value = defaults.fontFamily;
+        document.getElementById('subtitleCustomFont').value = defaults.customFont;
+        document.getElementById('subtitleColor').value = defaults.color;
+        document.getElementById('subtitleBackground').value = defaults.background;
+        document.getElementById('subtitleBackgroundOpacity').value = defaults.backgroundOpacity;
+        document.getElementById('customFontGroup').style.display = 'none';
+
+        updateOpacityDisplay();
+        updatePreview();
+    });
+
+    // Event listeners for live preview
+    document.getElementById('subtitleFontSize').addEventListener('input', () => {
+        updatePreview();
+    });
+    document.getElementById('subtitleFontSizeUnit').addEventListener('change', () => {
+        updatePreview();
+    });
+    document.getElementById('subtitleFontWeight').addEventListener('change', () => {
+        updatePreview();
+    });
+    document.getElementById('subtitleFontFamily').addEventListener('change', () => {
+        const customFontGroup = document.getElementById('customFontGroup');
+        if (document.getElementById('subtitleFontFamily').value === 'custom') {
+            customFontGroup.style.display = 'flex';
+        } else {
+            customFontGroup.style.display = 'none';
+        }
+        updatePreview();
+    });
+    document.getElementById('subtitleCustomFont').addEventListener('input', () => {
+        updatePreview();
+    });
+    document.getElementById('subtitleColor').addEventListener('input', () => {
+        updatePreview();
+    });
+    document.getElementById('subtitleBackground').addEventListener('input', () => {
+        updatePreview();
+    });
+    opacityInput.addEventListener('input', () => {
+        updateOpacityDisplay();
+        updatePreview();
+    });
+
+    // Load and show preview on init
+    loadCustomizationSettings();
+    updateOpacityDisplay(); // Initialize slider fill
+    updatePreview();
 }

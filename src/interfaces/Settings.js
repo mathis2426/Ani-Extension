@@ -26,6 +26,20 @@ class OpenSubtitlesSettings {
         this.language = "en"; // Default language
     }
 }
+
+class SubtitleCustomizationSettings {
+    constructor() {
+        this.fontSize = 0.9; // Default font size value
+        this.fontSizeUnit = "em"; // Default unit (em or px)
+        this.fontWeight = 700; // Default font weight (bold)
+        this.fontFamily = 'Arial, "Helvetica Neue", Helvetica, sans-serif'; // Default font family
+        this.customFont = ""; // Custom font family name
+        this.color = "#ffffff"; // Default text color (white)
+        this.background = "#000000"; // Default background color (black)
+        this.backgroundOpacity = 0; // Default background opacity (0-100)
+    }
+}
+
 class PlanningSettings {
     constructor() {
         this.syncGoogleCalendar = false; // Default Google Calendar sync setting
@@ -41,6 +55,7 @@ class Settings {
         this.netflixSettings = new NetflixSettings(); // Netflix specific settings
         this.planningSettings = new PlanningSettings(); // Planning specific settings
         this.openSubtitlesSettings = new OpenSubtitlesSettings(); // OpenSubtitles specific settings
+        this.subtitleCustomization = new SubtitleCustomizationSettings(); // Subtitle customization settings
     }
 }
 
