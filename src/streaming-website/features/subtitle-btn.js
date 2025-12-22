@@ -129,13 +129,18 @@ function createSubtitleButton() {
 async function handleSubtitleSearchFromButton() {
     try {
         // Get current anime info from background/storage
-        const result = await chrome.storage.sync.get("popupDataList");
-        const animeList = result.popupDataList || [];
+        const { popupDataList } =
+            await chrome.storage.sync.get("popupDataList");
+
+        const animeList = popupDataList || {};
 
         // Find the currently playing anime (the one on Netflix)
-        const currentAnime = animeList.find(anime =>
-            anime.link && location.href.includes(anime.link.split('?')[0])
-        );
+        const currentAnime = Object.values(animeList)
+            .flatMap(entry => entry.history || [])
+            .filter(anime => anime && anime.link)
+            .find(anime =>
+                location.href.includes(anime.link.split("?")[0])
+            );
 
         if (!currentAnime) {
             showNotification("Aucun anime détecté sur cette page", "error");
@@ -166,6 +171,7 @@ async function handleSubtitleSearchFromButton() {
 
             if (response && response.success) {
                 const results = response.data;
+                const normalized = Array.isArray(results) ? results : [results];
 
                 // // if only one result, download directly with stored site offset
                 // if (!Array.isArray(results)) {
@@ -175,7 +181,7 @@ async function handleSubtitleSearchFromButton() {
                 // } else {
                 //     // Show modal even if results is empty or has multiple items
                 //     // This allows users to try other search methods (OpenSubID, File upload, etc.)
-                    showSubtitleModal(results || [], currentAnime);
+                showSubtitleModal(normalized || [], currentAnime);
                 // }
             } else {
                 // Even if the search fails or finds nothing, show the modal
@@ -194,7 +200,6 @@ async function handleSubtitleSearchFromButton() {
  * Show modal with subtitle candidates (updated: hover animations + entry animations)
  */
 async function showSubtitleModal(candidates, anime) {
-    console.log("Afficher le modal des sous-titres pour:", anime, candidates);
     // Supprime toute modal existante
     const existing = document.getElementById('aniext-subtitle-modal');
     if (existing) existing.remove();
@@ -213,10 +218,12 @@ async function showSubtitleModal(candidates, anime) {
 @keyframes aniext-fadeIn { from { opacity:0 } to { opacity:1 } }
 @keyframes aniext-popIn { from { transform: scale(0.98); opacity: 0 } to { transform: scale(1); opacity:1 } }
 
-#aniext-subtitle-modal .modal-title { margin:0 0 10px 0; font-size:18px; text-align:center; }
+#aniext-subtitle-modal .modal-title { margin:0; font-size:18px; text-align:center; }
 #aniext-subtitle-modal .menu { display:flex; gap:8px; justify-content:space-between; margin:10px 0 16px 0; }
 #aniext-subtitle-modal .menu button { flex:1; background:none; border:none; padding:10px 12px; border-bottom:2px solid transparent; cursor:pointer; font-size:13px; transition: color .20s ease, border-color .25s ease, transform .12s ease; color:#cfcfcf; outline: none; }
 #aniext-subtitle-modal .menu button.passive { color:#7a7a7a; border-color:transparent; }
+
+.reload-btn { background:none; border:none; color:#cfcfcf; cursor:pointer; padding:6px; border-radius:4px; transition: background-color .2s ease, transform .12s ease; }
 
 /* Hover / focus states for menu buttons */
 #aniext-subtitle-modal .menu button:hover { border-color: #9b9b9b; }
@@ -275,6 +282,75 @@ async function showSubtitleModal(candidates, anime) {
     title.textContent = `Sous-titres pour ${anime.name || '—'} — Épisode ${anime.episode ?? '?'}`;
 
     headerRow.appendChild(title);
+    const reloadbtn = document.createElement('button');
+    reloadbtn.type = 'button';
+    reloadbtn.classList.add('reload-btn');
+    reloadbtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-refresh">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+            <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+        </svg>`;
+    reloadbtn.title = 'Reload';
+    headerRow.appendChild(reloadbtn);
+    const languageSelect = document.createElement('select');
+    const languages = [
+        { code: 'fr', name: 'Français' },
+        { code: 'en', name: 'English' },
+        { code: 'es', name: 'Español' },
+        { code: 'de', name: 'Deutsch' },
+        { code: 'ja', name: '日本語' },
+        { code: 'pt', name: 'Português' },
+        { code: 'it', name: 'Italiano' },
+        { code: 'ru', name: 'Русский' },
+        { code: 'zh', name: '中文' },
+        { code: 'ko', name: '한국어' }
+    ];
+
+    languages.forEach(lang => {
+        const option = document.createElement('option');
+        option.value = lang.code;
+        option.textContent = lang.name;
+        languageSelect.appendChild(option);
+    });
+
+    languageSelect.style.cssText = `
+        background: #111;
+        color: #fff;
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 4px;
+        padding: 6px 10px;
+        font-size: 13px;
+        cursor: pointer;
+        outline: none;
+        transition: border-color .2s ease;
+    `;
+
+    languageSelect.addEventListener('change', async (e) => {
+        currentLanguage = e.target.value;
+        const data = await chrome.storage.sync.get("settings");
+        const settings = data.settings || {};
+        if (!settings.openSubtitlesSettings) {
+            settings.openSubtitlesSettings = {};
+        }
+        settings.openSubtitlesSettings.language = currentLanguage;
+        await chrome.storage.sync.set({ settings });
+    });
+    languageSelect.addEventListener('focus', () => {
+        languageSelect.style.borderColor = 'rgba(164,142,229,0.6)';
+    });
+
+    languageSelect.addEventListener('blur', () => {
+        languageSelect.style.borderColor = 'rgba(255,255,255,0.2)';
+    });
+    languageSelect.id = 'subtitle-language-select';
+    languageSelect.title = 'Select subtitle language';
+    let preferedLanguage = await chrome.storage.sync.get("settings").then(data => {
+        return data.settings?.openSubtitlesSettings?.language || 'fr';
+    });
+    languageSelect.value = preferedLanguage;
+    headerRow.appendChild(languageSelect);
+
 
     content.appendChild(headerRow);
 
@@ -348,28 +424,28 @@ async function showSubtitleModal(candidates, anime) {
         function isMatchingAnime(subtitle, targetName) {
             const attrs = subtitle.attributes || {};
             const feat = attrs.feature_details || {};
-            
+
             // Récupérer le nom du fichier/release
             const release = (attrs.release || '').toLowerCase();
             const title = (feat.title || '').toLowerCase();
             const movieName = (feat.movie_name || '').toLowerCase();
-            
+
             // Nettoyer et normaliser le nom cible
             const target = targetName.toLowerCase()
                 .replace(/[:\-]/g, ' ')
                 .replace(/\s+/g, ' ')
                 .trim();
-            
+
             // Vérifier si le nom de l'anime apparaît dans les métadonnées
             const allText = `${release} ${title} ${movieName}`;
-            
+
             // Split target pour vérifier chaque mot clé
             const targetWords = target.split(' ').filter(w => w.length > 2);
-            
+
             // Au moins 70% des mots importants doivent matcher
             const matchCount = targetWords.filter(word => allText.includes(word)).length;
             const matchRatio = matchCount / targetWords.length;
-            
+
             return matchRatio >= 0.7;
         }
 
@@ -404,6 +480,7 @@ async function showSubtitleModal(candidates, anime) {
             const episodeNum = feat.episode_number ?? candidate.episode ?? "?";
             const lang = attrs.language || candidate.lang || "?";
             const downloads = attrs.download_count || 0;
+            console.log(candidate);
 
             const row = document.createElement('div');
             row.className = 'candidate';
@@ -418,14 +495,16 @@ async function showSubtitleModal(candidates, anime) {
                 transition: all 0.2s ease;
                 border: 1px solid rgba(255,255,255,0.05);
             `;
-            
+
             // Badge "Meilleur" pour le premier (plus téléchargé)
             const badge = index === 0 ? '<span style="color: #46d369; font-weight: 600; margin-left: 6px;">• Meilleur</span>' : '';
-            
+
             row.innerHTML = `
                 <div class="candidate-info" style="flex: 1; min-width: 0;">
                     <div class="candidate-title" style="font-size: 13px; color: #fff; font-weight: 500; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(release)}">${escapeHtml(titleTxt)}</div>
-                    <div class="candidate-meta" style="font-size: 11px; color: #999; margin-bottom: 2px;">S${escapeHtml(season)} • E${escapeHtml(episodeNum)} • ${escapeHtml(lang)}</div>
+                    <div class="candidate-meta" style="font-size: 11px; color: #999; margin-bottom: 2px;">
+                        ${feat.feature_type === 'Movie' ? `Movie • ${escapeHtml(lang)}` : `S${escapeHtml(season)} • E${escapeHtml(episodeNum)} • ${escapeHtml(lang)}`}
+                    </div>
                     <div style="font-size: 10px; color: #888;">${downloads} téléchargements${badge}</div>
                 </div>
             `;
@@ -450,7 +529,7 @@ async function showSubtitleModal(candidates, anime) {
                     applyBtn.disabled = false;
                 }
             });
-            
+
             row.addEventListener('mouseenter', () => {
                 row.style.background = 'rgba(255,255,255,0.05)';
                 row.style.borderColor = 'rgba(164,142,229,0.3)';
@@ -469,7 +548,7 @@ async function showSubtitleModal(candidates, anime) {
 
     function renderFullAnime() {
         contentArea.innerHTML = '';
-        
+
         const loadingMsg = document.createElement('div');
         loadingMsg.className = 'tab-placeholder';
         loadingMsg.textContent = `Chargement des épisodes pour ${anime.name || '—'}...`;
@@ -497,7 +576,7 @@ async function showSubtitleModal(candidates, anime) {
                 }
 
                 const episodes = response.data; // Array of subtitle objects with season/episode info
-                
+
                 if (!Array.isArray(episodes) || episodes.length === 0) {
                     contentArea.innerHTML = '<div class="tab-placeholder">Aucun épisode trouvé</div>';
                     return;
@@ -507,59 +586,59 @@ async function showSubtitleModal(candidates, anime) {
                 function isMatchingAnime(subtitle, targetName) {
                     const attrs = subtitle.attributes || {};
                     const feat = attrs.feature_details || {};
-                    
+
                     // Récupérer le nom du fichier/release
                     const release = (attrs.release || '').toLowerCase();
                     const title = (feat.title || '').toLowerCase();
                     const movieName = (feat.movie_name || '').toLowerCase();
-                    
+
                     // Nettoyer et normaliser le nom cible
                     const target = targetName.toLowerCase()
                         .replace(/[:\-]/g, ' ')
                         .replace(/\s+/g, ' ')
                         .trim();
-                    
+
                     // Vérifier si le nom de l'anime apparaît dans les métadonnées
                     const allText = `${release} ${title} ${movieName}`;
-                    
+
                     // Split target pour vérifier chaque mot clé
                     const targetWords = target.split(' ').filter(w => w.length > 2);
-                    
+
                     // Au moins 70% des mots importants doivent matcher
                     const matchCount = targetWords.filter(word => allText.includes(word)).length;
                     const matchRatio = matchCount / targetWords.length;
-                    
+
                     return matchRatio >= 0.7;
                 }
-                
+
                 // Filtrer et grouper par saison puis par épisode
                 const seasonMap = new Map(); // Map<season, Map<episode, subtitle[]>>
-                
+
                 console.log(`[Full Anime] Total episodes reçus: ${episodes.length}`);
-                
+
                 episodes.forEach(ep => {
                     // Vérifier que c'est bien le bon anime
                     if (!isMatchingAnime(ep, anime.name)) {
                         return; // Skip si pas le bon anime
                     }
-                    
+
                     const attrs = ep.attributes || {};
                     const feat = attrs.feature_details || {};
                     const season = feat.season_number ?? ep.season ?? 1;
                     const epNum = feat.episode_number ?? ep.episode ?? 0;
-                    
+
                     if (!seasonMap.has(season)) {
                         seasonMap.set(season, new Map());
                     }
-                    
+
                     const episodeMap = seasonMap.get(season);
                     if (!episodeMap.has(epNum)) {
                         episodeMap.set(epNum, []);
                     }
-                    
+
                     episodeMap.get(epNum).push(ep);
                 });
-                
+
                 console.log(`[Full Anime] Saisons trouvées: ${seasonMap.size}`);
                 seasonMap.forEach((eps, season) => {
                     console.log(`  - Saison ${season}: ${eps.size} épisodes`);
@@ -567,21 +646,21 @@ async function showSubtitleModal(candidates, anime) {
 
                 // Trier les saisons
                 const seasons = Array.from(seasonMap.keys()).sort((a, b) => a - b);
-                
+
                 if (seasons.length === 0) {
                     contentArea.innerHTML = '<div class="tab-placeholder">Aucun épisode ne correspond à cet anime après filtrage</div>';
                     return;
                 }
-                
+
                 contentArea.innerHTML = '';
-                
+
                 const container = document.createElement('div');
                 container.style.cssText = 'display: flex; flex-direction: column; gap: 8px; margin-top: 8px;';
-                
+
                 seasons.forEach(seasonNum => {
                     const episodeMap = seasonMap.get(seasonNum);
                     const episodeNumbers = Array.from(episodeMap.keys()).sort((a, b) => a - b);
-                    
+
                     // Season accordion container
                     const seasonBlock = document.createElement('div');
                     seasonBlock.style.cssText = `
@@ -591,7 +670,7 @@ async function showSubtitleModal(candidates, anime) {
                         overflow: hidden;
                         transition: all 0.2s ease;
                     `;
-                    
+
                     // Season header (clickable)
                     const seasonHeader = document.createElement('div');
                     seasonHeader.style.cssText = `
@@ -603,7 +682,7 @@ async function showSubtitleModal(candidates, anime) {
                         background: rgba(255,255,255,0.02);
                         transition: background 0.2s ease;
                     `;
-                    
+
                     seasonHeader.innerHTML = `
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <span style="font-weight: 600; color: #fff;">Saison ${seasonNum}</span>
@@ -613,7 +692,7 @@ async function showSubtitleModal(candidates, anime) {
                             <polyline points="6 9 12 15 18 9"/>
                         </svg>
                     `;
-                    
+
                     // Episode list (collapsible)
                     const episodeList = document.createElement('div');
                     episodeList.className = 'episode-list';
@@ -629,26 +708,26 @@ async function showSubtitleModal(candidates, anime) {
                         width: 100% !important;
                         min-height: 0 !important;
                     `;
-                    
+
                     episodeNumbers.forEach(epNum => {
                         const variants = episodeMap.get(epNum);
-                        
+
                         // Trier les variantes par download_count (meilleur en premier)
                         variants.sort((a, b) => {
                             const aCount = a.attributes?.download_count ?? 0;
                             const bCount = b.attributes?.download_count ?? 0;
                             return bCount - aCount;
                         });
-                        
+
                         const bestVariant = variants[0];
-                        
+
                         // Si une seule variante, affichage simple sans accordéon
                         if (variants.length === 1) {
                             const attrs = bestVariant.attributes || {};
                             const release = attrs.release || 'Unknown';
                             const downloads = attrs.download_count || 0;
                             const lang = attrs.language || 'unknown';
-                            
+
                             const simpleRow = document.createElement('div');
                             simpleRow.style.cssText = `
                                 padding: 10px 12px;
@@ -660,7 +739,7 @@ async function showSubtitleModal(candidates, anime) {
                                 margin: 2px 0;
                                 transition: background 0.15s ease;
                             `;
-                            
+
                             simpleRow.innerHTML = `
                                 <div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
                                     <div style="font-size: 13px; color: #fff; font-weight: 500;">Épisode ${epNum}</div>
@@ -668,13 +747,13 @@ async function showSubtitleModal(candidates, anime) {
                                     <div style="font-size: 10px; color: #888; margin-top: 2px;">${downloads} téléchargements • ${lang}</div>
                                 </div>
                             `;
-                            
+
                             const applyBtn = document.createElement('button');
                             applyBtn.className = 'apply-btn';
                             applyBtn.style.padding = '6px 12px';
                             applyBtn.style.fontSize = '12px';
                             applyBtn.textContent = 'Appliquer';
-                            
+
                             applyBtn.addEventListener('click', async () => {
                                 try {
                                     applyBtn.textContent = 'Chargement...';
@@ -688,19 +767,19 @@ async function showSubtitleModal(candidates, anime) {
                                     applyBtn.disabled = false;
                                 }
                             });
-                            
+
                             simpleRow.addEventListener('mouseenter', () => {
                                 simpleRow.style.background = 'rgba(255,255,255,0.05)';
                             });
                             simpleRow.addEventListener('mouseleave', () => {
                                 simpleRow.style.background = 'rgba(255,255,255,0.02)';
                             });
-                            
+
                             simpleRow.appendChild(applyBtn);
                             episodeList.appendChild(simpleRow);
                             return; // Skip l'accordéon pour cet épisode
                         }
-                        
+
                         // Si plusieurs variantes, affichage avec accordéon
                         const episodeBlock = document.createElement('div');
                         episodeBlock.className = 'episode-block-with-variants';
@@ -710,7 +789,7 @@ async function showSubtitleModal(candidates, anime) {
                             overflow: hidden;
                             margin: 2px 0;
                         `;
-                        
+
                         // Episode header
                         const epHeader = document.createElement('div');
                         epHeader.style.cssText = `
@@ -721,7 +800,7 @@ async function showSubtitleModal(candidates, anime) {
                             cursor: pointer;
                             transition: background 0.15s ease;
                         `;
-                        
+
                         epHeader.innerHTML = `
                             <div style="display: flex; flex-direction: column; flex: 1;">
                                 <div style="font-size: 13px; color: #fff; font-weight: 500;">Épisode ${epNum}</div>
@@ -731,7 +810,7 @@ async function showSubtitleModal(candidates, anime) {
                                 <polyline points="6 9 12 15 18 9"/>
                             </svg>
                         `;
-                        
+
                         // Variants list (collapsible)
                         const variantsList = document.createElement('div');
                         variantsList.className = 'variants-list';
@@ -742,13 +821,13 @@ async function showSubtitleModal(candidates, anime) {
                             background: rgba(0,0,0,0.2);
                             padding: 0 8px;
                         `;
-                        
+
                         variants.forEach((variant, idx) => {
                             const attrs = variant.attributes || {};
                             const release = attrs.release || 'Unknown';
                             const downloads = attrs.download_count || 0;
                             const lang = attrs.language || 'unknown';
-                            
+
                             const variantRow = document.createElement('div');
                             variantRow.style.cssText = `
                                 padding: 8px 10px;
@@ -760,7 +839,7 @@ async function showSubtitleModal(candidates, anime) {
                                 border-radius: 4px;
                                 margin: 4px 0;
                             `;
-                            
+
                             variantRow.innerHTML = `
                                 <div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">
                                     <div style="font-size: 12px; color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${escapeHtml(release)}">${escapeHtml(release)}</div>
@@ -769,13 +848,13 @@ async function showSubtitleModal(candidates, anime) {
                                     </div>
                                 </div>
                             `;
-                            
+
                             const applyBtn = document.createElement('button');
                             applyBtn.className = 'apply-btn';
                             applyBtn.style.padding = '5px 10px';
                             applyBtn.style.fontSize = '11px';
                             applyBtn.textContent = 'Appliquer';
-                            
+
                             applyBtn.addEventListener('click', async (e) => {
                                 e.stopPropagation();
                                 try {
@@ -790,24 +869,24 @@ async function showSubtitleModal(candidates, anime) {
                                     applyBtn.disabled = false;
                                 }
                             });
-                            
+
                             variantRow.addEventListener('mouseenter', () => {
                                 variantRow.style.background = 'rgba(255,255,255,0.05)';
                             });
                             variantRow.addEventListener('mouseleave', () => {
                                 variantRow.style.background = 'transparent';
                             });
-                            
+
                             variantRow.appendChild(applyBtn);
                             variantsList.appendChild(variantRow);
                         });
-                        
+
                         // Toggle episode accordion
                         episodeBlock.dataset.episodeOpen = 'false';
                         epHeader.addEventListener('click', () => {
                             const chevron = epHeader.querySelector('.episode-chevron');
                             const isCurrentlyOpen = episodeBlock.dataset.episodeOpen === 'true';
-                            
+
                             if (isCurrentlyOpen) {
                                 // Fermer cet épisode
                                 episodeBlock.dataset.episodeOpen = 'false';
@@ -824,7 +903,7 @@ async function showSubtitleModal(candidates, anime) {
                                         const otherVariantsList = block.querySelector('.variants-list');
                                         const otherChevron = block.querySelector('.episode-chevron');
                                         const otherHeader = block.querySelector('div[style*="cursor: pointer"]');
-                                        
+
                                         block.dataset.episodeOpen = 'false';
                                         otherVariantsList.style.maxHeight = '0';
                                         otherVariantsList.style.paddingTop = '0';
@@ -833,7 +912,7 @@ async function showSubtitleModal(candidates, anime) {
                                         otherHeader.style.background = 'transparent';
                                     }
                                 });
-                                
+
                                 // Ouvrir cet épisode
                                 episodeBlock.dataset.episodeOpen = 'true';
                                 variantsList.style.maxHeight = variantsList.scrollHeight + 'px';
@@ -843,7 +922,7 @@ async function showSubtitleModal(candidates, anime) {
                                 epHeader.style.background = 'rgba(164,142,229,0.08)';
                             }
                         });
-                        
+
                         epHeader.addEventListener('mouseenter', () => {
                             const isCurrentlyOpen = episodeBlock.dataset.episodeOpen === 'true';
                             if (!isCurrentlyOpen) {
@@ -856,18 +935,18 @@ async function showSubtitleModal(candidates, anime) {
                                 epHeader.style.background = 'transparent';
                             }
                         });
-                        
+
                         episodeBlock.appendChild(epHeader);
                         episodeBlock.appendChild(variantsList);
                         episodeList.appendChild(episodeBlock);
                     });
-                    
+
                     // Toggle accordion
                     let isOpen = false;
                     seasonHeader.addEventListener('click', () => {
                         isOpen = !isOpen;
                         const chevron = seasonHeader.querySelector('.season-chevron');
-                        
+
                         if (isOpen) {
                             // Forcer tous les styles inline pour contrer Netflix
                             episodeList.style.setProperty('display', 'flex', 'important');
@@ -877,7 +956,7 @@ async function showSubtitleModal(candidates, anime) {
                             episodeList.style.setProperty('height', 'auto', 'important');
                             episodeList.style.paddingTop = '8px';
                             episodeList.style.paddingBottom = '8px';
-                            
+
                             chevron.style.transform = 'rotate(180deg)';
                             seasonHeader.style.background = 'rgba(164,142,229,0.1)';
                             seasonBlock.dataset.open = 'true';
@@ -891,7 +970,7 @@ async function showSubtitleModal(candidates, anime) {
                             seasonBlock.dataset.open = 'false';
                         }
                     });
-                    
+
                     seasonHeader.addEventListener('mouseenter', () => {
                         if (!isOpen) {
                             seasonHeader.style.background = 'rgba(255,255,255,0.05)';
@@ -902,14 +981,14 @@ async function showSubtitleModal(candidates, anime) {
                             seasonHeader.style.background = 'rgba(255,255,255,0.02)';
                         }
                     });
-                    
+
                     seasonBlock.appendChild(seasonHeader);
                     seasonBlock.appendChild(episodeList);
                     container.appendChild(seasonBlock);
                 });
-                
+
                 contentArea.appendChild(container);
-                
+
             } catch (error) {
                 console.error("Erreur chargement full anime:", error);
                 contentArea.innerHTML = `<div class="tab-placeholder" style="color: #dc3545;">Erreur: ${error.message}</div>`;
@@ -1120,7 +1199,7 @@ async function showSubtitleModal(candidates, anime) {
 
             try {
                 const content = await file.text();
-                
+
                 if (!content || content.trim().length === 0) {
                     status.textContent = 'Le fichier est vide';
                     status.style.color = '#dc3545';
@@ -1133,7 +1212,7 @@ async function showSubtitleModal(candidates, anime) {
                 // Apply subtitle directly (same flow as downloadAndApplySubtitle but without API call)
                 const siteOffset = await getStoredOffset();
                 await setStoredOffset(siteOffset);
-                
+
                 const subtitleInfo = {
                     name: file.name,
                     language: 'fr' // could detect from filename if needed
@@ -1141,10 +1220,10 @@ async function showSubtitleModal(candidates, anime) {
 
                 await applySubtitleToVideo(content, subtitleInfo, siteOffset);
                 showNotification(`Sous-titres de ${file.name} appliqués !`, "success");
-                
+
                 // Show offset control
                 showOffsetControl(content, subtitleInfo, siteOffset);
-                
+
                 closeModal();
 
             } catch (error) {

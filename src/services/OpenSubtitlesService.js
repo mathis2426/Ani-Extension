@@ -230,8 +230,6 @@ export class OpenSubtitlesService {
 
     if (!episodeNumber) {
       const queries = generateSearchQueries(showName, null, null, episodeTitle);
-      console.log("Stratégies (no-season, no-episode):", queries);
-
       for (const query of queries) {
         try {
           console.log(`  → Essai: "${query}"`);
@@ -243,7 +241,7 @@ export class OpenSubtitlesService {
             per_page: 40
           });
           if (res && Array.isArray(res.data) && res.data.length > 0) {
-            const matched = findBestMatch(res.data, showName, null);
+            const matched = res.data;
             if (matched) {
               console.log(`  ✅ Trouvé avec: "${query}"`);
               return matched;

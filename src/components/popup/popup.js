@@ -11,62 +11,72 @@ let token = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   const listAnime = document.getElementById("content_list");
+
   chrome.storage.sync.get("popupDataList", (result) => {
-    const animeList = result.popupDataList || [];
-    if (animeList.length === 0) {
+    const popupDataList = result.popupDataList || {};
+
+    const entries = Object.entries(popupDataList)
+      .filter(([, entry]) => entry.history.length > 0)
+      .sort((a, b) => {
+        const lastA = a[1].history[0].lastUpdate ?? 0;
+        const lastB = b[1].history[0].lastUpdate ?? 0;
+        return lastB - lastA; // plus récent en premier
+      });
+
+    if (entries.length === 0) {
       const emptyMessage = document.createElement("div");
       emptyMessage.className = "empty-message";
-      emptyMessage.textContent = "Aucun anime detecté. Veuillez lancer un anime pour le voir ici.";
+      emptyMessage.textContent =
+        "Aucun anime detecté. Veuillez lancer un anime pour le voir ici.";
       listAnime.appendChild(emptyMessage);
       return;
     }
-    animeList.forEach((anime, index) => {
+
+    entries.forEach(([name, entry]) => {
+      const anime = entry.history[0];
+      if (!anime) return;
+
+      const uniqueId = `${name}-${anime.episode}`;
+
       const container = document.createElement("div");
       container.className = "content-list";
       container.setAttribute("data-link", anime.link);
+      container.id = `anime-${uniqueId}`;
+
       let episodeName = "";
       if (anime.saison && anime.title) {
         episodeName = `Saison ${anime.saison} - Ep ${anime.episode} - ${anime.title}`;
-      }
-      else if (anime.title && anime.episode) {
+      } else if (anime.title && anime.episode) {
         episodeName = `Ep ${anime.episode} - ${anime.title}`;
-      }
-      else if (anime.title && !anime.episode) {
-        episodeName = `${anime.title}`;
-      }
-      else {
+      } else if (anime.title) {
+        episodeName = anime.title;
+      } else {
         episodeName = `Episode ${anime.episode}`;
       }
 
       container.innerHTML = `
-          <div class="top-bar">
-            <h1>${anime.name}</h1>
-            <div class="notif" data-index="${index}">
-              <label class="container">
-                <input type="checkbox" id="notif-${index}">
-                <svg class="bell-solid" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 448 512">
-                  <path d="M224 0c-17.7 0-32 14.3-32 32V51.2C119 66 64 130.6 64 208v18.8c0 47-17.3 92.4-48.5 127.6l-7.4 8.3c-8.4 9.4-10.4 22.9-5.3 34.4S19.4 416 32 416H416c12.6 0 24-7.4 29.2-18.9s3.1-25-5.3-34.4l-7.4-8.3C401.3 319.2 384 273.9 384 226.8V208c0-77.4-55-142-128-156.8V32c0-17.7-14.3-32-32-32zm45.3 493.3c12-12 18.7-28.3 18.7-45.3H224 160c0 17 6.7 33.3 18.7 45.3s28.3 18.7 45.3 18.7s33.3-6.7 45.3-18.7z"></path>
-                </svg>
-                <svg class="bell-regular" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 448 512">
-                  <path d="M224 0c-17.7 0-32 14.3-32 32V49.9C119.5 61.4 64 124.2 64 200v33.4c0 45.4-15.5 89.5-43.8 124.9L5.3 377c-5.8 7.2-6.9 17.1-2.9 25.4S14.8 416 24 416H424c9.2 0 17.6-5.3 21.6-13.6s2.9-18.2-2.9-25.4l-14.9-18.6C399.5 322.9 384 278.8 384 233.4V200c0-75.8-55.5-138.6-128-150.1V32c0-17.7-14.3-32-32-32zm0 96h8c57.4 0 104 46.6 104 104v33.4c0 47.9 13.9 94.6 39.7 134.6H72.3C98.1 328 112 281.3 112 233.4V200c0-57.4 46.6-104 104-104h8zm64 352H224 160c0 17 6.7 33.3 18.7 45.3s28.3 18.7 45.3 18.7s33.3-6.7 45.3-18.7s18.7-28.3 18.7-45.3z"></path>
-                </svg>
-              </label>
+        <div class="top-bar">
+          <h1>${name}</h1>
+          <div class="notif">
+            <label class="container">
+              <input type="checkbox" id="notif-${uniqueId}">
+              <svg class="bell-solid" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 448 512"> <path d="M224 0c-17.7 0-32 14.3-32 32V51.2C119 66 64 130.6 64 208v18.8c0 47-17.3 92.4-48.5 127.6l-7.4 8.3c-8.4 9.4-10.4 22.9-5.3 34.4S19.4 416 32 416H416c12.6 0 24-7.4 29.2-18.9s3.1-25-5.3-34.4l-7.4-8.3C401.3 319.2 384 273.9 384 226.8V208c0-77.4-55-142-128-156.8V32c0-17.7-14.3-32-32-32zm45.3 493.3c12-12 18.7-28.3 18.7-45.3H224 160c0 17 6.7 33.3 18.7 45.3s28.3 18.7 45.3 18.7s33.3-6.7 45.3-18.7z"></path> </svg> <svg class="bell-regular" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 0 448 512"> <path d="M224 0c-17.7 0-32 14.3-32 32V49.9C119.5 61.4 64 124.2 64 200v33.4c0 45.4-15.5 89.5-43.8 124.9L5.3 377c-5.8 7.2-6.9 17.1-2.9 25.4S14.8 416 24 416H424c9.2 0 17.6-5.3 21.6-13.6s2.9-18.2-2.9-25.4l-14.9-18.6C399.5 322.9 384 278.8 384 233.4V200c0-75.8-55.5-138.6-128-150.1V32c0-17.7-14.3-32-32-32zm0 96h8c57.4 0 104 46.6 104 104v33.4c0 47.9 13.9 94.6 39.7 134.6H72.3C98.1 328 112 281.3 112 233.4V200c0-57.4 46.6-104 104-104h8zm64 352H224 160c0 17 6.7 33.3 18.7 45.3s28.3 18.7 45.3 18.7s33.3-6.7 45.3-18.7s18.7-28.3 18.7-45.3z"></path></svg> 
+            </label> 
+          </div>
+        </div>
+        <div class="info">
+          <h3>${episodeName}</h3>
+          <div class="load">
+            <progress value="0" max="100" id="bar-${uniqueId}"></progress>
+            <p id="timecode-${uniqueId}">00:00</p>
+          </div>
+          <div class="actions-row">
+            <div class="in-progress" id="in-progress-${uniqueId}">
+              Lecture en cours
             </div>
           </div>
-  
-          <div class="info">
-            <div>
-              <h3>${episodeName}</h3>
-            </div>
-            <div class="load">
-              <progress value="0" max="100" id="bar-${index}">0%</progress>
-              <p id="timecode-${index}">00:00</p>
-            </div>
-            <div class="actions-row">
-              <div class="in-progress" id="in-progress-${index}">Lecture en cours</div>
-            </div>
-          </div>
-        `;
+        </div>
+      `;
 
       listAnime.appendChild(container);
 
@@ -85,30 +95,25 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       // update the timecode and progress bar 
-      updateTime(anime.currentTime, anime.duration, index);
+      updateTime(anime.currentTime, anime.duration, uniqueId);
 
       // Notification toggle
       const notifContainer = container.querySelector(".notif");
-      const checkbox = container.querySelector(`#notif-${index}`);
-      checkbox.addEventListener("click", (event) => {
-        event.stopPropagation();
-      });
+      const checkbox = document.getElementById(`notif-${uniqueId}`);
+
+      checkbox.addEventListener("click", e => e.stopPropagation());
+
       notifContainer.addEventListener("click", (event) => {
         event.stopPropagation();
       });
 
-      checkbox.checked = anime.notif;
+      checkbox.checked = entry.notif;
 
       checkbox.addEventListener("change", () => {
-        const isChecked = checkbox.checked;
-
-        // Update the notification status in the storage
-        chrome.storage.sync.get("popupDataList", (result) => {
-          let dataList = result.popupDataList || [];
-          dataList[index].notif = isChecked;
-          chrome.storage.sync.set({ popupDataList: dataList });
-        });
+        popupDataList[name].notif = checkbox.checked;
+        chrome.storage.sync.set({ popupDataList });
       });
+
     });
   });
 
@@ -199,52 +204,77 @@ function updateTime(current, total, index) {
 document.addEventListener("DOMContentLoaded", () => {
 
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === "sync" && changes.popupDataList) {
-      const oldList = changes.popupDataList.oldValue || [];
-      const newList = changes.popupDataList.newValue || [];
-      // Détecte d'abord s'il y a eu un vrai changement lié à la lecture
-      let anyHasChanged = false;
-      newList.forEach((anime, index) => {
-        const oldAnime = oldList[index];
-        if (!oldAnime) return; // nouvel élément ? ignore
-        if (anime.currentTime !== oldAnime.currentTime || anime.duration !== oldAnime.duration) {
-          anyHasChanged = true;
-        }
-      });
+    if (area !== "sync" || !changes.popupDataList) return;
 
-      // N'insère le delimiter que si un changement de lecture a eu lieu.
-      if (anyHasChanged) {
-        // Compte les items qui sont réellement marqués comme "in-progress.active"
-        const activeCount = document.querySelectorAll('.in-progress.active').length;
-        const listanime = document.getElementById(`content_list`);
-        if (!document.getElementById("delimiter")) {
-          let delimiter = document.createElement("div");
-          delimiter.innerHTML = '<div class="delimiter-container"><div class="delimiter" id="delimiter"></div></div>';
-          const refernode = listanime.children[activeCount + 1] || null;
-          listanime.insertBefore(delimiter, refernode);
-        }
+    const oldData = changes.popupDataList.oldValue || {};
+    const newData = changes.popupDataList.newValue || {};
+
+    let anyHasChanged = false;
+
+    Object.keys(newData).forEach(name => {
+      const newEntry = newData[name];
+      const oldEntry = oldData[name];
+
+      if (!oldEntry) return;
+
+      const newAnime = newEntry.history[0];
+      const oldAnime = oldEntry.history[0];
+
+      if (!newAnime || !oldAnime) return;
+
+      if (
+        newAnime.currentTime !== oldAnime.currentTime ||
+        newAnime.duration !== oldAnime.duration
+      ) {
+        anyHasChanged = true;
+      }
+    });
+
+    if (anyHasChanged) {
+      const activeCount = document.querySelectorAll('.in-progress.active').length;
+      const listanime = document.getElementById("content_list");
+
+      if (!document.getElementById("delimiter")) {
+        const delimiterWrapper = document.createElement("div");
+        delimiterWrapper.innerHTML =
+          '<div class="delimiter-container"><div class="delimiter" id="delimiter"></div></div>';
+
+        const refernode = listanime.children[activeCount + 1] || null;
+        listanime.insertBefore(delimiterWrapper, refernode);
+      }
+    }
+
+    Object.keys(newData).forEach(name => {
+      const newEntry = newData[name];
+      const oldEntry = oldData[name];
+      if (!oldEntry) return;
+
+      const newAnime = newEntry.history[0];
+      const oldAnime = oldEntry.history[0];
+      if (!newAnime || !oldAnime) return;
+
+      const hasChanged =
+        newAnime.currentTime !== oldAnime.currentTime ||
+        newAnime.duration !== oldAnime.duration;
+
+      if (!hasChanged) return;
+
+      const uniqueId = `${name}-${newAnime.episode}`;
+      const inprogress = document.getElementById(`in-progress-${uniqueId}`);
+      if (!inprogress) return;
+
+      const now = Date.now();
+      if (newAnime.lastUpdate && now - newAnime.lastUpdate < 1100) {
+        inprogress.classList.add("active");
+      } else {
+        inprogress.classList.remove("active");
       }
 
-      // Puis applique les mises à jour de temps/état uniquement pour les éléments réellement modifiés
-      newList.forEach((anime, index) => {
-        const oldAnime = oldList[index];
-        if (!oldAnime) return; // nouvel élément ? ignore
-
-        const hasChanged = anime.currentTime !== oldAnime.currentTime || anime.duration !== oldAnime.duration;
-        if (hasChanged) {
-          const inprogress = document.getElementById(`in-progress-${index}`);
-
-          if (anime.lastUpdate == Date.now() || anime.lastUpdate > Date.now() - 1100) {
-            inprogress.classList.add("active");
-          } else {
-            inprogress.classList.remove("active");
-          }
-          updateTime(anime.currentTime, anime.duration, index);
-        }
-      });
-    }
+      updateTime(newAnime.currentTime, newAnime.duration, uniqueId);
+    });
   });
 });
+
 
 // Click on the login button
 document.addEventListener("click", (event) => {

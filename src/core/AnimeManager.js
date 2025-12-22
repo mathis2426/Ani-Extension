@@ -6,21 +6,48 @@ import { StorageService } from "../services/StorageService.js";
  */
 export class AnimeManager {
   static async saveAnime(anime) {
-    const dataList = (await StorageService.getsync("popupDataList")) || [];
+    const popupDataList =
+      (await StorageService.getsync("popupDataList")) || {};
 
-    const existingIndex = dataList.findIndex(a => a.name === anime.name);
+    const name = anime.name;
 
-    if (existingIndex !== -1) {
-      // Conserver la notif et les éventuelles images déjà stockées
-      anime.notif = dataList[existingIndex].notif;
-      anime.anilistBanner = anime.anilistBanner || dataList[existingIndex].anilistBanner || null;
-      anime.anilistImage = anime.anilistImage || dataList[existingIndex].anilistImage || null;
-      dataList.splice(existingIndex, 1);
+    popupDataList[name] ??= {
+      notif: anime.notif ?? false,
+      history: []
+    };
+
+    const { notif, ...animeWithoutNotif } = anime;
+
+    const history = popupDataList[name].history;
+    const now = Date.now();
+
+    const index = history.findIndex(a => a.episode === anime.episode);
+
+    if (index !== -1) {
+      const lastUpdate = history[index].lastUpdate ?? 0;
+
+      if (now - lastUpdate < 1000) {
+        return;
+      }
+
+      const updatedAnime = {
+        ...history[index],
+        ...animeWithoutNotif,
+        lastUpdate: now
+      };
+
+      history.splice(index, 1);
+      history.unshift(updatedAnime);
+    } else {
+      history.unshift({
+        ...animeWithoutNotif,
+        lastUpdate: now
+      });
     }
 
-    // Sauvegarder avec les infos d'images si présentes
-    dataList.unshift({ ...anime });
-
-    await StorageService.setsync("popupDataList", dataList);
+    await StorageService.setsync("popupDataList", popupDataList);
   }
 }
+
+
+
