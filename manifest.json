@@ -3,6 +3,7 @@
     "name": "Ani-extension",
     "description": "Ani-bankai extension, to track your anime and manga",
     "version": "0.0.1",
+    "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0KG7CKQClyEtEDys/wthJO5BEifHBnfYUQJ0C4N2/wF16rC1TufPyFPHkfOVyNB5seRavmNv6TpUN9V6E0rgGmGnr5jmgJkZPgo4PxTSNWrGbLFtvH0SAhCegT06pbGuh1wZ2p1dKx1SzW6VRu/yf7XVg6WEGTsVvNpZMWBTOrY97q9il4zfCGVzx4lPN/AyuVRxIhW4CpmbB3+GzppKKEzpp6D21egojYENzImuvdmDfXGWk6gVlaURZ2D7GaG1diY+EqaaBSjF60pQK/wEd9WqyKnUhrmEVOv4bNHy8uqqmTXK88ptYKJ6ulrksoq5MTG4S8PEUkKor3LmRhkJMQIDAQAB",
     "icons": {
         "16": "public/logo/logo-16.png",
         "48": "public/logo/logo-48.png",
