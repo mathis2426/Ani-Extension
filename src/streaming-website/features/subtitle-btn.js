@@ -335,6 +335,7 @@ async function showSubtitleModal(candidates, anime) {
         }
         settings.openSubtitlesSettings.language = currentLanguage;
         await chrome.storage.sync.set({ settings });
+        renderAutoSearch();
     });
     languageSelect.addEventListener('focus', () => {
         languageSelect.style.borderColor = 'rgba(164,142,229,0.6)';

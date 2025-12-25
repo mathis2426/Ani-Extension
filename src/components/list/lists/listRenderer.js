@@ -43,7 +43,9 @@ export async function renderList() {
   }
   let items = [];
   if (state.selected === "all") {
-    items = state.popupData.map((a) => ({
+    // Ensure popupData is an array
+    const popupData = Array.isArray(state.popupData) ? state.popupData : [];
+    items = popupData.map((a) => ({
       name: a.name,
       link: a.link,
       episode: a.episode,
@@ -64,8 +66,10 @@ export async function renderList() {
       // Référence directe à l'objet dans state.aniLists pour persister les modifications
       const stateItem = state.aniLists[state.selected][index];
 
+      // Ensure popupData is an array before using find
+      const popupData = Array.isArray(state.popupData) ? state.popupData : [];
       // Trouver un équivalent dans popupData uniquement par nom (on ignore l'épisode)
-      const fullData = state.popupData.find(p =>
+      const fullData = popupData.find(p =>
         p.name && stateItem.name && p.name.trim().toLowerCase() === stateItem.name.trim().toLowerCase()
       );
 

@@ -37,7 +37,9 @@ export function syncPopupToInprogress() {
     if (n) byName.set(n, e);
   });
 
-  const nextInprogress = state.popupData.map(a => {
+  // Ensure popupData is an array
+  const popupData = Array.isArray(state.popupData) ? state.popupData : [];
+  const nextInprogress = popupData.map(a => {
     const nameNorm = (a?.name || '').trim().toLowerCase();
     const existing = (a?.link && byLink.get(a.link)) || byName.get(nameNorm);
     if (existing) {

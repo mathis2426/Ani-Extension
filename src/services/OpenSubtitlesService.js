@@ -225,7 +225,7 @@ export class OpenSubtitlesService {
  * @param {number|null} providedSeason  // optional: when provided, search only that season
  * @returns {Promise<object|null|object[]>} - single match if season provided, otherwise array of matches
  */
-  async searchEpisodeSubtitle(showName, episodeNumber, languages = ["fr"], providedSeason = null, episodeTitle = null) {
+  async searchEpisodeSubtitle(showName, episodeNumber, languages, providedSeason = null, episodeTitle = null) {
     console.log(`🔍 Recherche sous-titres pour: "${showName}" Episode ${episodeNumber} (season: ${providedSeason ?? "auto"})`);
 
     if (!episodeNumber) {
