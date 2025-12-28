@@ -318,7 +318,7 @@ function setupEventListeners(settings) {
                     document.getElementById("open-subtitles-create-account").style.display = "none";
                     settings.openSubtitlesSettings.token = openSubtitlesService._token;
                     settings.openSubtitlesSettings.tokenExpiration = openSubtitlesService._tokenExp;
-                    showToast("Connected to OpenSubtitles successfully");
+                    showToast("Connected to OpenSubtitles successfully", "success");
                     saveSettings(settings);
                     document.getElementById("openSubtitlesConnect").textContent = "Logout";
                     document.getElementById("toggleSubtitleCustomization").style.display = "block";
@@ -342,7 +342,7 @@ function setupEventListeners(settings) {
             status.classList.add("tooltip-not-ok");
             settings.openSubtitlesSettings.token = "";
             saveSettings(settings);
-            showToast("Logged out from OpenSubtitles successfully");
+            showToast("Logged out from OpenSubtitles successfully", "success");
             document.getElementById("openSubtitlesConnect").textContent = "Login";
             document.getElementById("toggleSubtitleCustomization").style.display = "none";
             await openSubtitlesService.logout();
@@ -583,7 +583,7 @@ function initializeSubtitleCustomization() {
 
         settings.subtitleCustomization = newConfig;
         saveSettings(settings, () => {
-            showToast('Subtitle settings applied', 'Settings saved successfully', 'success');
+            showToast('Subtitle settings applied', 'success');
         });
     });
 

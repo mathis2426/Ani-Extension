@@ -12,11 +12,12 @@ let openSubtitlesService = null;
 let languageCode = null;
 
 // Initialize language code from settings
-async function getLanguageCode() {
-    if (languageCode === null) {
+async function getLanguageCode(forceReload = false) {
+    if (languageCode === null || forceReload) {
         const settings = await StorageService.getsync("settings");
         languageCode = settings?.openSubtitlesSettings?.language || "en";
     }
+    console.log("Using OpenSubtitles language code:", languageCode);
     return languageCode;
 }
 
@@ -74,12 +75,13 @@ export class OpenSubtitlesManager {
     /**
      * Handle subtitle search in background
      */
-    static async SubtitleSearch(anime, sendResponse) {
+    static async SubtitleSearch(anime, sendResponse, language = null) {
         try {
             const ok = await OpenSubtitlesManager.ensureOpenSubtitlesAuth();
             if (!ok) { sendResponse({ success: false, error: "Non connecté à OpenSubtitles" }); return; }
 
-            const lang = await getLanguageCode();
+            // Utiliser la langue fournie ou recharger depuis le storage
+            const lang = language || await getLanguageCode(true);
             let foundSubtitle;
             try {
                 foundSubtitle = await openSubtitlesService.searchEpisodeSubtitle(
@@ -167,7 +169,7 @@ export class OpenSubtitlesManager {
     /**
      * Handle full anime search (all episodes/seasons)
      */
-    static async FullAnimeSearch(anime, sendResponse) {
+    static async FullAnimeSearch(anime, sendResponse, language = null) {
         try {
             const ok = await OpenSubtitlesManager.ensureOpenSubtitlesAuth();
             if (!ok) { 
@@ -175,7 +177,8 @@ export class OpenSubtitlesManager {
                 return; 
             }
 
-            const lang = await getLanguageCode();
+            // Utiliser la langue fournie ou recharger depuis le storage
+            const lang = language || await getLanguageCode(true);
             // Search for multiple episodes (use large per_page to get many results)
             let results;
             try {

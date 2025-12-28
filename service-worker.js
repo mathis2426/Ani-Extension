@@ -23,7 +23,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   // Handle subtitle search request from content script
   if (message.type === "searchSubtitles") {
-    OpenSubtitlesManager.SubtitleSearch(message.anime, sendResponse);
+    OpenSubtitlesManager.SubtitleSearch(message.anime, sendResponse, message.language || null);
     return true; // Keep channel open for async response
   }
   
@@ -35,7 +35,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // Handle full anime search request (all episodes/seasons)
   if (message.type === "searchFullAnime") {
-    OpenSubtitlesManager.FullAnimeSearch(message.anime, sendResponse);
+    OpenSubtitlesManager.FullAnimeSearch(message.anime, sendResponse, message.language || null);
     return true;
   }
 

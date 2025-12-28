@@ -172,20 +172,9 @@ async function handleSubtitleSearchFromButton() {
             if (response && response.success) {
                 const results = response.data;
                 const normalized = Array.isArray(results) ? results : [results];
-
-                // // if only one result, download directly with stored site offset
-                // if (!Array.isArray(results)) {
-                //     getStoredOffset().then((siteOffset) => downloadAndApplySubtitle(results, currentAnime, siteOffset));
-                // } else if (results.length === 1) {
-                //     getStoredOffset().then((siteOffset) => downloadAndApplySubtitle(results[0], currentAnime, siteOffset));
-                // } else {
-                //     // Show modal even if results is empty or has multiple items
-                //     // This allows users to try other search methods (OpenSubID, File upload, etc.)
                 showSubtitleModal(normalized || [], currentAnime);
                 // }
             } else {
-                // Even if the search fails or finds nothing, show the modal
-                // This allows users to try other search methods (Full Anime, OpenSubID, File upload, etc.)
                 showSubtitleModal([], currentAnime);
             }
         });
@@ -206,6 +195,14 @@ async function showSubtitleModal(candidates, anime) {
 
     // Récupère offset stocké pour initialisation
     let currentOffset = await getStoredOffset() || 0;
+    
+    // Utiliser une variable locale mutable pour les candidats
+    let currentCandidates = candidates;
+    
+    // Stocker la langue actuelle pour les recherches
+    let currentLanguage = await chrome.storage.sync.get("settings").then(data => {
+        return data.settings?.openSubtitlesSettings?.language || 'fr';
+    });
 
     // Inject CSS scoped (une seule fois) - enrichi pour hover / animations
     if (!document.getElementById('aniext-subtitle-modal-styles')) {
@@ -292,6 +289,9 @@ async function showSubtitleModal(candidates, anime) {
             <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
         </svg>`;
     reloadbtn.title = 'Reload';
+    reloadbtn.addEventListener('click', async () => {
+        await reloadSubtitles();
+    });
     headerRow.appendChild(reloadbtn);
     const languageSelect = document.createElement('select');
     const languages = [
@@ -327,15 +327,17 @@ async function showSubtitleModal(candidates, anime) {
     `;
 
     languageSelect.addEventListener('change', async (e) => {
-        currentLanguage = e.target.value;
+        const newLanguage = e.target.value;
+        currentLanguage = newLanguage; // Mettre à jour la langue locale
         const data = await chrome.storage.sync.get("settings");
         const settings = data.settings || {};
         if (!settings.openSubtitlesSettings) {
             settings.openSubtitlesSettings = {};
         }
-        settings.openSubtitlesSettings.language = currentLanguage;
+        settings.openSubtitlesSettings.language = newLanguage;
         await chrome.storage.sync.set({ settings });
-        renderAutoSearch();
+        // Recharger les sous-titres avec la nouvelle langue
+        await reloadSubtitles(newLanguage);
     });
     languageSelect.addEventListener('focus', () => {
         languageSelect.style.borderColor = 'rgba(164,142,229,0.6)';
@@ -346,10 +348,7 @@ async function showSubtitleModal(candidates, anime) {
     });
     languageSelect.id = 'subtitle-language-select';
     languageSelect.title = 'Select subtitle language';
-    let preferedLanguage = await chrome.storage.sync.get("settings").then(data => {
-        return data.settings?.openSubtitlesSettings?.language || 'fr';
-    });
-    languageSelect.value = preferedLanguage;
+    languageSelect.value = currentLanguage;
     headerRow.appendChild(languageSelect);
 
 
@@ -406,6 +405,62 @@ async function showSubtitleModal(candidates, anime) {
             .replace(/'/g, "&#039;");
     }
 
+    // Fonction pour recharger les sous-titres avec la nouvelle langue
+    async function reloadSubtitles(language = null) {
+        try {
+            // Afficher un message de chargement dans la zone de contenu
+            contentArea.innerHTML = '<div class="tab-placeholder">Recherche de sous-titres...</div>';
+
+            // Envoyer une requête pour rechercher les sous-titres
+            const messageData = {
+                type: "searchSubtitles",
+                anime: anime
+            };
+            
+            // Ajouter la langue si elle est fournie
+            if (language) {
+                messageData.language = language;
+            }
+
+            chrome.runtime.sendMessage(messageData, (response) => {
+                if (chrome.runtime.lastError) {
+                    contentArea.innerHTML = '<div class="tab-placeholder" style="color: #dc3545;">Erreur de communication avec l\'extension</div>';
+                    return;
+                }
+
+                if (response && response.success) {
+                    const results = response.data;
+                    currentCandidates = Array.isArray(results) ? results : [results];
+                } else {
+                    currentCandidates = [];
+                }
+
+                // Re-render l'onglet actif
+                const activeTab = document.querySelector('.menu button.active');
+                if (activeTab) {
+                    const section = activeTab.dataset.section;
+                    switch (section) {
+                        case 'autoSearch':
+                            renderAutoSearch();
+                            break;
+                        case 'fullAnime':
+                            renderFullAnime();
+                            break;
+                        case 'opensubId':
+                            renderOpenSubId();
+                            break;
+                        case 'file':
+                            renderFileSection();
+                            break;
+                    }
+                }
+            });
+        } catch (error) {
+            console.error("Erreur lors du rechargement:", error);
+            contentArea.innerHTML = `<div class="tab-placeholder" style="color: #dc3545;">Erreur: ${error.message}</div>`;
+        }
+    }
+
     // RENDERERS
     function renderAutoSearch() {
         contentArea.innerHTML = ''; // clear
@@ -413,7 +468,7 @@ async function showSubtitleModal(candidates, anime) {
         list.id = 'candidates-list';
         list.className = 'candidates-list';
 
-        if (!Array.isArray(candidates) || candidates.length === 0) {
+        if (!Array.isArray(currentCandidates) || currentCandidates.length === 0) {
             const p = document.createElement('div');
             p.className = 'tab-placeholder';
             p.textContent = "Aucun sous-titre disponible.";
@@ -451,11 +506,11 @@ async function showSubtitleModal(candidates, anime) {
         }
 
         // Filtrer les candidats qui correspondent vraiment à l'anime
-        const filteredCandidates = candidates.filter(candidate => {
+        const filteredCandidates = currentCandidates.filter(candidate => {
             return isMatchingAnime(candidate, anime.name || '');
         });
 
-        console.log(`[Auto Search] Candidats avant filtrage: ${candidates.length}, après: ${filteredCandidates.length}`);
+        console.log(`[Auto Search] Candidats avant filtrage: ${currentCandidates.length}, après: ${filteredCandidates.length}`);
 
         if (filteredCandidates.length === 0) {
             const p = document.createElement('div');
@@ -560,10 +615,17 @@ async function showSubtitleModal(candidates, anime) {
             try {
                 // On fait une recherche large pour récupérer plusieurs épisodes/saisons
                 const response = await new Promise((resolve, reject) => {
-                    chrome.runtime.sendMessage({
+                    const messageData = {
                         type: "searchFullAnime",
                         anime: anime
-                    }, (resp) => {
+                    };
+                    
+                    // Ajouter la langue actuelle
+                    if (currentLanguage) {
+                        messageData.language = currentLanguage;
+                    }
+                    
+                    chrome.runtime.sendMessage(messageData, (resp) => {
                         if (chrome.runtime.lastError) {
                             reject(new Error(chrome.runtime.lastError.message));
                         } else {

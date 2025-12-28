@@ -44,8 +44,8 @@ async function applySubtitleToVideo(subtitleContent, subtitleInfo = {}, offsetMs
   // append track and wait for load to show
   video.appendChild(track);
 
-  // inject style once
-  injectSubtitleStyle();
+  // inject style once (async to load settings)
+  await injectSubtitleStyle();
 
   // Ensure track is shown after load (some players only expose textTracks after append)
   await waitForTrackAndShow(video, track);
@@ -200,47 +200,70 @@ function msToVttTime(ms) {
    Styling injection (::cue) - Netflix/Crunchyroll style
    =========================== */
 let __aniext_style_injected = false;
-function injectSubtitleStyle() {
+
+function mixColorOpacity(hex, opacity) {
+  const alpha = Math.round((opacity / 100) * 255).toString(16).padStart(2, '0');
+  return `${hex}${alpha}`;
+}
+function mixSizeWithUnit(size, unit) {
+  return `${size}${unit}`;
+}
+
+async function injectSubtitleStyle() {
   if (__aniext_style_injected) return;
   __aniext_style_injected = true;
 
+  // Récupérer les paramètres de style depuis le storage
+  const data = await chrome.storage.sync.get("settings");
+  const subtitleSettings = data.settings.subtitleCustomization || {};
+
+  // Valeurs par défaut si non définies
+  const color = subtitleSettings.color || "#ffffff";
+  const fontSize = subtitleSettings.fontSize || "0.9";
+  const sizeUnit = subtitleSettings.fontSizeUnit || "em";
+  const fontWeight = subtitleSettings.fontWeight || "700";
+  const fontFamily = subtitleSettings.fontFamily || 'Arial, "Helvetica Neue", Helvetica, sans-serif';
+  const backgroundOpacity = subtitleSettings.backgroundOpacity || 0;
+  const backgroundColor = subtitleSettings.background || "#000000";
+
+  // Convertir backgroundColor hex + opacity en rgba
+  const bgRgba = mixColorOpacity(backgroundColor, backgroundOpacity);
+  const fontSizeWithUnit = mixSizeWithUnit(fontSize, sizeUnit);
+
+  const textShadow = subtitleSettings.textShadow || `
+    0 0 9px rgba(0,0,0,0.85),
+    -1.2px -1.2px 1px rgba(0,0,0,0.95),
+    1.2px -1.2px 1px rgba(0,0,0,0.95),
+    -1.2px 1.2px 1px rgba(0,0,0,0.95),
+    1.2px 1.2px 1px rgba(0,0,0,0.95),
+    -1.5px -1.5px 1px rgba(0,0,0,0.92),
+    1.5px -1.5px 1px rgba(0,0,0,0.92),
+    -1.5px 1.5px 1px rgba(0,0,0,0.92),
+    1.5px 1.5px 1px rgba(0,0,0,0.92),
+    -2px 0 1px rgba(0,0,0,0.88),
+    2px 0 1px rgba(0,0,0,0.88),
+    0 -2px 1px rgba(0,0,0,0.88),
+    0 2px 1px rgba(0,0,0,0.88)
+  `;
+  const verticalPosition = subtitleSettings.verticalPosition || "5%";
+
   const css = `
   ::cue {
-  color: #ffffff;
-  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
-  font-size: 0.9em;
-  font-weight: 700;
+  color: ${color};
+  font-family: ${fontFamily};
+  font-size: ${fontSizeWithUnit};
+  font-weight: ${fontWeight}; 
   line-height: 1.2;
-  background: transparent;
+  background: ${bgRgba};
   padding: 0;
 
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  text-shadow:
-    /* flou central un peu plus large pour lisser */
-    0 0 9px rgba(0,0,0,0.85),
-
-    /* diagonales légères et fractionnaires */
-    -1.2px -1.2px 1px rgba(0,0,0,0.95),
-    1.2px -1.2px 1px rgba(0,0,0,0.95),
-    -1.2px 1.2px 1px rgba(0,0,0,0.95),
-    1.2px 1.2px 1px rgba(0,0,0,0.95),
-
-    /* nouvelle couche diagonale proche pour renforcer l'épaisseur */
-    -1.5px -1.5px 1px rgba(0,0,0,0.92),
-    1.5px -1.5px 1px rgba(0,0,0,0.92),
-    -1.5px 1.5px 1px rgba(0,0,0,0.92),
-    1.5px 1.5px 1px rgba(0,0,0,0.92),
-
-    /* axes horizontaux et verticaux */
-    -2px 0 1px rgba(0,0,0,0.88),
-    2px 0 1px rgba(0,0,0,0.88),
-    0 -2px 1px rgba(0,0,0,0.88),
-    0 2px 1px rgba(0,0,0,0.88);
+  text-shadow: ${textShadow};
 }
   video::-webkit-media-text-track-container {
-  bottom: 5% !important; /* vertical height adjustment */
+  bottom: ${verticalPosition} !important;
 }
 
   `;
