@@ -11,7 +11,7 @@ export function renderHourLabels(hours) {
   hours.forEach((h) => {
     const div = document.createElement("div");
     div.className = "hour";
-    div.style.height = "80px";
+    div.style.height = "120px";
     div.textContent = `${h.toString().padStart(2, "0")}:00`;
     hoursContainer.appendChild(div);
   });

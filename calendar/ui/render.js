@@ -3,32 +3,38 @@ import { renderHourLabels } from "./renderHours.js";
 import { showAnimePopup } from "./popup.js";
 import { getScoreColor } from "../utils/score.js";
 
-export function renderSchedule(animeList, currentDate, currentFilter) {
+export function renderSchedule(animeList, currentDate, currentFilter, hideEmptyHours = true) {
   const scheduleEl = document.getElementById("schedule"); // Main schedule container
   const weekLabel = document.getElementById("week-label"); // Week label element
   const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 
-  if (!Array.isArray(animeList) || animeList.length === 0) return; // No events to display
-
   const weekDates = getWeekDates(currentDate);
   scheduleEl.innerHTML = "";
 
-  const activeHours = getActiveHours(animeList, weekDates);
+  let displayHours;
+  if (hideEmptyHours) {
+    displayHours = getActiveHours(animeList, weekDates);
+  } else {
+    // Afficher toutes les heures de 0 à 23
+    displayHours = Array.from({ length: 24 }, (_, i) => i);
+  }
 
   if (currentFilter === "heure") {
-    const gridTemplateRows = activeHours.map(() => "80px").join(" ");
+    const gridTemplateRows = displayHours.map(() => "120px").join(" ");
     scheduleEl.style.display = "grid";
     scheduleEl.style.gridTemplateColumns = "repeat(7, 1fr)";
     scheduleEl.style.gridTemplateRows = `50px ${gridTemplateRows}`;
+    scheduleEl.classList.add("light-grid");
 
-    renderHourLabels(activeHours);
+    renderHourLabels(displayHours);
   } else {
     scheduleEl.style.display = "grid";
     scheduleEl.style.gridTemplateColumns = "repeat(7, 1fr)";
     scheduleEl.style.gridTemplateRows = `50px repeat(10, 120px)`;
+    scheduleEl.classList.remove("light-grid");
     
     const hoursContainer = document.querySelector(".hours");
-    if (hoursContainer) hoursContainer.innerHTML = "";
+    if (hoursContainer) hoursContainer.innerHTML = "";  
   }
 
 
@@ -72,10 +78,10 @@ export function renderSchedule(animeList, currentDate, currentFilter) {
         .sort((a, b) => parseInt(a.heure) - parseInt(b.heure))
         .forEach((ev) => {
           const hour = parseInt(ev.heure.split(":")[0], 10);
-          const rowIndex = activeHours.indexOf(hour);
+          const rowIndex = displayHours.indexOf(hour);
           if (rowIndex === -1) return;
 
-          const evDiv = buildEventDiv(ev);
+          const evDiv = buildEventDiv(ev, "hour-view");
           evDiv.style.gridColumn = `${dayIndex + 1}`;
           evDiv.style.gridRow = `${rowIndex + 2}`;
           scheduleEl.appendChild(evDiv);
@@ -89,14 +95,26 @@ export function renderSchedule(animeList, currentDate, currentFilter) {
           evDiv.style.gridRow = `${index + 2}`;
           scheduleEl.appendChild(evDiv);
         });
+    } else if (currentFilter === "notes") {
+      todaysEvents
+        .sort((a, b) => (b.score || 0) - (a.score || 0))
+        .forEach((ev, index) => {
+          const evDiv = buildEventDiv(ev);
+          evDiv.style.gridColumn = `${dayIndex + 1}`;
+          evDiv.style.gridRow = `${index + 2}`;
+          scheduleEl.appendChild(evDiv);
+        });
     }
   });
 }
 
 // Helper function to build event divs
-function buildEventDiv(ev) {
+function buildEventDiv(ev, viewType = "default") {
   const evDiv = document.createElement("div");
   evDiv.className = "event";
+  if (viewType === "hour-view") {
+    evDiv.classList.add("event-hour-view");
+  }
   evDiv.style.cursor = "pointer";
   
   // Ajouter le clic pour ouvrir la popup

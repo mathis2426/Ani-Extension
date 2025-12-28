@@ -1,11 +1,13 @@
 import { getAnimeScheduleWithCache } from "./storage/cache.js";
 import { renderSchedule } from "./ui/render.js";
 import { Dropdown } from "./ui/dropdown.js";
+import { RangeSlider } from "./ui/rangeSlider.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
   let animeList = [];
   let currentFilter = "popularité";
   let currentDate = new Date();
+  let currentNoteFilter = { min: 0, max: 100 };
 
   try {
     animeList = await getAnimeScheduleWithCache();
@@ -22,21 +24,26 @@ document.addEventListener("DOMContentLoaded", async () => {
       currentFilter = value.toLowerCase().includes("heure")
         ? "heure"
         : "popularité";
-      renderSchedule(animeList, currentDate, currentFilter);
+      const filteredList = filterAnimeByNotes(animeList, currentNoteFilter);
+      renderSchedule(filteredList, currentDate, currentFilter);
     },
   });
 
   sortDropdown.mount(document.getElementById("sort-dropdown"));
 
-  const filterDropdown = new Dropdown({
-    options: ["Tous les animes", "Notes > 70", "Notes > 80"],
-    defaultIndex: 0,
-    onChange: (value) => {
-      console.log("Filtre choisi :", value);
+  const filterRangeSlider = new RangeSlider({
+    minValue: 0,
+    maxValue: 100,
+    defaultMin: 0,
+    defaultMax: 100,
+    onChange: (values) => {
+      currentNoteFilter = values;
+      const filteredList = filterAnimeByNotes(animeList, currentNoteFilter);
+      renderSchedule(filteredList, currentDate, currentFilter);
     },
   });
 
-  filterDropdown.mount(document.getElementById("filter-dropdown"));
+  filterRangeSlider.mount(document.getElementById("filter-dropdown"));
 
   const today = new Date(); // Get today's date
   const startOfWeek = new Date(today); // Calculate start of the week (Monday)
@@ -75,9 +82,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const prevweekBtn = document.getElementById("prev-week");
     const nextweekBtn = document.getElementById("next-week");
     const dropdowns = document.querySelectorAll(".dropdown");
+    const rangeSlider = document.querySelector(".range-slider");
     const weekLabel = document.getElementById("week-label");
+    const openDropdowns = Array.from(dropdowns).some(d => d.querySelector(".dropdown-options.show"));
 
-    if (window.scrollY > 50) {
+    // Don't hide dropdowns if one is open
+    if (window.scrollY > 50 && !openDropdowns) {
       nav.classList.add("scrolled");
 
       prevweekBtn.innerHTML =
@@ -86,12 +96,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         '<img src="images/fleche-droite.png" alt="droite" style="width:16px; vertical-align:middle;">';
 
       dropdowns.forEach(el => el.classList.add("hidden"));
+      if (rangeSlider) rangeSlider.classList.add("hidden");
       weekLabel.classList.add("hidden");
-    } else {
+    } else if (window.scrollY <= 50) {
       nav.classList.remove("scrolled");
       prevweekBtn.textContent = "Semaine précédente";
       nextweekBtn.textContent = "Semaine suivante";
       dropdowns.forEach(el => el.classList.remove("hidden"));
+      if (rangeSlider) rangeSlider.classList.remove("hidden");
       weekLabel.classList.remove("hidden");
     }
 
@@ -103,4 +115,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 function hideLoadingScreen() {
   const loadingScreen = document.getElementById("loading-screen");
   if (loadingScreen) loadingScreen.classList.add("hide");
+}
+
+// Function to filter anime by notes
+function filterAnimeByNotes(animeList, noteFilter) {
+  if (typeof noteFilter === 'object' && noteFilter.min !== undefined && noteFilter.max !== undefined) {
+    return animeList.filter(anime => {
+      const score = anime.score || 0;
+      return score >= noteFilter.min && score <= noteFilter.max;
+    });
+  }
+  return animeList;
 }
