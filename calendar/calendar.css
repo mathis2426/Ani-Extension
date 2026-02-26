@@ -431,7 +431,6 @@ body {
   font-family: sans-serif;
   user-select: none;
   transition: all 0.3s ease;
-  border: 1px solid #7f6eb2;
   border-radius: 6px;
 }
 
@@ -723,8 +722,7 @@ body {
   display: flex;
   flex-direction: column;
   padding: 8px 7px 5px 7px;
-  background: #333;
-  border: 1px solid #7f6eb2;
+  background: #2a2a2a;
   border-radius: 12px;
   width: 220px;
   user-select: none;
@@ -821,4 +819,286 @@ body {
 
 .range-slider-input::-moz-range-thumb:hover {
   background: #b8a2f0;
+}
+
+/* ============ ADD FORM (Ajouter) ============ */
+
+.popup-add-btn {
+  background: #a48ee5;
+  color: #fff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 0.9em;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.popup-add-btn:hover {
+  background: #8873cc;
+  transform: scale(1.05);
+}
+
+.popup-right-form {
+  transition: opacity 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* --- Form Header --- */
+.form-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.form-title-input {
+  flex: 1;
+  background: #4a4a4a;
+  border: 1px solid #555;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 1em;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.form-title-input:focus {
+  border-color: #a48ee5;
+}
+
+.form-title-input::placeholder {
+  color: #888;
+}
+
+.form-icons-row {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.form-icon-btn {
+  background: none;
+  border: none;
+  font-size: 1.4em;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+  padding: 4px;
+  filter: grayscale(100%);
+}
+
+.form-icon-btn:hover {
+  opacity: 0.7;
+  transform: scale(1.15);
+}
+
+.form-icon-btn.active {
+  opacity: 1;
+  filter: grayscale(0%);
+}
+
+/* --- Top Row (checks + comment) --- */
+.form-top-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.form-checks-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.form-check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-custom-label {
+  font-size: 0.8em;
+  color: #aaa;
+  flex-shrink: 0;
+  min-width: 120px;
+}
+
+.form-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #a48ee5;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.form-check-label {
+  background: #4a4a4a;
+  padding: 7px 16px;
+  border-radius: 6px;
+  color: #ccc;
+  font-size: 0.85em;
+  min-width: 80px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.form-field-wrapper {
+  min-width: 110px;
+}
+
+.form-date-input,
+.form-time-input,
+.form-inline-input {
+  background: #4a4a4a;
+  border: 1px solid #555;
+  border-radius: 6px;
+  color: #fff;
+  padding: 6px 10px;
+  font-size: 0.85em;
+  outline: none;
+  color-scheme: dark;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-date-input:focus,
+.form-time-input:focus,
+.form-inline-input:focus {
+  border-color: #a48ee5;
+}
+
+.form-date-input:disabled,
+.form-time-input:disabled,
+.form-inline-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #3a3a3a;
+}
+
+/* --- Comment area --- */
+.form-comment {
+  flex: 1;
+  background: #4a4a4a;
+  border: 1px solid #555;
+  border-radius: 8px;
+  color: #fff;
+  padding: 10px 12px;
+  font-size: 0.85em;
+  font-family: inherit;
+  resize: none;
+  outline: none;
+  min-height: 80px;
+  transition: border-color 0.2s ease;
+}
+
+.form-comment:focus {
+  border-color: #a48ee5;
+}
+
+.form-comment::placeholder {
+  color: #888;
+}
+
+/* --- Status row (status + conditional fields on same line) --- */
+.form-status-row {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.form-select {
+  background: #4a4a4a;
+  border: 1px solid #555;
+  border-radius: 6px;
+  color: #fff;
+  padding: 8px 14px;
+  font-size: 0.85em;
+  outline: none;
+  cursor: pointer;
+  min-width: 120px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.form-select:focus {
+  border-color: #a48ee5;
+}
+
+/* --- Conditional fields (note + episodes) --- */
+.form-conditional-fields {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.form-input {
+  background: #4a4a4a;
+  border: 1px solid #555;
+  border-radius: 6px;
+  color: #fff;
+  padding: 8px 14px;
+  font-size: 0.85em;
+  outline: none;
+  text-align: center;
+  width: 140px;
+}
+
+.form-input:focus {
+  border-color: #a48ee5;
+}
+
+.form-input::placeholder {
+  color: #888;
+}
+
+/* --- Separator --- */
+.form-separator {
+  border-top: 1px solid #555;
+  margin-top: auto;
+}
+
+/* --- Footer buttons --- */
+.form-footer {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding-top: 10px;
+}
+
+.form-btn {
+  padding: 10px 30px;
+  border-radius: 8px;
+  font-size: 0.95em;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.form-btn:hover {
+  transform: scale(1.04);
+}
+
+.form-btn-retour {
+  background: #4a4a4a;
+  color: #fff;
+}
+
+.form-btn-retour:hover {
+  background: #555;
+}
+
+.form-btn-confirmer {
+  background: #a48ee5;
+  color: #fff;
+}
+
+.form-btn-confirmer:hover {
+  background: #8873cc;
 }

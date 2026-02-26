@@ -30,7 +30,7 @@ export function renderSchedule(animeList, currentDate, currentFilter, hideEmptyH
   } else {
     scheduleEl.style.display = "grid";
     scheduleEl.style.gridTemplateColumns = "repeat(7, 1fr)";
-    scheduleEl.style.gridTemplateRows = `50px repeat(10, 120px)`;
+    scheduleEl.style.gridTemplateRows = `50px repeat(100, 120px)`;
     scheduleEl.classList.remove("light-grid");
     
     const hoursContainer = document.querySelector(".hours");

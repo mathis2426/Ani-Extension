@@ -200,7 +200,7 @@ async function voiranime(animeClass, callback) {
     animeClass.link = link;
     animeClass.notif = false;
   }
-  if (location.hostname == "vidmoly.net" || location.hostname == "w9gw7oou.com" || location.hostname == "voe.sx" || location.hostname == "sandratableother.com" || location.hostname == "my.mail.ru") {
+  if (location.hostname == "vidmoly.biz" || location.hostname == "w9gw7oou.com" || location.hostname == "voe.sx" || location.hostname == "sandratableother.com" || location.hostname == "my.mail.ru") {
 
     let video = document.querySelector("video");
     if (!video)
