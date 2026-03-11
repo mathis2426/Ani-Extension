@@ -456,6 +456,7 @@ body {
   background: #333;
   max-height: 0;
   opacity: 0;
+  display: none;
   transition: max-height 0.3s ease, opacity 0.3s ease;
 }
 
@@ -466,6 +467,7 @@ body {
 .dropdown-options.show {
   max-height: 200px;
   opacity: 1;
+  display: block;
   overflow-y: auto;
 }
 
@@ -1101,4 +1103,72 @@ body {
 
 .form-btn-confirmer:hover {
   background: #8873cc;
+}
+
+/* =================================== PART IN TESTING =================================== */
+
+/* ============ TABS (Onglets Calendrier) ============ */  
+.tabs {
+  display: flex;
+  gap: 0;
+  background: #2a2a2a;
+  border-bottom: 2px solid #555;
+  padding: 0;
+  position: sticky;
+  top: 50px;
+  z-index: 100;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 12px 20px;
+  background: #2a2a2a;
+  color: #aaa;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95em;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+  position: relative;
+}
+
+.tab-btn:hover {
+  background: #333;
+  color: #ddd;
+}
+
+.tab-btn.active {
+  color: #a48ee5;
+  border-bottom-color: #a48ee5;
+  background: #333;
+}
+
+.tab-btn.active::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #a48ee5;
+}
+
+/* ============ TAB CONTENT & PANES ============ */
+.tab-content {
+  display: flex;
+  width: 100%;
+}
+
+.tab-pane {
+  width: 100%;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  flex-direction: column;
+}
+
+.tab-pane.active {
+  display: flex;
+  opacity: 1;
 }
