@@ -4,7 +4,9 @@ import { renderSchedulePersonnalCalendar } from "./ui/renderPersonnalCalendar.js
 import { Dropdown } from "./ui/dropdown.js";
 import { RangeSlider } from "./ui/rangeSlider.js";
 
-//let currentCalendar = "anime"; // Track the current calendar being displayed
+let currentCalendar = "anime"; // Track the current calendar being displayed
+
+let personalAnimeList = []; // List of anime in user's list
 
 document.addEventListener("DOMContentLoaded", async () => {
   let animeList = [];
@@ -15,6 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     animeList = await getAnimeScheduleWithCache();
     renderScheduleAnimeCalendar(animeList, currentDate, currentFilter);
+    renderSchedulePersonnalCalendar(personalAnimeList, currentDate, currentFilter);
     hideLoadingScreen();
   } catch (err) {
     console.error("Erreur AniList :", err);
@@ -27,19 +30,65 @@ document.addEventListener("DOMContentLoaded", async () => {
       currentFilter = value.toLowerCase().includes("heure")
         ? "heure"
         : "popularité";
-      const filteredList = filterAnimeByNotes(animeList, currentNoteFilter);
-      renderScheduleAnimeCalendar(filteredList, currentDate, currentFilter);
+      
+      // Choose the correct list based on current calendar
+      const listToUse = currentCalendar === "personal" ? personalAnimeList : animeList;
+      const filteredList = filterAnimeByNotes(listToUse, currentNoteFilter);
+      
+      const animeContent = document.getElementById("anime-content");
+      const personalContent = document.getElementById("personal-content");
+      
+      // Force correct display
+      if (currentCalendar === "personal") {
+        personalContent.style.display = "flex";
+        animeContent.style.display = "none";
+        renderSchedulePersonnalCalendar(filteredList, currentDate, currentFilter);
+      } else {
+        animeContent.style.display = "flex";
+        personalContent.style.display = "none";
+        renderScheduleAnimeCalendar(filteredList, currentDate, currentFilter);
+      }
     },
   });
 
   sortDropdown.mount(document.getElementById("sort-dropdown"));
 
   // Switch calendar
-  // document.getElementById("tab-personal").addEventListener("click", () => {
-  //   if (currentCalendar === "personal") return; // Already on personal calendar
-  //   currentCalendar = "personal";
-  // });
+  document.addEventListener("click", (e) => {
+    if (e.target.id === "tab-personal" || e.target.id === "tab-anime") {
+      if (e.target.id === "tab-personal" && currentCalendar === "personal") return;
+      if (e.target.id === "tab-anime" && currentCalendar === "anime") return;
 
+      currentCalendar = e.target.id === "tab-personal" ? "personal" : "anime";
+      
+      // Update button styles
+      const tabAnimeBtn = document.getElementById("tab-anime");
+      const tabPersonalBtn = document.getElementById("tab-personal");
+      tabAnimeBtn.classList.remove("active");
+      tabPersonalBtn.classList.remove("active");
+      
+      if (e.target.id === "tab-personal") {
+        tabPersonalBtn.classList.add("active");
+      } else {
+        tabAnimeBtn.classList.add("active");
+      }
+      
+      const animeContent = document.getElementById("anime-content");
+      const personalContent = document.getElementById("personal-content");
+
+      if (e.target.id === "tab-personal") {
+        personalContent.style.display = "flex";
+        animeContent.style.display = "none";
+        const filteredList = filterAnimeByNotes(personalAnimeList, currentNoteFilter);
+        renderSchedulePersonnalCalendar(filteredList, currentDate, currentFilter);
+      } else {
+        animeContent.style.display = "flex";
+        personalContent.style.display = "none";
+        const filteredList = filterAnimeByNotes(animeList, currentNoteFilter);
+        renderScheduleAnimeCalendar(filteredList, currentDate, currentFilter);
+      }
+    }
+  });
 
   const filterRangeSlider = new RangeSlider({
     minValue: 0,
@@ -48,8 +97,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     defaultMax: 100,
     onChange: (values) => {
       currentNoteFilter = values;
-      const filteredList = filterAnimeByNotes(animeList, currentNoteFilter);
-      renderScheduleAnimeCalendar(filteredList, currentDate, currentFilter);
+      
+      // Choose the correct list based on current calendar
+      const listToUse = currentCalendar === "personal" ? personalAnimeList : animeList;
+      const filteredList = filterAnimeByNotes(listToUse, currentNoteFilter);
+      
+      const animeContent = document.getElementById("anime-content");
+      const personalContent = document.getElementById("personal-content");
+      
+      // Force correct display
+      if (currentCalendar === "personal") {
+        personalContent.style.display = "flex";
+        animeContent.style.display = "none";
+        renderSchedulePersonnalCalendar(filteredList, currentDate, currentFilter);
+      } else {
+        animeContent.style.display = "flex";
+        personalContent.style.display = "none";
+        renderScheduleAnimeCalendar(filteredList, currentDate, currentFilter);
+      }
     },
   });
 
@@ -67,8 +132,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     currentDate = new Date(currentDate);
     currentDate.setDate(currentDate.getDate() - 7);
-    renderScheduleAnimeCalendar(animeList, currentDate, currentFilter); // Re-render schedule with new date
-
+    if (currentCalendar === "personal") {
+      renderSchedulePersonnalCalendar(personalAnimeList, currentDate, currentFilter);
+    } else {
+      renderScheduleAnimeCalendar(animeList, currentDate, currentFilter); // Re-render schedule with new date
+    }
     document.getElementById("prev-week").classList.add("inactive");
     document.getElementById("next-week").classList.remove("inactive");
   });
@@ -81,7 +149,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     currentDate = new Date(currentDate);
     currentDate.setDate(currentDate.getDate() + 7);
-    renderScheduleAnimeCalendar(animeList, currentDate, currentFilter); // Re-render schedule with new date
+    if (currentCalendar === "personal") {
+      renderSchedulePersonnalCalendar(personalAnimeList, currentDate, currentFilter);
+    } else {
+      renderScheduleAnimeCalendar(animeList, currentDate, currentFilter); // Re-render schedule with new date
+    }
     document.getElementById("next-week").classList.add("inactive");
     document.getElementById("prev-week").classList.remove("inactive");
   });

@@ -22,7 +22,7 @@ export function renderScheduleAnimeCalendar(animeList, currentDate, currentFilte
   if (currentFilter === "heure") {
     const gridTemplateRows = displayHours.map(() => "120px").join(" ");
     scheduleEl.style.display = "grid";
-    scheduleEl.style.gridTemplateColumns = "repeat(50, 1fr)";
+    scheduleEl.style.gridTemplateColumns = "repeat(7, 1fr)";
     scheduleEl.style.gridTemplateRows = `50px ${gridTemplateRows}`;
     scheduleEl.classList.add("light-grid");
 
@@ -33,7 +33,8 @@ export function renderScheduleAnimeCalendar(animeList, currentDate, currentFilte
     scheduleEl.style.gridTemplateRows = `50px repeat(50, 120px)`;
     scheduleEl.classList.remove("light-grid");
     
-    const hoursContainer = document.querySelector(".hours");
+    const animeContent = document.getElementById("anime-content");
+    const hoursContainer = animeContent.querySelector(".hours");
     if (hoursContainer) hoursContainer.innerHTML = "";  
   }
 

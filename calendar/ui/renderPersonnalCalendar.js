@@ -3,17 +3,33 @@ import { renderHourLabels } from "./renderHours.js";
 import { showAnimePopup } from "./popup.js";
 import { getScoreColor } from "../utils/score.js";
 
-export function renderSchedulePersonnalCalendar(animeList, currentDate, currentFilter, hideEmptyHours = true) {
-  const scheduleEl = document.getElementById("schedule"); // Main schedule container
+export function renderSchedulePersonnalCalendar(personalAnimeList, currentDate, currentFilter, hideEmptyHours = true) {
+  const scheduleEl = document.getElementById("schedule-personal"); // Main schedule container
   const weekLabel = document.getElementById("week-label"); // Week label element
   const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 
   const weekDates = getWeekDates(currentDate);
   scheduleEl.innerHTML = "";
 
+  // Check if personalAnimeList is empty
+  if (!personalAnimeList || personalAnimeList.length === 0) {
+    scheduleEl.style.display = "flex";
+    scheduleEl.style.flexDirection = "column";
+    scheduleEl.style.alignItems = "center";
+    scheduleEl.style.justifyContent = "center";
+    scheduleEl.style.minHeight = "88vh";
+    
+    const emptyDiv = document.createElement("div");
+    emptyDiv.style.fontSize = "1.2em";
+    emptyDiv.style.color = "#aaa";
+    emptyDiv.textContent = "Calendrier vide";
+    scheduleEl.appendChild(emptyDiv);
+    return;
+  }
+
   let displayHours;
   if (hideEmptyHours) {
-    displayHours = getActiveHours(animeList, weekDates);
+    displayHours = getActiveHours(personalAnimeList, weekDates);
   } else {
     // Afficher toutes les heures de 0 à 23
     displayHours = Array.from({ length: 24 }, (_, i) => i);
@@ -22,7 +38,7 @@ export function renderSchedulePersonnalCalendar(animeList, currentDate, currentF
   if (currentFilter === "heure") {
     const gridTemplateRows = displayHours.map(() => "120px").join(" ");
     scheduleEl.style.display = "grid";
-    scheduleEl.style.gridTemplateColumns = "repeat(50, 1fr)";
+    scheduleEl.style.gridTemplateColumns = "repeat(7, 1fr)";
     scheduleEl.style.gridTemplateRows = `50px ${gridTemplateRows}`;
     scheduleEl.classList.add("light-grid");
 
@@ -33,7 +49,8 @@ export function renderSchedulePersonnalCalendar(animeList, currentDate, currentF
     scheduleEl.style.gridTemplateRows = `50px repeat(50, 120px)`;
     scheduleEl.classList.remove("light-grid");
     
-    const hoursContainer = document.querySelector(".hours");
+    const personalContent = document.getElementById("personal-content");
+    const hoursContainer = personalContent.querySelector(".hours");
     if (hoursContainer) hoursContainer.innerHTML = "";  
   }
 
@@ -69,7 +86,7 @@ export function renderSchedulePersonnalCalendar(animeList, currentDate, currentF
   // Events part
   weekDates.forEach((date, dayIndex) => {
     const dateStr = date.toLocaleDateString("fr-CA");
-    const todaysEvents = animeList.filter((e) => e.date === dateStr);
+    const todaysEvents = personalAnimeList.filter((e) => e.date === dateStr);
 
     // Sort and place animes based on current filter + creation of "card" divs
     if (currentFilter === "heure") {
