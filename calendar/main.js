@@ -1,7 +1,10 @@
 import { getAnimeScheduleWithCache } from "./storage/cache.js";
-import { renderSchedule } from "./ui/render.js";
+import { renderScheduleAnimeCalendar } from "./ui/renderAnimeCalendar.js";
+import { renderSchedulePersonnalCalendar } from "./ui/renderPersonnalCalendar.js";
 import { Dropdown } from "./ui/dropdown.js";
 import { RangeSlider } from "./ui/rangeSlider.js";
+
+//let currentCalendar = "anime"; // Track the current calendar being displayed
 
 document.addEventListener("DOMContentLoaded", async () => {
   let animeList = [];
@@ -11,7 +14,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   try {
     animeList = await getAnimeScheduleWithCache();
-    renderSchedule(animeList, currentDate, currentFilter);
+    renderScheduleAnimeCalendar(animeList, currentDate, currentFilter);
     hideLoadingScreen();
   } catch (err) {
     console.error("Erreur AniList :", err);
@@ -25,11 +28,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         ? "heure"
         : "popularité";
       const filteredList = filterAnimeByNotes(animeList, currentNoteFilter);
-      renderSchedule(filteredList, currentDate, currentFilter);
+      renderScheduleAnimeCalendar(filteredList, currentDate, currentFilter);
     },
   });
 
   sortDropdown.mount(document.getElementById("sort-dropdown"));
+
+  // Switch calendar
+  // document.getElementById("tab-personal").addEventListener("click", () => {
+  //   if (currentCalendar === "personal") return; // Already on personal calendar
+  //   currentCalendar = "personal";
+  // });
+
 
   const filterRangeSlider = new RangeSlider({
     minValue: 0,
@@ -39,7 +49,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     onChange: (values) => {
       currentNoteFilter = values;
       const filteredList = filterAnimeByNotes(animeList, currentNoteFilter);
-      renderSchedule(filteredList, currentDate, currentFilter);
+      renderScheduleAnimeCalendar(filteredList, currentDate, currentFilter);
     },
   });
 
@@ -57,7 +67,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     currentDate = new Date(currentDate);
     currentDate.setDate(currentDate.getDate() - 7);
-    renderSchedule(animeList, currentDate, currentFilter); // Re-render schedule with new date
+    renderScheduleAnimeCalendar(animeList, currentDate, currentFilter); // Re-render schedule with new date
 
     document.getElementById("prev-week").classList.add("inactive");
     document.getElementById("next-week").classList.remove("inactive");
@@ -71,7 +81,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     currentDate = new Date(currentDate);
     currentDate.setDate(currentDate.getDate() + 7);
-    renderSchedule(animeList, currentDate, currentFilter); // Re-render schedule with new date
+    renderScheduleAnimeCalendar(animeList, currentDate, currentFilter); // Re-render schedule with new date
     document.getElementById("next-week").classList.add("inactive");
     document.getElementById("prev-week").classList.remove("inactive");
   });

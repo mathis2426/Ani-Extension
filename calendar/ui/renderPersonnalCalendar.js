@@ -3,7 +3,7 @@ import { renderHourLabels } from "./renderHours.js";
 import { showAnimePopup } from "./popup.js";
 import { getScoreColor } from "../utils/score.js";
 
-export function renderSchedule(animeList, currentDate, currentFilter, hideEmptyHours = true) {
+export function renderSchedulePersonnalCalendar(animeList, currentDate, currentFilter, hideEmptyHours = true) {
   const scheduleEl = document.getElementById("schedule"); // Main schedule container
   const weekLabel = document.getElementById("week-label"); // Week label element
   const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
