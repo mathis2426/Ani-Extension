@@ -1,53 +1,104 @@
-// Chrome storage interactions
+import { StorageService } from '../../../services/StorageService.js';
 
-import { state, setPopupData, setAniLists, setCustomLists } from './state.js';
-
-export function persistAniLists(lists) {
-  chrome.storage.sync.set({ aniLists: lists });
-}
-
-export function persistCustomLists(lists) {
-  chrome.storage.sync.set({ customLists: lists });
-}
-
-export function loadAllData(callback) {
-  chrome.storage.sync.get(["popupDataList", "aniLists", "customLists"], (result) => {
-    setPopupData(result.popupDataList || []);
-    setAniLists(result.aniLists || { wishlist: [], inprogress: [], finished: [] });
-    setCustomLists(result.customLists || []);
-    if (callback) callback();
-  });
-}
-
-// Debounce pour éviter les mises à jour trop rapides
-let storageUpdateTimeout = null;
-
-export function setupStorageListener(onPopupDataChange, onAniListsChange) {
-  chrome.storage.onChanged.addListener((changes, area) => {
-    if (area !== "sync") return;
-    
-    // Annuler la mise à jour précédente si elle arrive trop vite
-    if (storageUpdateTimeout) {
-      clearTimeout(storageUpdateTimeout);
+export async function getcreateStoredLists() {
+  const storedLists = await StorageService.getsync("ListsNames");
+  if (!storedLists) {
+    await StorageService.setsync("ListsNames", ["wishlist", "inprogress", "finished"]);
+    const baseLists = ["wishlist", "inprogress", "finished"];
+    for (const listName of baseLists) {
+      await StorageService.setsync(`${listName}`, []);
     }
-    
-    storageUpdateTimeout = setTimeout(() => {
-      if (changes.popupDataList) {
-        setPopupData(changes.popupDataList.newValue || []);
-        if (onPopupDataChange) onPopupDataChange();
-      }
-      
-      if (changes.aniLists) {
-        setAniLists(changes.aniLists.newValue || state.aniLists);
-        if (onAniListsChange) onAniListsChange();
-      }
+    return baseLists;
+  }
+  return storedLists;
+}
 
-      if (changes.customLists) {
-        setCustomLists(changes.customLists.newValue || []);
-        if (onAniListsChange) onAniListsChange();
-      }
-      
-      storageUpdateTimeout = null;
-    }, 10); // Attendre seulement 10ms pour un rendu plus fluide
+export async function createList(listName) {
+  const storedLists = await getcreateStoredLists();
+  if (!storedLists.includes(listName)) {
+    storedLists.push(listName);
+    await StorageService.setsync("ListsNames", storedLists);
+    await StorageService.setsync(`${listName}`, []);
+  }
+  return storedLists;
+}
+
+export async function renameList(oldName, newName) {
+  const storedLists = await getcreateStoredLists();
+  if (!oldName || !newName || oldName === newName || storedLists.includes(newName)) {
+    return storedLists;
+  }
+
+  const index = storedLists.indexOf(oldName);
+  if (index === -1) return storedLists;
+
+  const listItems = await getListItems(oldName);
+  storedLists[index] = newName;
+  await StorageService.setsync("ListsNames", storedLists);
+  await StorageService.setsync(newName, listItems);
+  await removeSyncKey(oldName);
+  return storedLists;
+}
+
+export async function removeList(listName) {
+  const storedLists = await getcreateStoredLists();
+  const index = storedLists.indexOf(listName);
+  if (index > -1) {
+    storedLists.splice(index, 1);
+    await StorageService.setsync("ListsNames", storedLists);
+    await removeSyncKey(listName);
+  }
+  return storedLists;
+}
+
+export async function getListItems(listName) {
+  return (await StorageService.getsync(listName)) || [];
+}
+
+export async function setListItems(listName, items) {
+  await StorageService.setsync(listName, Array.isArray(items) ? items : []);
+  return getListItems(listName);
+}
+
+export async function addListItem(listName, item) {
+  const items = await getListItems(listName);
+  const id = item.id ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const nextItem = {
+    ...item,
+    id,
+    addedAt: item.addedAt ?? Date.now(),
+  };
+
+  const exists = items.some((currentItem) => String(currentItem.id) === String(id));
+  if (!exists) {
+    items.unshift(nextItem);
+    await setListItems(listName, items);
+  }
+
+  return items;
+}
+
+export async function updateListItem(listName, itemId, patch) {
+  const items = await getListItems(listName);
+  const nextItems = items.map((item) => (
+    String(item.id) === String(itemId)
+      ? { ...item, ...patch, updatedAt: Date.now() }
+      : item
+  ));
+  await setListItems(listName, nextItems);
+  return nextItems;
+}
+
+export async function removeListItem(listName, itemId) {
+  const items = await getListItems(listName);
+  const nextItems = items.filter((item) => String(item.id) !== String(itemId));
+  await setListItems(listName, nextItems);
+  return nextItems;
+}
+
+function removeSyncKey(key) {
+  return new Promise((resolve) => {
+    chrome.storage.sync.remove(key, resolve);
   });
 }
+

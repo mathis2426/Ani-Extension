@@ -4,15 +4,55 @@
  */
 export class AnilistService {
   static ENDPOINT = "https://graphql.anilist.co";
+  static MIN_REQUEST_INTERVAL_MS = 2300;
+  static RETRY_DELAY_MS = 5000;
+  static MAX_RATE_LIMIT_WAIT_MS = 60000;
+  static queue = Promise.resolve();
+  static nextRequestAt = 0;
 
   /** Low-level GraphQL request */
   static async request(query, variables = {}) {
-    // Try direct fetch with a couple of retries for 5xx errors/network issues
-    const maxRetries = 2;
+    return this.enqueueRequest(() => this.executeRequest(query, variables));
+  }
+
+  static enqueueRequest(task) {
+    const run = this.queue.then(task, task);
+    this.queue = run.catch(() => {});
+    return run;
+  }
+
+  static async waitForRateLimitSlot() {
+    const now = Date.now();
+    const wait = Math.min(Math.max(0, this.nextRequestAt - now), this.MAX_RATE_LIMIT_WAIT_MS);
+    if (wait > 0) {
+      await this.sleep(wait);
+    }
+    this.nextRequestAt = Date.now() + this.MIN_REQUEST_INTERVAL_MS;
+  }
+
+  static updateRateLimitFromHeaders(headers) {
+    if (!headers) return;
+
+    const retryAfter = Number(headers.get?.("Retry-After") || 0);
+    if (retryAfter > 0) {
+      this.nextRequestAt = Math.max(this.nextRequestAt, Date.now() + this.clampRateLimitWait(retryAfter * 1000));
+      return;
+    }
+
+    const remaining = Number(headers.get?.("X-RateLimit-Remaining"));
+    const reset = Number(headers.get?.("X-RateLimit-Reset"));
+    if (remaining === 0 && reset > 0) {
+      this.nextRequestAt = Math.max(this.nextRequestAt, Date.now() + this.clampRateLimitWait(reset * 1000 - Date.now()));
+    }
+  }
+
+  static async executeRequest(query, variables = {}) {
+    const maxRetries = 1;
     let attempt = 0;
     let lastError = null;
     while (attempt <= maxRetries) {
       try {
+        await this.waitForRateLimitSlot();
         const res = await fetch(this.ENDPOINT, {
           method: "POST",
           headers: {
@@ -21,16 +61,18 @@ export class AnilistService {
           },
           body: JSON.stringify({ query, variables }),
         });
+        this.updateRateLimitFromHeaders(res.headers);
 
         // If server error, throw to trigger retry logic
         if (!res.ok) {
           const text = await res.text().catch(() => null);
           const errMsg = `HTTP ${res.status} ${res.statusText} - ${text}`;
           lastError = new Error(`AniList GraphQL error: ${errMsg}`);
-          // Retry only on 5xx
-          if (res.status >= 500 && attempt < maxRetries) {
-            const wait = 200 * Math.pow(2, attempt);
-            await new Promise(r => setTimeout(r, wait));
+          if (res.status === 429 || (res.status >= 500 && attempt < maxRetries)) {
+            const wait = res.status === 429
+              ? Math.max(0, this.nextRequestAt - Date.now())
+              : this.RETRY_DELAY_MS * (attempt + 1);
+            await this.sleep(wait);
             attempt++;
             continue;
           } else {
@@ -49,8 +91,7 @@ export class AnilistService {
         // If fetch/network error or server error, try proxying via background as a fallback
         // but only after exhausting direct retries
         if (attempt < maxRetries) {
-          const wait = 200 * Math.pow(2, attempt);
-          await new Promise(r => setTimeout(r, wait));
+          await this.sleep(this.RETRY_DELAY_MS * (attempt + 1));
           attempt++;
           continue;
         }
@@ -61,6 +102,7 @@ export class AnilistService {
             const response = await new Promise((resolve) => {
               chrome.runtime.sendMessage({ type: 'ANILIST_REQUEST', query, variables }, (resp) => resolve(resp));
             });
+            this.updateRateLimitFromProxy(response?.rateLimit);
             if (response && response.ok && response.data) {
               const proxyJson = response.data;
               if (proxyJson.errors) {
@@ -81,6 +123,38 @@ export class AnilistService {
 
         throw lastError;
       }
+    }
+  }
+
+  static sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, Math.max(0, ms)));
+  }
+
+  static clampRateLimitWait(ms) {
+    return Math.min(Math.max(0, Number(ms) || 0), this.MAX_RATE_LIMIT_WAIT_MS);
+  }
+
+  static getRateLimitStatus() {
+    return {
+      nextRequestAt: this.nextRequestAt,
+      waitMs: Math.max(0, this.nextRequestAt - Date.now()),
+      minIntervalMs: this.MIN_REQUEST_INTERVAL_MS,
+    };
+  }
+
+  static updateRateLimitFromProxy(rateLimit) {
+    if (!rateLimit) return;
+
+    const retryAfter = Number(rateLimit.retryAfter || 0);
+    if (retryAfter > 0) {
+      this.nextRequestAt = Math.max(this.nextRequestAt, Date.now() + this.clampRateLimitWait(retryAfter * 1000));
+      return;
+    }
+
+    const remaining = Number(rateLimit.remaining);
+    const reset = Number(rateLimit.reset);
+    if (remaining === 0 && reset > 0) {
+      this.nextRequestAt = Math.max(this.nextRequestAt, Date.now() + this.clampRateLimitWait(reset * 1000 - Date.now()));
     }
   }
 
@@ -186,7 +260,6 @@ static async getFranchiseInfoById(id, maxDepth = 6, options = {}) {
 
   // Ajoute les films dans la chronologie ou comme alternatives
   const allowedFormats = new Set(options.allowedFormats || ['TV']);
-  const movieFormats = new Set(['MOVIE']);
   const query = `
     query ($id: Int!) {
       Media(id: $id, type: ANIME) {
@@ -252,48 +325,35 @@ static async getFranchiseInfoById(id, maxDepth = 6, options = {}) {
 
     const edges = m.relations?.edges || [];
     for (const e of edges) {
-      if (!e || !e.node) continue;
+      if (!e || !e.node || e.node.type !== 'ANIME') continue;
       const rel = e.relationType;
       const node = e.node;
-      // Si c'est un film
-      if (movieFormats.has(node.format) && node.type === 'ANIME') {
-        // Si c'est une suite logique (PREQUEL/SEQUEL)
-        if (rel === 'PREQUEL' || rel === 'SEQUEL') {
-          // Ajoute le film dans la chronologie principale
-          if (!tvNodes.has(node.id)) {
-            tvNodes.set(node.id, {
-              id: node.id,
-              title: this.bestTitle ? this.bestTitle(node.title) : (node.title?.romaji || node.title?.english || '(no title)'),
-              episodes: (typeof node.episodes === 'number') ? node.episodes : null,
-              season: node.season || null,
-              seasonYear: node.seasonYear || null,
-              format: node.format,
-              siteUrl: node.siteUrl || null,
-              alternatives: []
-            });
-          }
-          if (!seen.has(node.id)) {
-            stack.push({ id: node.id, depth: cur.depth + 1 });
-          }
-        } else {
-          // Si c'est une alternative, ajoute dans le node TV parent
-          if (allowedFormats.has(m.format) && tvNodes.has(m.id)) {
-            tvNodes.get(m.id).alternatives.push({
-              id: node.id,
-              title: this.bestTitle ? this.bestTitle(node.title) : (node.title?.romaji || node.title?.english || '(no title)'),
-              episodes: (typeof node.episodes === 'number') ? node.episodes : null,
-              season: node.season || null,
-              seasonYear: node.seasonYear || null,
-              format: node.format,
-              siteUrl: node.siteUrl || null,
-              relationType: rel
-            });
-          }
+      const nodeData = {
+        id: node.id,
+        title: this.bestTitle ? this.bestTitle(node.title) : (node.title?.romaji || node.title?.english || '(no title)'),
+        episodes: (typeof node.episodes === 'number') ? node.episodes : null,
+        season: node.season || null,
+        seasonYear: node.seasonYear || null,
+        format: node.format,
+        siteUrl: node.siteUrl || null,
+        relationType: rel,
+      };
+
+      if ((rel === 'PREQUEL' || rel === 'SEQUEL') && allowedFormats.has(node.format)) {
+        if (!tvNodes.has(node.id)) {
+          tvNodes.set(node.id, { ...nodeData, alternatives: [] });
         }
-      } else if ((rel === 'PREQUEL' || rel === 'SEQUEL') && node.type === 'ANIME') {
-        // Traverse les autres nodes TV
         if (!seen.has(node.id)) {
           stack.push({ id: node.id, depth: cur.depth + 1 });
+        }
+        continue;
+      }
+
+      if (allowedFormats.has(m.format) && tvNodes.has(m.id) && allowedFormats.has(node.format)) {
+        const parent = tvNodes.get(m.id);
+        const alreadyLinked = parent.alternatives.some((alt) => alt.id === node.id && alt.relationType === rel);
+        if (!alreadyLinked) {
+          parent.alternatives.push(nodeData);
         }
       }
     }

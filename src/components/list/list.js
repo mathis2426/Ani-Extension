@@ -1,581 +1,450 @@
-
-// List page main orchestrator - imports and coordinates all modules
-
-import { state, setSelectedList, setDisplayMode, setListSort, addCustomList, removeCustomList, LIST_LABELS } from './core/state.js';
-import { loadAllData, setupStorageListener, persistCustomLists } from './core/storage.js';
-import { renderList, setActiveNav, closeOpenDropdown, updateDisplayMode } from './lists/listRenderer.js';
-import { addToList, syncPopupToInprogress, removeListFromAniLists } from './lists/listActions.js';
-import { initHomeWidgets, getHwEdit, setHwEdit, renderHomeWidgets } from './widgets/widgetManager.js';
+import {
+  createList,
+  getcreateStoredLists,
+  getListItems,
+  removeList,
+  renameList,
+} from './core/storage.js';
+import { initHomeWidgets } from './widgets/widgetManager.js';
 import { AnilistService } from '../../services/AnilistService.js';
+import { loadPopupData } from './core/state.js';
+import { addAnilistAnimeToList, removeAnimeFromList } from './lists/listActions.js';
+import { hydrateInProgressChronologies, loadInProgressItems } from './lists/inProgressService.js';
+import {
+  closeChronologyModal,
+  getVisibleItems,
+  renderChronologyModal,
+  renderListItems,
+} from './lists/listRenderer.js';
 
-/**
- * Transforme le résultat de getFranchiseInfoById en une chronologie indexée
- * Chaque entrée contient la saison ou le film, et éventuellement les alternatives
- * @param {Object} franchiseInfo - résultat de getFranchiseInfoById
- * @returns {Object} chronology
- */
-function buildChronology(franchiseInfo) {
-  if (!franchiseInfo || !Array.isArray(franchiseInfo.nodes)) return {};
-  const chronology = {};
-  let idx = 1;
-  for (const node of franchiseInfo.nodes) {
-    // Saison ou film principal
-    chronology[idx] = {
-      ...node,
-      alternatives: Array.isArray(node.alternatives) ? node.alternatives : []
-    };
-    idx++;
-  }
-  return chronology;
-}
-
-function createNewList() {
-  // Generate unique ID and default name
-  const timestamp = Date.now();
-  const listNumber = state.customLists.length + 1;
-  const newList = {
-    id: `custom-${timestamp}`,
-    name: `Ma liste ${listNumber}`,
-    description: ""
-  };
-
-  // Add to state and persist
-  addCustomList(newList);
-  state.aniLists[newList.id] = [];
-  persistCustomLists(state.customLists);
-
-  // Add label for navigation
-  LIST_LABELS[newList.id] = {
-    title: newList.name,
-    sub: newList.description || "Liste personnalisée"
-  };
-
-  // Render the new list item in sidebar
-  renderCustomListsInSidebar();
-
-  // Navigate to the new list
-  setSelectedList(newList.id);
-  setActiveNav();
-  updateListToolbarUI();
-  updateEditButton();
-  updateAniListSearchVisibility();
-  renderList();
-}
-
-function deleteCustomList(listId) {
-  // Remove from state
-  removeCustomList(listId);
-
-  // Persist changes
-  persistCustomLists(state.customLists);
-  removeListFromAniLists(listId);
-
-  // Re-render sidebar
-  renderCustomListsInSidebar();
-
-  // Navigate back to home if we were on the deleted list
-  if (state.selected === listId) {
-    setSelectedList('home');
-    setActiveNav();
-    updateListToolbarUI();
-    updateEditButton();
-    updateAniListSearchVisibility();
-    renderList();
-  }
-}
-
-function renderCustomListsInSidebar() {
-  const container = document.getElementById('custom-lists-container');
-
-  // Clear container
-  container.innerHTML = '';
-
-  // Add each custom list
-  state.customLists.forEach(list => {
-    const btn = document.createElement('button');
-    btn.className = 'nav-item';
-    btn.dataset.list = list.id;
-    btn.dataset.custom = 'true';
-    btn.setAttribute('aria-label', list.name);
-    btn.textContent = list.name;
-
-    btn.addEventListener('click', () => {
-      setSelectedList(list.id);
-      setActiveNav();
-      updateListToolbarUI();
-      updateEditButton();
-      updateAniListSearchVisibility();
-      renderList();
-    });
-
-    container.appendChild(btn);
-  });
-}
-
-function openEditListModal(list) {
-  const modal = document.getElementById("edit-list-modal");
-  const nameEl = document.getElementById("edit-list-name");
-  const descEl = document.getElementById("edit-list-description");
-
-  nameEl.value = list.name;
-  descEl.value = list.description || "";
-  modal.dataset.listId = list.id;
-  modal.showModal();
-}
-
-function updateEditButton() {
-  const editBtn = document.getElementById('edit-list-btn');
-
-  // Check if current list is custom
-  const isCustomList = state.customLists.some(list => list.id === state.selected);
-
-  if (isCustomList) {
-    // Show and enable for custom lists
-    editBtn.hidden = false;
-    editBtn.disabled = false;
-    editBtn.style.opacity = '1';
-    editBtn.style.cursor = 'pointer';
-  } else {
-    // Hide for default lists
-    editBtn.hidden = true;
-  }
-}
-
-
-// AniList Search functionality
-let anilistSearchTimeout;
-let anilistSearchFilters = {
-  formats: ['TV'],
-  statuses: ['FINISHED', 'RELEASING'],
-  sort: 'SEARCH_MATCH'
+const BUILT_IN_LISTS = ['wishlist', 'inprogress', 'finished'];
+const LIST_LABELS = {
+  home: 'Home',
+  wishlist: 'Wishlist',
+  inprogress: 'En cours',
+  finished: 'Termines',
+};
+const LIST_SUBTITLES = {
+  home: 'Tableau de bord',
+  wishlist: 'Animes a regarder plus tard',
+  inprogress: 'Animes en cours de visionnage',
+  finished: 'Animes termines',
 };
 
-// Load saved filters from storage
-function loadAnilistSearchFilters() {
-  chrome.storage.local.get('anilistSearchFilters', (result) => {
-    if (result.anilistSearchFilters) {
-      anilistSearchFilters = result.anilistSearchFilters;
-      updateFiltersUI();
+const state = {
+  lists: [],
+  currentList: 'home',
+  displayMode: 'list',
+  sortMode: 'name-asc',
+  query: '',
+  items: [],
+  anilistTimer: 0,
+  inProgressHydrationId: 0,
+};
+
+const els = {};
+
+document.addEventListener('DOMContentLoaded', init);
+
+async function init() {
+  cacheElements();
+  bindStaticControls();
+  await loadPopupData();
+  initHomeWidgets();
+
+  state.lists = await getcreateStoredLists();
+  wireBuiltInListButtons();
+  renderListsNav();
+  await selectList('home');
+}
+
+function cacheElements() {
+  els.nav = document.getElementById('lists-nav');
+  els.customLists = document.getElementById('custom-lists-container');
+  els.addListBtn = document.getElementById('add-list-btn');
+  els.title = document.getElementById('current-list-title');
+  els.subtitle = document.getElementById('current-list-sub');
+  els.search = document.getElementById('search');
+  els.homeSection = document.getElementById('home-section');
+  els.listSection = document.getElementById('list-section');
+  els.list = document.getElementById('list');
+  els.empty = document.getElementById('empty');
+  els.editBtn = document.getElementById('edit-list-btn');
+  els.editModal = document.getElementById('edit-list-modal');
+  els.editForm = document.getElementById('edit-list-form');
+  els.editName = document.getElementById('edit-list-name');
+  els.editDescription = document.getElementById('edit-list-description');
+  els.editCancel = document.getElementById('edit-list-cancel');
+  els.editCancelBtn = document.getElementById('edit-list-cancel-btn');
+  els.deleteListBtn = document.getElementById('delete-list-btn');
+  els.sort = document.getElementById('lt-sort');
+  els.anilistBar = document.getElementById('anilist-search-bar');
+  els.anilistSearch = document.getElementById('anilist-search');
+  els.anilistClear = document.getElementById('anilist-search-clear');
+  els.anilistResults = document.getElementById('anilist-search-results');
+  els.anilistFiltersBtn = document.getElementById('anilist-search-filters-btn');
+  els.anilistFiltersPanel = document.getElementById('anilist-search-filters-panel');
+  els.anilistSort = document.getElementById('anilist-sort');
+}
+
+function bindStaticControls() {
+  els.addListBtn?.addEventListener('click', openCreateListPopup);
+  els.nav?.addEventListener('click', handleNavClick);
+  els.search?.addEventListener('input', () => {
+    state.query = els.search.value.trim().toLowerCase();
+    renderItems();
+  });
+
+  document.querySelectorAll('.lt-btn[id^="btn-dispo-"]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const mode = button.id.replace('btn-dispo-', '');
+      setDisplayMode(mode === 'grid' || mode === 'mixte' ? mode : 'list');
+    });
+  });
+
+  els.sort?.addEventListener('change', () => {
+    state.sortMode = els.sort.value;
+    renderItems();
+  });
+
+  els.editBtn?.addEventListener('click', openEditListModal);
+  els.editCancel?.addEventListener('click', closeEditListModal);
+  els.editCancelBtn?.addEventListener('click', closeEditListModal);
+  els.editForm?.addEventListener('submit', saveEditedList);
+  els.deleteListBtn?.addEventListener('click', deleteCurrentList);
+
+  els.anilistSearch?.addEventListener('input', handleAnilistSearchInput);
+  els.anilistClear?.addEventListener('click', clearAnilistSearch);
+  els.anilistResults?.addEventListener('click', handleAnilistResultClick);
+  els.anilistFiltersBtn?.addEventListener('click', toggleAnilistFilters);
+  els.anilistSort?.addEventListener('change', () => {
+    if (els.anilistSearch.value.trim().length >= 2) searchAnilist(els.anilistSearch.value.trim());
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeCreateListPopup();
+      closeEditListModal();
+      closeChronologyModal();
+      hideAnilistResults();
     }
   });
+
+  if (typeof chrome !== 'undefined' && chrome.storage?.onChanged) {
+    chrome.storage.onChanged.addListener(async (changes, area) => {
+      if (area !== 'sync' || !changes.popupDataList || state.currentList !== 'inprogress') return;
+      state.items = await loadInProgressItems();
+      renderItems();
+    });
+  }
 }
 
-// Save filters to storage
-function saveAnilistSearchFilters() {
-  chrome.storage.local.set({ anilistSearchFilters });
+function wireBuiltInListButtons() {
+  const buttons = Array.from(document.querySelectorAll('#lists-scrollable-container > .nav-item'));
+  buttons.forEach((button, index) => {
+    const listName = BUILT_IN_LISTS[index];
+    if (!listName) return;
+    button.dataset.list = listName;
+    button.textContent = LIST_LABELS[listName];
+  });
 }
 
-// Update filters UI from saved preferences
-function updateFiltersUI() {
-  // Update format checkboxes
-  document.querySelectorAll('input[name="format"]').forEach(checkbox => {
-    checkbox.checked = anilistSearchFilters.formats.includes(checkbox.value);
+async function handleNavClick(event) {
+  const button = event.target.closest('[data-list]');
+  if (!button) return;
+  await selectList(button.dataset.list);
+}
+
+async function selectList(listName) {
+  state.currentList = listName;
+  state.query = '';
+  if (els.search) els.search.value = '';
+
+  const isHome = listName === 'home';
+  els.homeSection.hidden = !isHome;
+  els.listSection.hidden = isHome;
+  els.list.hidden = isHome;
+  els.empty.hidden = true;
+  els.anilistBar.hidden = isHome || listName === 'inprogress';
+  els.editBtn.hidden = isHome || BUILT_IN_LISTS.includes(listName);
+
+  setActiveNavItem(listName);
+  updateHeader();
+  clearAnilistSearch();
+
+  if (isHome) {
+    state.items = [];
+    els.list.innerHTML = '';
+    return;
+  }
+
+  state.items = listName === 'inprogress'
+    ? await loadInProgressItems()
+    : await getListItems(listName);
+  renderItems();
+
+  if (listName === 'inprogress') {
+    hydrateCurrentInProgressChronologies();
+  }
+}
+
+function setActiveNavItem(listName) {
+  document.querySelectorAll('.nav-item').forEach((button) => {
+    button.classList.toggle('active', button.dataset.list === listName);
+  });
+}
+
+function updateHeader() {
+  const label = getListLabel(state.currentList);
+  els.title.textContent = label;
+  els.subtitle.textContent = LIST_SUBTITLES[state.currentList] || `${state.items.length} element(s)`;
+}
+
+function renderListsNav() {
+  if (!els.customLists) return;
+  els.customLists.innerHTML = '';
+
+  state.lists
+    .filter((listName) => !BUILT_IN_LISTS.includes(listName))
+    .forEach((listName) => {
+      const button = document.createElement('button');
+      button.className = 'nav-item custom-list-item';
+      button.dataset.list = listName;
+      button.type = 'button';
+      button.textContent = getListLabel(listName);
+      els.customLists.appendChild(button);
+    });
+}
+
+function renderItems() {
+  const items = getVisibleItems(state.items, state.query, state.sortMode);
+  updateToolbarMode();
+  updateHeader();
+
+  renderListItems({
+    container: els.list,
+    empty: els.empty,
+    items,
+    displayMode: state.displayMode,
+    currentList: state.currentList,
+    onItemClick: renderChronologyModal,
+    onRemoveClick: removeRenderedItem,
+    canRemove: state.currentList !== 'inprogress',
+  });
+}
+
+async function hydrateCurrentInProgressChronologies() {
+  const hydrationId = Date.now();
+  state.inProgressHydrationId = hydrationId;
+
+  await hydrateInProgressChronologies((items) => {
+    if (state.currentList !== 'inprogress' || state.inProgressHydrationId !== hydrationId) return;
+    state.items = items;
+    renderItems();
   });
 
-  // Update status checkboxes
-  document.querySelectorAll('input[name="status"]').forEach(checkbox => {
-    checkbox.checked = anilistSearchFilters.statuses.includes(checkbox.value);
-  });
-
-  // Update sort select
-  const sortSelect = document.getElementById('anilist-sort');
-  if (sortSelect) {
-    sortSelect.value = anilistSearchFilters.sort;
+  if (state.currentList === 'inprogress' && state.inProgressHydrationId === hydrationId) {
+    state.items = await loadInProgressItems();
+    renderItems();
   }
 }
 
-function initAniListSearch() {
-  const searchInput = document.getElementById('anilist-search');
-  const searchResults = document.getElementById('anilist-search-results');
-  const clearBtn = document.getElementById('anilist-search-clear');
-  const filtersBtn = document.getElementById('anilist-search-filters-btn');
-  const filtersPanel = document.getElementById('anilist-search-filters-panel');
+function setDisplayMode(mode) {
+  state.displayMode = mode;
+  renderItems();
+}
 
-  if (!searchInput || !searchResults) return;
+function updateToolbarMode() {
+  document.querySelectorAll('.lt-btn[id^="btn-dispo-"]').forEach((button) => {
+    button.setAttribute('aria-pressed', String(button.id === `btn-dispo-${state.displayMode}`));
+  });
+}
 
-  // Setup custom clear button (show when there is text)
-  if (clearBtn) {
-    // initial state
-    clearBtn.hidden = !searchInput.value;
+function openCreateListPopup() {
+  closeCreateListPopup();
+  const overlay = document.createElement('div');
+  overlay.className = 'popup-overlay';
+  overlay.innerHTML = `
+    <form class="popup-content" id="create-list-form">
+      <div class="popup-header">
+        <h2>Creer une nouvelle liste</h2>
+        <button id="close-popup-btn" class="close-button" type="button" aria-label="Fermer">x</button>
+      </div>
+      <input type="text" id="new-list-name" class="inputs" placeholder="Nom de la liste" aria-label="Nom de la liste" maxlength="30" required>
+      <div class="popup-buttons">
+        <button id="create-list-confirm-btn" class="button" type="submit">Creer</button>
+      </div>
+    </form>
+  `;
+  document.body.appendChild(overlay);
+  document.getElementById('close-popup-btn')?.addEventListener('click', closeCreateListPopup);
+  document.getElementById('create-list-form')?.addEventListener('submit', createNewList);
+  document.getElementById('new-list-name')?.focus();
+}
 
-    // show/hide clear on input
-    searchInput.addEventListener('input', () => {
-      clearBtn.hidden = !searchInput.value;
-    });
+async function createNewList(event) {
+  event.preventDefault();
+  const input = document.getElementById('new-list-name');
+  const listName = normalizeListName(input.value);
+  if (!listName) return;
+  state.lists = await createList(listName);
+  renderListsNav();
+  closeCreateListPopup();
+  await selectList(listName);
+}
 
-    // clear input when clicking the button
-    clearBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      searchInput.value = '';
-      clearBtn.hidden = true;
-      // hide results and trigger input handlers
-      searchResults.hidden = true;
-      searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-      searchInput.focus();
-    });
+function closeCreateListPopup() {
+  document.querySelector('.popup-overlay')?.remove();
+}
+
+function openEditListModal() {
+  if (BUILT_IN_LISTS.includes(state.currentList) || state.currentList === 'home') return;
+  els.editName.value = getListLabel(state.currentList);
+  els.editDescription.value = LIST_SUBTITLES[state.currentList] || '';
+  els.editModal.showModal();
+  els.editName.focus();
+}
+
+function closeEditListModal() {
+  if (els.editModal?.open) els.editModal.close();
+}
+
+async function saveEditedList(event) {
+  event.preventDefault();
+  const oldName = state.currentList;
+  const newName = normalizeListName(els.editName.value);
+  if (!newName) return;
+
+  state.lists = await renameList(oldName, newName);
+  renderListsNav();
+  closeEditListModal();
+  await selectList(state.lists.includes(newName) ? newName : oldName);
+}
+
+async function deleteCurrentList() {
+  if (BUILT_IN_LISTS.includes(state.currentList) || state.currentList === 'home') return;
+  const label = getListLabel(state.currentList);
+  const confirmed = window.confirm(`Supprimer la liste "${label}" ?`);
+  if (!confirmed) return;
+
+  state.lists = await removeList(state.currentList);
+  renderListsNav();
+  closeEditListModal();
+  await selectList('wishlist');
+}
+
+function handleAnilistSearchInput() {
+  const query = els.anilistSearch.value.trim();
+  els.anilistClear.hidden = !query;
+  clearTimeout(state.anilistTimer);
+
+  if (query.length < 2) {
+    hideAnilistResults();
+    return;
   }
 
-  // Load saved filters
-  loadAnilistSearchFilters();
+  state.anilistTimer = setTimeout(() => searchAnilist(query), 250);
+}
 
-  // Toggle filters panel
-  if (filtersBtn && filtersPanel) {
-    filtersBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isOpen = !filtersPanel.hidden;
-      filtersPanel.hidden = isOpen;
-      filtersBtn.setAttribute('aria-pressed', String(!isOpen));
+async function searchAnilist(query) {
+  els.anilistResults.hidden = false;
+  els.anilistResults.innerHTML = '<div class="anilist-search-loading">Recherche...</div>';
 
-      // Close search results when opening filters
-      if (!isOpen) {
-        searchResults.hidden = true;
-      }
-    });
-
-    // Handle filter changes
-    filtersPanel.addEventListener('click', (e) => e.stopPropagation());
-
-    // Format checkboxes
-    document.querySelectorAll('input[name="format"]').forEach(checkbox => {
-      checkbox.addEventListener('change', () => {
-        anilistSearchFilters.formats = Array.from(
-          document.querySelectorAll('input[name="format"]:checked')
-        ).map(cb => cb.value);
-        saveAnilistSearchFilters();
-      });
-    });
-
-    // Status checkboxes
-    document.querySelectorAll('input[name="status"]').forEach(checkbox => {
-      checkbox.addEventListener('change', () => {
-        anilistSearchFilters.statuses = Array.from(
-          document.querySelectorAll('input[name="status"]:checked')
-        ).map(cb => cb.value);
-        saveAnilistSearchFilters();
-      });
-    });
-
-    // Sort select
-    const sortSelect = document.getElementById('anilist-sort');
-    if (sortSelect) {
-      sortSelect.addEventListener('change', () => {
-        anilistSearchFilters.sort = sortSelect.value;
-        saveAnilistSearchFilters();
-      });
-    }
-  }
-
-  searchInput.addEventListener('input', (e) => {
-    const query = e.target.value.trim();
-
-    clearTimeout(anilistSearchTimeout);
-
-    if (query.length < 2) {
-      searchResults.hidden = true;
+  try {
+    const results = await AnilistService.searchAnimes(query, 8, getAnilistFilters());
+    if (!results.length) {
+      els.anilistResults.innerHTML = '<div class="anilist-search-empty">Aucun resultat</div>';
       return;
     }
 
-    // Show loading
-    searchResults.hidden = false;
-    searchResults.innerHTML = '<div class="anilist-search-loading">Recherche en cours...</div>';
-
-    anilistSearchTimeout = setTimeout(async () => {
-      try {
-        const results = await AnilistService.searchAnimes(query, 8, anilistSearchFilters);
-
-        if (results.length === 0) {
-          searchResults.innerHTML = '<div class="anilist-search-empty">Aucun résultat trouvé</div>';
-          return;
-        }
-
-        searchResults.innerHTML = results.map(anime => `
-          <div class="anilist-search-result-item" data-anime='${JSON.stringify({
-          id: anime.id,
-          name: anime.title,
-          link: `https://anilist.co/anime/${anime.id}`,
-          cover: anime.cover,
-          banner: anime.banner
-        })}'>
-            ${anime.cover ? `<img src="${anime.cover}" class="anilist-search-result-cover" alt="${anime.title}">` : ''}
-            <div class="anilist-search-result-info">
-              <div class="anilist-search-result-title">${anime.title}</div>
-              <div class="anilist-search-result-meta">
-                ${anime.status ? `<span>${anime.status}</span>` : ''}
-                ${anime.startDate?.year ? `<span>${anime.startDate.year}</span>` : ''}
-              </div>
-            </div>
-          </div>
-        `).join('');
-
-        // Add click listeners to results
-        searchResults.querySelectorAll('.anilist-search-result-item').forEach(item => {
-          item.addEventListener('click', () => {
-            const animeData = JSON.parse(item.dataset.anime);
-            AnilistService.getFranchiseInfoById(animeData.id, 5).then(info => {
-              animeData.chronology = info ? buildChronology(info) : {};
-              addAnimeToCurrentList(animeData);
-              searchInput.value = '';
-              searchResults.hidden = true;
-            });
-          });
-        });
-      } catch (error) {
-        console.error('AniList search error:', error);
-        searchResults.innerHTML = '<div class="anilist-search-empty">Erreur lors de la recherche</div>';
-      }
-    }, 300);
-  });
-
-  // Close results when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-      searchResults.hidden = true;
-    }
-
-    // Close filters panel when clicking outside
-    if (filtersBtn && filtersPanel) {
-      if (!filtersBtn.contains(e.target) && !filtersPanel.contains(e.target)) {
-        filtersPanel.hidden = true;
-        filtersBtn.setAttribute('aria-pressed', 'false');
-      }
-    }
-  });
-}
-
-function addAnimeToCurrentList(anime) {
-  const currentList = state.selected;
-
-  // Only add to wishlist or finished
-  if (currentList === 'wishlist' || currentList === 'finished') {
-    // Vérifier si l'anime existe déjà avant d'ajouter
-    const existingList = state.aniLists[currentList] || [];
-    const alreadyExists = existingList.some(e =>
-      (e.link && anime.link && e.link === anime.link) ||
-      (e.name && anime.name && e.name.trim().toLowerCase() === anime.name.trim().toLowerCase()) ||
-      (e.id && anime.id && e.id === anime.id)
-    );
-
-    if (alreadyExists) {
-      console.log('Anime already in list:', anime.name);
-      return;
-    }
-
-    // Add the anime with cached images from AniList
-    const animeWithImages = {
-      id: anime.id,
-      name: anime.name,
-      chronology: anime.chronology || {},
-      link: anime.link,
-      anilistBanner: anime.banner || null,
-      anilistImage: anime.cover || null
-    };
-    addToList(currentList, animeWithImages);
+    els.anilistResults.innerHTML = results.map((anime) => `
+      <button class="anilist-search-result-item" type="button" data-anilist-id="${anime.id}">
+        ${anime.cover ? `<img class="anilist-search-result-cover" src="${escapeAttribute(anime.cover)}" alt="">` : ''}
+        <span class="anilist-search-result-info">
+          <strong class="anilist-search-result-title">${escapeHtml(anime.title || 'Sans titre')}</strong>
+          <span class="anilist-search-result-meta">${escapeHtml([anime.status, getYear(anime.startDate)].filter(Boolean).join(' - '))}</span>
+        </span>
+      </button>
+    `).join('');
+  } catch (error) {
+    console.warn('AniList search failed', error);
+    els.anilistResults.innerHTML = '<div class="anilist-search-empty">Recherche indisponible</div>';
   }
 }
 
-function updateAniListSearchVisibility() {
-  const searchBar = document.getElementById('anilist-search-bar');
-  if (!searchBar) return;
+async function handleAnilistResultClick(event) {
+  const button = event.target.closest('[data-anilist-id]');
+  if (!button) return;
+  const id = button.dataset.anilistId;
+  button.disabled = true;
+  els.anilistResults.innerHTML = '<div class="anilist-search-loading">Creation de la chronologie...</div>';
 
-  // Show only for wishlist and finished
-  if (state.selected === 'wishlist' || state.selected === 'finished') {
-    searchBar.hidden = false;
-  } else {
-    searchBar.hidden = true;
+  try {
+    state.items = await addAnilistAnimeToList(state.currentList, id);
+    renderItems();
+    clearAnilistSearch();
+  } catch (error) {
+    console.warn('Unable to add AniList item', error);
+    els.anilistResults.innerHTML = '<div class="anilist-search-empty">Impossible de creer la chronologie</div>';
   }
 }
 
-
-function initUI() {
-  // Sidebar nav
-  document.querySelectorAll("#lists-nav .nav-item").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      setSelectedList(btn.dataset.list);
-      setActiveNav();
-      updateListToolbarUI();
-      updateEditButton();
-      updateAniListSearchVisibility();
-      renderList();
-    });
-  });
-
-  // Search
-  document.getElementById("search").addEventListener("input", () => renderList());
-
-  // AniList Search (for wishlist and finished lists)
-  initAniListSearch();
-
-  // Add list button - creates list directly
-  const addBtn = document.querySelector('.add-btn');
-  if (addBtn) {
-    addBtn.addEventListener("click", createNewList);
-  }
-
-  // Edit button in page header
-  const editListBtn = document.getElementById('edit-list-btn');
-  if (editListBtn) {
-    editListBtn.addEventListener('click', () => {
-      const currentList = state.customLists.find(list => list.id === state.selected);
-      if (currentList) {
-        openEditListModal(currentList);
-      }
-    });
-  }
-
-  // Edit list modal handlers
-  const editModal = document.getElementById("edit-list-modal");
-  if (editModal) {
-    document.getElementById("edit-list-cancel").addEventListener("click", () => {
-      editModal.close();
-    });
-
-    const cancelBtn = document.getElementById("edit-list-cancel-btn");
-    if (cancelBtn) {
-      cancelBtn.addEventListener("click", () => {
-        editModal.close();
-      });
-    }
-
-    // Delete list button
-    const deleteBtn = document.getElementById("delete-list-btn");
-    if (deleteBtn) {
-      deleteBtn.addEventListener("click", () => {
-        const listId = editModal.dataset.listId;
-        const list = state.customLists.find(l => l.id === listId);
-
-        if (list && confirm(`Voulez-vous vraiment supprimer la liste "${list.name}" ?`)) {
-          deleteCustomList(listId);
-          editModal.close();
-        }
-      });
-    }
-
-    document.getElementById("edit-list-form").addEventListener("submit", (e) => {
-      e.preventDefault();
-      const listId = editModal.dataset.listId;
-      const name = document.getElementById("edit-list-name").value.trim();
-      const description = document.getElementById("edit-list-description").value.trim();
-
-      if (!name) return;
-
-      // Update the list
-      const listIndex = state.customLists.findIndex(l => l.id === listId);
-      if (listIndex !== -1) {
-        state.customLists[listIndex].name = name;
-        state.customLists[listIndex].description = description;
-
-        // Update label
-        LIST_LABELS[listId] = {
-          title: name,
-          sub: description || "Liste personnalisée"
-        };
-
-        persistCustomLists(state.customLists);
-        renderCustomListsInSidebar();
-
-        // Update header if we're currently on this list
-        if (state.selected === listId) {
-          setActiveNav();
-        }
-      }
-
-      editModal.close();
-    });
-  }
-
-  // List toolbar events
-
-  const btnList = document.getElementById('btn-dispo-list');
-  const btnGrid = document.getElementById('btn-dispo-grid');
-  const btnMixte = document.getElementById('btn-dispo-mixte');
-  const sortSel = document.getElementById('lt-sort');
-
-  if (btnList && btnGrid) {
-    btnList.addEventListener('click', () => {
-      setDisplayMode('list');
-      updateListToolbarUI();
-      updateDisplayMode();
-    });
-    btnGrid.addEventListener('click', () => {
-      setDisplayMode('grid');
-      updateListToolbarUI();
-      updateDisplayMode();
-    });
-    btnMixte.addEventListener('click', () => {
-      setDisplayMode('mixte');
-      updateListToolbarUI();
-      updateDisplayMode();
-    });
-  }
-
-  if (sortSel) {
-    sortSel.addEventListener('change', (e) => {
-      const val = e.target.value;
-      setListSort(val);
-      renderList();
-    });
-  }
+async function removeRenderedItem(item) {
+  state.items = await removeAnimeFromList(state.currentList, item.id);
+  renderItems();
 }
 
-function updateListToolbarUI() {
-  const btnList = document.getElementById('btn-dispo-list');
-  const btnGrid = document.getElementById('btn-dispo-grid');
-  const btnMixte = document.getElementById('btn-dispo-mixte');
-  const sortSel = document.getElementById('lt-sort');
-  if (btnList && btnGrid && btnMixte) {
-    btnList.setAttribute('aria-pressed', String(state.displayMode === 'list'));
-    btnGrid.setAttribute('aria-pressed', String(state.displayMode === 'grid'));
-    btnMixte.setAttribute('aria-pressed', String(state.displayMode === 'mixte'));
-  }
-  if (sortSel) {
-    sortSel.value = state.listSort;
-  }
+function getAnilistFilters() {
+  const checked = (name) => Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map((input) => input.value);
+  return {
+    formats: checked('format'),
+    statuses: checked('status'),
+    sort: els.anilistSort?.value || 'SEARCH_MATCH',
+  };
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  initUI();
-  setActiveNav();
-  updateListToolbarUI();
-  updateEditButton();
-  updateAniListSearchVisibility();
+function clearAnilistSearch() {
+  if (els.anilistSearch) els.anilistSearch.value = '';
+  if (els.anilistClear) els.anilistClear.hidden = true;
+  hideAnilistResults();
+}
 
-  // Load data first, THEN initialize widgets so they have data to render
-  loadAllData(() => {
-    syncPopupToInprogress();
-    renderCustomListsInSidebar();
-    renderList();
+function hideAnilistResults() {
+  if (els.anilistResults) {
+    els.anilistResults.hidden = true;
+    els.anilistResults.innerHTML = '';
+  }
+  if (els.anilistFiltersPanel) els.anilistFiltersPanel.hidden = true;
+  if (els.anilistFiltersBtn) els.anilistFiltersBtn.setAttribute('aria-pressed', 'false');
+}
 
-    // Initialize widgets AFTER data is loaded
-    initHomeWidgets();
-  });
+function toggleAnilistFilters() {
+  const next = !els.anilistFiltersPanel.hidden;
+  els.anilistFiltersPanel.hidden = next;
+  els.anilistFiltersBtn.setAttribute('aria-pressed', String(!next));
+}
 
-  // Global event listeners
-  document.addEventListener('click', () => closeOpenDropdown());
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      closeOpenDropdown();
-      // Exit edit mode if active
-      if (getHwEdit()) {
-        setHwEdit(false);
-        document.getElementById('wg-toggle-edit')?.setAttribute('aria-pressed', 'false');
-        renderHomeWidgets();
-      }
-    }
-  });
+function getListLabel(listName) {
+  return LIST_LABELS[listName] || listName.replace(/[-_]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
 
-  // Setup storage listeners
-  setupStorageListener(
-    () => {
-      syncPopupToInprogress();
-      if (state.selected === "all") renderList();
-      // Re-render widgets when data changes
-      renderHomeWidgets();
-    },
-    () => {
-      if (state.selected !== "all") renderList();
-      // Re-render widgets when data changes
-      renderHomeWidgets();
-    }
-  );
-});
+function normalizeListName(value) {
+  return value.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-_]/g, '').slice(0, 30);
+}
 
+function getYear(startDate) {
+  return startDate?.year || '';
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[char]));
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(value).replace(/`/g, '&#96;');
+}

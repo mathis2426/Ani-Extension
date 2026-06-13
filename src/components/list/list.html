@@ -23,16 +23,19 @@
         <br>
         <div class="list-header">
           <h2 class="sidebar-title">Listes</h2> 
-          <button class="add-btn">+</button>
+          <button class="add-btn" id="add-list-btn" aria-label="Ajouter une liste">+</button>
         </div>
         <div id="lists-scrollable-container" class="lists-scrollable-container">
-          <button class="nav-item" data-list="wishlist" aria-label="Wishlist">Wishlist</button>
-          <button class="nav-item" data-list="inprogress" aria-label="En cours">En cours</button>
-          <button class="nav-item" data-list="finished" aria-label="Terminés">Terminés</button>
+          <button class="nav-item" aria-label="Wishlist">Wishlist</button>
+          <button class="nav-item" aria-label="En cours">En cours</button>
+          <button class="nav-item" aria-label="Terminés">Terminés</button>
           <div id="custom-lists-container" class="custom-lists-container"></div>
         </div>
       </nav>
     </aside>
+
+
+
     <section class="content-area">
       <header class="content-header">
         <div class="titles">
@@ -173,7 +176,7 @@
             <select id="lt-sort" class="lt-select">
               <option value="name-asc">Nom A → Z</option>
               <option value="name-desc">Nom Z → A</option>
-              <option value="progress">Progression</option>
+              <option value="progress">Chronologie</option>
               <option value="recent">Récent</option>
             </select>
           </div>

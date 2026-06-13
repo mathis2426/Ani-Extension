@@ -1,18 +1,20 @@
 /* ===== Add List / Generic Modals ===== */
 .list-modal {
   border: none;
-  border-radius: 16px;
-  background: #1f1f1f;
+  border-radius: 8px;
+  background: linear-gradient(145deg, rgba(28, 31, 42, 0.9), rgba(17, 20, 29, 0.78));
   color: #fff;
   padding: 0;
   max-width: 480px;
   width: 90%;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.48), inset 0 1px rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(26px) saturate(150%);
+  -webkit-backdrop-filter: blur(26px) saturate(150%);
 }
 
 .list-modal::backdrop {
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  background: rgba(4, 6, 12, 0.62);
+  backdrop-filter: blur(12px);
 }
 
 .modal-container {
@@ -36,7 +38,7 @@
 }
 
 .modal-close {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.055);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: rgba(255, 255, 255, 0.7);
   width: 32px;
@@ -75,8 +77,8 @@
 }
 
 .form-field input {
-  background: #2b2b2b;
-  border: 1px solid #3d3d3d;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: #fff;
   border-radius: 8px;
   padding: 10px 12px;
@@ -86,7 +88,8 @@
 }
 
 .form-field input:focus {
-  border-color: var(--color-primary-purple, #7b5ac2);
+  border-color: rgba(164, 142, 229, 0.72);
+  box-shadow: 0 0 0 3px rgba(164, 142, 229, 0.15);
 }
 
 .form-field input::placeholder {
@@ -115,22 +118,23 @@
 }
 
 .modal-btn-primary {
-  background: var(--color-primary-purple, #7b5ac2);
+  background: linear-gradient(135deg, rgba(164, 142, 229, 0.92), rgba(116, 92, 192, 0.86));
   color: #fff;
+  border: 1px solid rgba(226, 220, 255, 0.28);
 }
 
 .modal-btn-primary:hover {
-  background: #8d6dd4;
+  background: linear-gradient(135deg, rgba(180, 162, 239, 0.98), rgba(126, 101, 203, 0.92));
 }
 
 .modal-btn-secondary {
-  background: #333;
+  background: rgba(255, 255, 255, 0.06);
   color: #e4e4e4;
-  border: 1px solid #444;
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .modal-btn-secondary:hover {
-  background: #3a3a3a;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .modal-btn-danger {

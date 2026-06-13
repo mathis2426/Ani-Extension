@@ -1,204 +1,343 @@
-
-/* Chronology modal & vertical timeline layout */
+/* Chronology modal */
 .chronology-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   z-index: 9999;
-  padding: 28px;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(5, 7, 12, 0.72);
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
 }
 
-
 .chronology-modal {
-  --panel-bg: linear-gradient(180deg, rgba(22,22,24,0.98), rgba(14,14,16,0.98));
-  width: min(920px, 94%);
-  max-height: 88vh;
-  overflow: auto;
-  border-radius: 18px;
-  background: var(--panel-bg);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.7);
-  padding: 22px 28px;
+  width: min(920px, 100%);
+  max-height: min(86vh, 860px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(145deg, rgba(27, 31, 42, 0.92), rgba(13, 16, 24, 0.86)),
+    rgba(18, 21, 30, 0.88);
+  box-shadow:
+    0 28px 90px rgba(0, 0, 0, 0.55),
+    inset 0 1px rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
 }
 
 .chronology-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 18px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
 }
 
 .chronology-title {
-  font-size: 18px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.96);
+  font-size: 20px;
   font-weight: 700;
-  color: #f5f5f5;
+  line-height: 1.2;
+}
+
+.chronology-subtitle {
+  margin: 6px 0 0;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .chronology-close {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
-  color: #fff;
-  padding: 6px 10px;
-  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.82);
   cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  transition: background .16s ease, border-color .16s ease, transform .16s ease;
+}
+
+.chronology-close:hover {
+  border-color: rgba(164, 142, 229, 0.48);
+  background: rgba(164, 142, 229, 0.18);
+  transform: translateY(-1px);
 }
 
 .chronology-content {
+  --timeline-x: 18px;
+  --marker-size: 36px;
   position: relative;
+  overflow-y: auto;
+  padding: 22px 24px 28px;
   display: flex;
   flex-direction: column;
-  --entry-gap: 20px;
-  gap: var(--entry-gap);
-  padding-left: 80px; /* réduit pour éviter chevauchement du texte */
+  gap: 14px;
 }
 
-/* Each entry aligns to the right of the gutter */
-.chronology-entry {
-  display: flex;
-  gap: 18px;
-  padding: 16px 18px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.03);
-  align-items: flex-start;
-  position: relative;
-  z-index: 1; /* above the faint spine */
-}
-
-/* Numbered circle that sits visually on the timeline */
-.chronology-index {
-  width: 34px;
-  height: 34px;
-  min-width: 34px;
-  border-radius: 50%;
-  background: #f5f5f5;
-  color: #111;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  position: absolute;
-  left: -50px;/* centre exact du trait */
-  transform: translateX(-50%); /* centre le cercle sur la coordonnée left */
-  z-index: 4;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-}
-
-/* Per-entry connector: default solid segment (behind content but above base spine) */
-.chronology-index::after {
+.chronology-content::before {
   content: '';
   position: absolute;
-  top: calc(100% );
-  left: 50%;
-  transform: translateX(-50%);
+  top: 34px;
+  bottom: 34px;
+  left: calc(24px + var(--timeline-x));
   width: 2px;
-  height: calc(var(--entry-gap) + 55px);
-  background: #f5f5f5;
-  border-radius: 2px;
-  z-index: 2;
-  pointer-events: none;
-}
-
-/* dotted when flagged by JS */
-.chronology-entry.dotted-connector .chronology-index::after {
-  background: repeating-linear-gradient(
+  border-radius: 999px;
+  background: linear-gradient(
     to bottom,
-    rgba(255,255,255,0.10) 0 6px,
-    transparent 6px 12px
+    rgba(164, 142, 229, 0.08),
+    rgba(164, 142, 229, 0.58) 18%,
+    rgba(255, 255, 255, 0.16) 82%,
+    rgba(255, 255, 255, 0.04)
   );
 }
 
-
-/* Last entry short connector */
-.chronology-entry:last-child .chronology-index::after {
-  height: 0px !important;
+.chronology-entry {
+  position: relative;
+  display: grid;
+  grid-template-columns: calc(var(--timeline-x) + var(--marker-size) + 18px) minmax(0, 1fr);
+  align-items: start;
+  min-height: min-content;
+  isolation: isolate;
 }
 
-/* THUMBNAIL */
-.chronology-thumb {
-  width: 84px;
-  height: 64px;
-  border-radius: 6px;
-  overflow: hidden;
-  background: rgba(255,255,255,0.06);
+.chronology-index {
+  position: relative;
+  z-index: 1;
+  grid-column: 1;
+  width: var(--marker-size);
+  height: var(--marker-size);
+  margin-left: calc(var(--timeline-x) - (var(--marker-size) / 2));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(221, 214, 254, 0.46);
+  background:
+    linear-gradient(145deg, rgba(178, 160, 238, 0.96), rgba(112, 89, 184, 0.92));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow:
+    0 10px 22px rgba(72, 55, 134, 0.28),
+    inset 0 1px rgba(255, 255, 255, 0.25);
 }
 
-/* ENTRY TEXT */
 .chronology-body {
+  grid-column: 2;
+  min-width: 0;
+  min-height: 74px;
+  padding: 16px 18px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.035));
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.16),
+    inset 0 1px rgba(255, 255, 255, 0.045);
+}
+
+.chronology-done .chronology-body {
+  border-color: rgba(52, 178, 52, 0.24);
+  background:
+    linear-gradient(145deg, rgba(52, 178, 52, 0.10), rgba(255, 255, 255, 0.035));
+}
+
+.chronology-current .chronology-body {
+  border-color: rgba(164, 142, 229, 0.44);
+  background:
+    linear-gradient(145deg, rgba(164, 142, 229, 0.16), rgba(255, 255, 255, 0.04));
+}
+
+.chronology-upcoming .chronology-body {
+  opacity: 0.74;
+}
+
+.chronology-done .chronology-index {
+  border-color: rgba(100, 220, 120, 0.45);
+  background: linear-gradient(145deg, rgba(63, 185, 83, 0.94), rgba(29, 122, 53, 0.9));
+}
+
+.chronology-current .chronology-index {
+  border-color: rgba(221, 214, 254, 0.64);
+  box-shadow:
+    0 12px 26px rgba(100, 72, 190, 0.34),
+    0 0 0 4px rgba(164, 142, 229, 0.12),
+    inset 0 1px rgba(255, 255, 255, 0.25);
+}
+
+.chronology-upcoming .chronology-index {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.chronology-node-head {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .chronology-node-title {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.94);
   font-size: 15px;
   font-weight: 700;
-  color: #f5f5f5;
+  line-height: 1.28;
+  overflow-wrap: anywhere;
+}
+
+.chronology-state-badge {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.chronology-done .chronology-state-badge {
+  border-color: rgba(100, 220, 120, 0.32);
+  background: rgba(52, 178, 52, 0.14);
+  color: rgba(190, 255, 202, 0.88);
+}
+
+.chronology-current .chronology-state-badge {
+  border-color: rgba(164, 142, 229, 0.42);
+  background: rgba(164, 142, 229, 0.18);
+  color: rgba(236, 231, 255, 0.92);
 }
 
 .chronology-meta {
+  margin: 7px 0 0;
+  color: rgba(255, 255, 255, 0.62);
   font-size: 12px;
-  opacity: .75;
-  color: rgba(245,245,245,0.85);
+  line-height: 1.45;
 }
 
-.chronology-entry-group-special{
-    display: flex;
+.chronology-progress {
+  height: 7px;
+  margin-top: 12px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.chronology-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(164, 142, 229, 0.95), rgba(95, 211, 180, 0.86));
+  box-shadow: 0 0 18px rgba(164, 142, 229, 0.24);
+}
+
+.chronology-entry-group-special {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+  max-height: 170px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.chronology-special-row {
+  min-width: 0;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.chronology-special-title {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.chronology-special-meta {
+  margin-top: 5px;
+  margin-bottom: 0;
+  font-size: 11px;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.chronology-modal ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chronology-modal ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chronology-modal ::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.chronology-modal ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+@media (max-width: 720px) {
+  .chronology-overlay {
+    padding: 12px;
+    place-items: stretch;
+  }
+
+  .chronology-modal {
+    max-height: calc(100vh - 24px);
+  }
+
+  .chronology-header {
+    padding: 18px 16px 14px;
+  }
+
+  .chronology-title {
+    font-size: 17px;
+  }
+
+  .chronology-content {
+    --timeline-x: 14px;
+    --marker-size: 30px;
+    padding: 18px 14px 22px;
     gap: 12px;
-    margin-left: 50px;
-    overflow-x: auto;
-    align-items: center;
+  }
+
+  .chronology-content::before {
+    left: calc(14px + var(--timeline-x));
+  }
+
+  .chronology-entry {
+    grid-template-columns: calc(var(--timeline-x) + var(--marker-size) + 12px) minmax(0, 1fr);
+  }
+
+  .chronology-body {
+    padding: 13px 14px;
+  }
+
+  .chronology-entry-group-special {
+    grid-template-columns: 1fr;
+  }
 }
-
-/* SPECIAL ENTRY (spin-off etc.) */
-.chronology-entry.chronology-special {
-  border: 1px dashed rgba(255,255,255,0.06);
-  width: 30%;
-}
-
-.chronology-index.special {
-  width: 17px;
-  height: 17px;
-  min-width: 17px;
-  border-radius: 50%;
-  background: #272729;
-  color: #111;
-  font-size: 10px;
-  left: 31px;/* same centre as normal index */
-  
-  transform: translateX(-50%);
-  z-index: 999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
-}
-
-.final-dot {
-  width: 17px;
-  height: 17px;
-  background-color: transparent;
-  border-radius: 9999px;
-  position: absolute;
-  left: 22px;
-  z-index: 50;
-  background-color: #272729;
-
-}
-
-/* RESPONSIVE */
-@media (max-width: 640px) {
-  .chronology-content { padding-left: 64px; }
-  .chronology-index { left: 32px; }
-}
-
-/* Hide connector for entries marked as last visual node */
-.chronology-entry.no-connector .chronology-index::after {
-  height: 0px !important;
-}
-

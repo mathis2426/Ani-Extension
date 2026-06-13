@@ -6,3 +6,8 @@
 @import './modal.css';
 @import './chronology.css';
 @import './common.css';
+@import './custom-lists.css';
+
+/* Base styles component */
+@import './inputs.css';
+@import './buttons.css';

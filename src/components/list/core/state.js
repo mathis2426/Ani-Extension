@@ -1,79 +1,28 @@
-// State management for list component
-
-export const DEFAULT_LISTS = ["wishlist", "inprogress", "finished"];
-
-export const LIST_LABELS = {
-  home: { title: "Home", sub: "Personnalisez votre tableau" },
-  wishlist: { title: "Wishlist", sub: "Animés à regarder plus tard" },
-  inprogress: { title: "En cours", sub: "Animés en cours de visionnage" },
-  finished: { title: "Terminés", sub: "Animés terminés" },
-  all: { title: "Tous", sub: "Tous les animés détectés" },
-};
+import { StorageService } from '../../../services/StorageService.js';
 
 export const state = {
-  selected: "home",
   popupData: [],
-  aniLists: { wishlist: [], inprogress: [], finished: [] },
-  customLists: [], // Array of { id, name, description }
-  displayMode: 'list',
-  listSort: 'name-asc'
 };
 
-// Track open dropdown to close on outside clicks
-export let openDropdown = null;
+export async function loadPopupData() {
+  const popupDataList = (await StorageService.getsync('popupDataList')) || {};
 
-export function setOpenDropdown(dropdown) {
-  openDropdown = dropdown;
+  state.popupData = Object.entries(popupDataList)
+    .filter(([, entry]) => Array.isArray(entry?.history) && entry.history.length > 0)
+    .sort((a, b) => {
+      const lastA = a[1].history[0]?.lastUpdate ?? 0;
+      const lastB = b[1].history[0]?.lastUpdate ?? 0;
+      return lastB - lastA;
+    })
+    .map(([name, entry]) => ({
+      name,
+      notif: entry.notif ?? false,
+      ...entry.history[0],
+    }));
+
+  return state.popupData;
 }
 
-export function setSelectedList(listKey) {
-  state.selected = listKey;
-  // When the selected list changes, ensure the main content area scrolls to top
-  try {
-    const content = document.querySelector('.content-area');
-    if (content) {
-      // smooth scroll for better UX
-      content.scrollTo({ top: 0, behavior: 'auto' });
-    }
-  } catch (e) {
-    // ignore if called in non-DOM environment
-  }
-}
-
-export function setPopupData(data) {
-  state.popupData = data;
-}
-
-export function setAniLists(lists) {
-  state.aniLists = lists;
-}
-
-export function setDisplayMode(mode) {
-  if(mode === 'list' || mode === 'grid' || mode === 'mixte') state.displayMode = mode;
-}
-
-export function setListSort(sort) {
-  const allowed = ['name-asc','name-desc','progress','recent'];
-  if(allowed.includes(sort)) state.listSort = sort;
-}
-
-export function setCustomLists(lists) {
-  state.customLists = lists || [];
-}
-
-export function addCustomList(list) {
-  state.customLists.push(list);
-  return list;
-}
-
-export function removeCustomList(listId) {
-  state.customLists = state.customLists.filter(list => list.id !== listId);
-  // Also remove from aniLists if it exists
-  if (state.aniLists[listId]) {
-    delete state.aniLists[listId];
-  }
-  // Remove from labels
-  if (LIST_LABELS[listId]) {
-    delete LIST_LABELS[listId];
-  }
+export function setPopupData(nextPopupData) {
+  state.popupData = Array.isArray(nextPopupData) ? nextPopupData : [];
 }

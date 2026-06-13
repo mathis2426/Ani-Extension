@@ -6,13 +6,15 @@
   gap: 12px;
   margin: 0 0 16px;
   padding: 10px 12px;
-  background: #242424;
-  border: 1px solid #2f2f2f;
-  border-radius: 12px;
+  background: rgba(20, 23, 32, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
   position: sticky;
   top: 0;
   z-index: 40;
-  backdrop-filter: blur(8px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18), inset 0 1px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
 }
 
 .lt-group {
@@ -34,12 +36,12 @@
 }
 
 .lt-btn {
-  background: #333;
+  background: rgba(255, 255, 255, 0.055);
   color: #eaeaea;
-  border: 1px solid #444;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   padding: 8px 12px;
   font-size: 12px;
-  border-radius: 10px;
+  border-radius: 8px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -53,17 +55,17 @@
 }
 
 .lt-btn:hover {
-  background: #3a3a3a;
+  background: rgba(255, 255, 255, 0.095);
 }
 
 .lt-btn[aria-pressed="true"] {
-  background: var(--color-primary-purple, #7b5ac2);
-  border-color: var(--color-primary-purple, #7b5ac2);
+  background: rgba(164, 142, 229, 0.24);
+  border-color: rgba(164, 142, 229, 0.5);
 }
 
 .lt-select {
-  background: #2e2e2e;
-  border: 1px solid #3d3d3d;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: #fff;
   font-size: 12px;
   padding: 8px 10px;
@@ -73,5 +75,5 @@
 }
 
 .lt-select:focus {
-  border-color: var(--color-primary-purple, #7b5ac2);
+  border-color: rgba(164, 142, 229, 0.72);
 }
