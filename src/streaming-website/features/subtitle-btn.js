@@ -6,6 +6,8 @@
  * Version        : 1.0.2
  */
 
+import { applySubtitleToVideo } from "../../utils/subtitles/subtitleVideoApplicationUtils.js";
+
 let openSubtitlesService = null;
 let infoTimeout = null; // Notification timer
 
@@ -29,7 +31,7 @@ async function setStoredOffset(value, host = location.hostname) {
     return;
 }
 
-function createSubtitleButton() {
+export function createSubtitleButton() {
     if (document.getElementById('aniext-subtitle-btn')) return; // Avoid duplicates
 
     // Interval to wait for the Netflix player controls to load

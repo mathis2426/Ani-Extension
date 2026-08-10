@@ -7,7 +7,6 @@
  */
 
 import { waitVideoElement } from './videoUtils.js';
-import { fetchAllAnimes } from './anilistUtils.js';
 
 /**
  * Send the anime name to iframe when it's ready
@@ -105,7 +104,6 @@ export async function sendRequestFindAnime() {
       
       if (!hasTriggered && currentTime >= TIME_TO_DETECT && animeNameFromParent) {
         hasTriggered = true;
-        fetchAllAnimes(animeNameFromParent); // Fetch animes from Anilist
       }
     });
   }

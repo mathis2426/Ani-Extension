@@ -18,10 +18,12 @@ import { normalizeTitle, similarityRatio } from './subtitleUtils.js';
  * @param {number|null} providedSeason - Season number (optional)
  * @returns {string[]} - Array of query variations
  */
-export function generateSearchQueries(showName, episodeNumber, providedSeason = null) {
+export function generateSearchQueries(showName, episodeNumber, providedSeason = null, episodeTitle = null) {
   const queries = [];
   let cleanName = showName.replace(/\s+Season\s+\d+/gi, "").replace(/\s+\(\d{4}\)/g, "").trim();
   const epPadded = String(episodeNumber).padStart(2, "0");
+
+
 
   // If season known, push SxxExx patterns
   if (providedSeason) {
@@ -31,11 +33,23 @@ export function generateSearchQueries(showName, episodeNumber, providedSeason = 
     queries.push(`${cleanName} ${providedSeason}x${episodeNumber}`);
   }
 
-  // Common patterns
-  queries.push(`${cleanName} ${episodeNumber}`);
-  queries.push(`${cleanName} Ep${episodeNumber}`);
-  queries.push(`${cleanName} Episode ${episodeNumber}`);
-  queries.push(`${cleanName} E${epPadded}`);
+  if (episodeTitle && providedSeason == null && episodeNumber == "") {
+    queries.push(`${episodeTitle}`);
+    queries.push(`${cleanName} ${episodeTitle}`);
+    return [...new Set(queries)];
+  }
+  else {
+    if (episodeTitle) {
+      queries.push(`${cleanName} ${episodeTitle}`);
+      queries.push(`${episodeTitle}`);
+      queries.push(`${cleanName} Ep${episodeNumber} ${episodeTitle}`);
+    }
+    queries.push(`${cleanName} ${episodeNumber}`);
+    queries.push(`${cleanName} Ep${episodeNumber}`);
+    queries.push(`${cleanName} Episode ${episodeNumber}`);
+    queries.push(`${cleanName} E${epPadded}`);
+  }
+
 
   // short name (first 4 words) + ep
   const words = cleanName.split(/\s+/);
@@ -120,4 +134,46 @@ export function deduplicateByFileId(candidates) {
     seen.add(fileId);
     return true;
   });
+}
+
+/**
+ * Extract season and episode information from a subtitle item
+ * @param {object} item - Subtitle item from API
+ * @returns {object} - {season, episode, title}
+ */
+export function extractSeasonEpisodeInfo(item) {
+  const attrs = item?.attributes || {};
+  const feat = attrs.feature_details || {};
+
+  let season = feat.season_number ?? null;
+  let episode = feat.episode_number ?? null;
+  let title = feat.title || feat.movie_name || attrs.release ||
+    (attrs.files && attrs.files[0] && attrs.files[0].file_name) || "";
+
+  // Fallback: parse filename if season/episode missing
+  if ((season === null || episode === null) && attrs.files && attrs.files.length > 0) {
+    const fname = attrs.files[0].file_name || attrs.release || "";
+
+    // Patterns: S01E02, S1E2, 01x02, 1x2
+    const m = fname.match(/S?(\d{1,2})[ ._xX-]?(?:E|e|x)(\d{1,3})/);
+    if (m) {
+      season = season ?? parseInt(m[1], 10);
+      episode = episode ?? parseInt(m[2], 10);
+    } else {
+      // Try 102 format (season 1 episode 02)
+      const m2 = fname.match(/(?:^|[^\d])(\d)(\d{2})(?:[^\d]|$)/);
+      if (m2) {
+        season = season ?? parseInt(m2[1], 10);
+        episode = episode ?? parseInt(m2[2], 10);
+      }
+    }
+
+    if (!title) title = fname;
+  }
+
+  return {
+    season: (season !== null && !isNaN(season)) ? Number(season) : null,
+    episode: (episode !== null && !isNaN(episode)) ? Number(episode) : null,
+    title
+  };
 }

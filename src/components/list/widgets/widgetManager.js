@@ -30,7 +30,7 @@ export function initHomeWidgets() {
   bindHomeToolbar();
   
   window.addEventListener('pointermove', (e) => onHwPointerMove(e, hwLayout, updateAllWidgetPositions));
-  window.addEventListener('pointerup', (e) => onHwPointerUp(e, hwLayout, updateAllWidgetPositions, saveHwLayout));
+  window.addEventListener('pointerup', (e) => onHwPointerUp(e, hwLayout, updateAllWidgetPositions, saveHwLayout, renderHomeWidgets));
   window.addEventListener('pointercancel', onHwPointerCancel);
   // Fallbacks for missed pointer events (mouse/touch/escape/window blur)
   window.addEventListener('mouseup', forceEndHwDrag);

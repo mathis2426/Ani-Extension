@@ -18,10 +18,11 @@ function updateWidgetContent(el, widget) {
   }
 }
 
+import { WIDGET_TYPES } from './types/index.js';
+
 // Load widget types once at startup
-(async function initWidgetTypes() {
-  const module = await import('./types/index.js');
-  WIDGET_TYPES_CACHE = module.WIDGET_TYPES;
+(function initWidgetTypes() {
+  WIDGET_TYPES_CACHE = WIDGET_TYPES;
 })();
 
 export let hwPointer = null;
@@ -255,7 +256,7 @@ export function onHwPointerMove(e, hwLayout, updatePositionsFn) {
   }
 }
 
-export function onHwPointerUp(e, hwLayout, updatePositionsFn, saveFn) {
+export function onHwPointerUp(e, hwLayout, updatePositionsFn, saveFn, renderHomeWidgetsFn) {
   if (!hwPointer) return;
   const w = hwLayout.find(x => x.id === hwPointer.id);
   const wasResize = hwPointer.type === 'resize';
@@ -272,11 +273,8 @@ export function onHwPointerUp(e, hwLayout, updatePositionsFn, saveFn) {
   cleanupDragState();
   
   // Re-render widget if size changed to update adaptive layout
-  if (sizeChanged && w) {
-    // Import render function dynamically to avoid circular dependency
-    import('./widgetManager.js').then(({ renderHomeWidgets }) => {
-      renderHomeWidgets();
-    });
+  if (sizeChanged && w && renderHomeWidgetsFn) {
+    renderHomeWidgetsFn();
   }
 }
 

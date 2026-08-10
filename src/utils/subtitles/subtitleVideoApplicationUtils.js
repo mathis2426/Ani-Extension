@@ -9,7 +9,7 @@
 /* ===========================
    Main: appliquer les sous-titres
    =========================== */
-async function applySubtitleToVideo(subtitleContent, subtitleInfo = {}, offsetMs = 0) {
+export async function applySubtitleToVideo(subtitleContent, subtitleInfo = {}, offsetMs = 0) {
   console.log("Application des sous-titres...", subtitleInfo, "offsetMs=", offsetMs);
 
   // Trouver la video - tentative progressive (some sites use shadow DOM/custom players)
@@ -57,7 +57,7 @@ async function applySubtitleToVideo(subtitleContent, subtitleInfo = {}, offsetMs
 /* ===========================
    Helpers: detection video / tracks
    =========================== */
-function findBestVideoElement() {
+export function findBestVideoElement() {
   // Common selectors: try simple selectors first
   const candidates = [
     () => document.querySelector("video"),

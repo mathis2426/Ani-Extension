@@ -11,7 +11,7 @@
  * Useful for sites like Crunchyroll that use client-side routing
  * @param {Function} callback - Function to call when navigation is detected
  */
-function SPADetectChange(callback) {
+export function SPADetectChange(callback) {
   callback();
   let currentUrl = location.href;
 

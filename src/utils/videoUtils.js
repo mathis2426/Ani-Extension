@@ -11,7 +11,7 @@
  * Useful for pages where video is loaded dynamically
  * @returns {Promise<HTMLVideoElement>} - Promise that resolves with the video element
  */
-async function waitVideoElement() {
+export async function waitVideoElement() {
   return new Promise((resolve) => {
     // Check if the video already exists
     const existing = document.getElementsByTagName("video")[0];

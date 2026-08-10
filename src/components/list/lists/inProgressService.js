@@ -2,6 +2,7 @@ import { StorageService } from '../../../services/StorageService.js';
 import { loadPopupData } from '../core/state.js';
 import { getcreateStoredLists, getListItems } from '../core/storage.js';
 import { createAnimeListItemFromTitle } from './chronologyService.js';
+import { normalizeTitle } from '../../../utils/subtitles/subtitleUtils.js';
 
 const CHRONOLOGY_CACHE_KEY = 'inprogressChronologyCache';
 
@@ -33,7 +34,8 @@ export async function hydrateInProgressChronologies(onUpdate) {
   for (const popupItem of popupItems) {
     if (findCachedChronologyItem(cache, popupItem.name)) continue;
 
-    const chronologyItem = await createAnimeListItemFromTitle(popupItem.name).catch((error) => {
+    const cleanTitle = normalizeTitle(popupItem.name);
+    const chronologyItem = await createAnimeListItemFromTitle(cleanTitle).catch((error) => {
       console.warn('Unable to fetch in-progress chronology', popupItem.name, error);
       return null;
     });

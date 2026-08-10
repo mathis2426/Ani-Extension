@@ -2,7 +2,7 @@
 // REST API v1: https://api.opensubtitles.com/api/v1
 // Requires headers: Api-Key, User-Agent (custom), and Authorization: Bearer <token> after /login
 import { StorageService } from "./StorageService.js";
-import { generateSearchQueries, findBestMatch, deduplicateByFileId } from "../utils/subtitleSearchUtils.js";
+import { generateSearchQueries, findBestMatch, deduplicateByFileId } from "../utils/subtitles/subtitleSearchUtils.js";
 
 export class OpenSubtitlesService {
 

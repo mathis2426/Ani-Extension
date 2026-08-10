@@ -6,6 +6,8 @@
  * Version        : 1.0.1
  */
 
+import { sendAnimeNameToIframe, sendRequestFindAnime } from "../utils/iframeUtils.js";
+
 /**
  * crunchyroll
  * Description :
@@ -14,7 +16,7 @@
  * @param {string} location 
  * @param {function} callback 
  */
-function crunchyroll(animeClass, location, callback) {
+export function crunchyroll(animeClass, location, callback) {
   // Listener for messages from the iframe
   window.addEventListener("message", (event) => {
     if (!event.data) return;

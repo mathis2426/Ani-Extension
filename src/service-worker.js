@@ -6,8 +6,8 @@
  * Version        : 1.2.0
  */
 
-import { AnimeManager } from "./src/core/AnimeManager.js";
-import { OpenSubtitlesManager } from "./src/core/OpenSubtitlesManager.js";
+import { AnimeManager } from "./core/AnimeManager.js";
+import { OpenSubtitlesManager } from "./core/OpenSubtitlesManager.js";
 
 const ANILIST_MIN_REQUEST_INTERVAL_MS = 2300;
 const ANILIST_MAX_RATE_LIMIT_WAIT_MS = 60000;
@@ -126,7 +126,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.warn('Background ANILIST_REQUEST failed', err);
         sendResponse({ ok: false, error: String(err) });
       }
-    })();
+    });
     return true; // async
   }
 

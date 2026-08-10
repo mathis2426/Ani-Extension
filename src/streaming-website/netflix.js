@@ -6,6 +6,8 @@
  * Version        : 1.0.1
  */
 
+import { createSubtitleButton } from "./features/subtitle-btn.js";
+
 /**
  * netflix
  * Description :
@@ -13,7 +15,7 @@
  * @param {animeClass} animeClass 
  * @param {function} callback 
  */
-function netflix(animeClass, callback) {
+export function netflix(animeClass, callback) {
     createSubtitleButton();
     let targetNode = document.body;
     let config = { childList: true, subtree: true };

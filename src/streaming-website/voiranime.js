@@ -6,6 +6,7 @@
  * Version        : 1.0.0
  */
 
+import { sendAnimeNameToIframe, sendRequestFindAnime } from "../utils/iframeUtils.js";
 
 /**
  * voiranime
@@ -14,7 +15,7 @@
  * @param {function} callback
  * @return void
  */
-async function voiranime(animeClass, callback) {
+export async function voiranime(animeClass, callback) {
 
   // Listener for messages from the iframe
   window.addEventListener("message", (event) => {

@@ -13,7 +13,7 @@
     "web_accessible_resources": [
         {
             "resources": [
-                "login.html"
+                "src/components/login/login.html"
             ],
             "matches": [
                 "<all_urls>"
@@ -21,7 +21,7 @@
         },
         {
             "resources": [
-                "assets/AnimeFilter.js"
+                "src/components/list/list.html"
             ],
             "matches": [
                 "<all_urls>"
@@ -45,7 +45,7 @@
         "https://api.opensubtitles.com/*"
     ],
     "background": {
-        "service_worker": "service-worker.js",
+        "service_worker": "src/service-worker.js",
         "type": "module"
     },
     "content_security_policy": {
@@ -55,17 +55,7 @@
         {
             "run_at": "document_idle",
             "js": [
-                "src/utils/subtitles/subtitleVideoApplicationUtils.js",
-                "src/streaming-website/features/subtitle-btn.js",
-                "src/utils/videoUtils.js",
-                "src/utils/anilistUtils.js",
-                "src/utils/navigationUtils.js",
-                "src/utils/utils.js",
-                "src/streaming-website/netflix.js",
-                "src/streaming-website/voiranime.js",
-                "src/streaming-website/crunchyroll.js",
-                "src/interfaces/Anime.js",
-                "content-script.js"
+                "src/content-script.js"
             ],
             "matches": [
                 "*://*/*",

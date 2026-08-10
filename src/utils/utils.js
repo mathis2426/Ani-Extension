@@ -12,7 +12,7 @@
 // Note: This file is intentionally empty for content scripts.
 // All utils are loaded individually via manifest.json.
 // For ES6 module contexts (popup, settings, service worker), import directly from specific files:
-// - import { normalizeTitle } from './subtitleUtils.js';
-// - import { findBestMatch } from './subtitleSearchUtils.js';
+// - import { normalizeTitle } from './subtitles/subtitleUtils.js';
+// - import { findBestMatch } from './subtitles/subtitleSearchUtils.js';
 // etc.
 

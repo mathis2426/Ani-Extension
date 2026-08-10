@@ -6,6 +6,13 @@
  * Version        : 1.0.0
  */
 
+import { anime } from "./interfaces/Anime.js";
+import { applySubtitleToVideo } from "./utils/subtitles/subtitleVideoApplicationUtils.js";
+import { SPADetectChange } from "./utils/navigationUtils.js";
+import { voiranime } from "./streaming-website/voiranime.js";
+import { crunchyroll } from "./streaming-website/crunchyroll.js";
+import { netflix } from "./streaming-website/netflix.js";
+
 let animeClass = new anime();
 
 // --- ton switch hostname existant (inchangé) ---

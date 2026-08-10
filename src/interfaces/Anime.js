@@ -1,4 +1,4 @@
-class anime {
+export class anime {
   constructor() {
     this.name = "";
     this.title = "";

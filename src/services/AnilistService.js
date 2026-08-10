@@ -178,8 +178,8 @@ export class AnilistService {
     const variables = { 
       search: title, 
       perPage,
-      format_in: filters.formats?.length > 0 ? filters.formats : null,
-      status_in: filters.statuses?.length > 0 ? filters.statuses : null,
+      format_in: filters.formats?.length > 0 ? filters.formats : undefined,
+      status_in: filters.statuses?.length > 0 ? filters.statuses : undefined,
       sort: filters.sort ? [filters.sort] : ['SEARCH_MATCH']
     };
     const data = await this.request(query, variables);
