@@ -1,21 +1,36 @@
 import { getAnimeScheduleWithCache } from "./storage/cache.js";
+import { fetchTwoWeeksSchedule } from "./api/anilist.js";
 import { renderScheduleAnimeCalendar } from "./ui/renderAnimeCalendar.js";
 import { renderSchedulePersonnalCalendar } from "./ui/renderPersonnalCalendar.js";
 import { Dropdown } from "./ui/dropdown.js";
 import { RangeSlider } from "./ui/rangeSlider.js";
 
-let currentCalendar = "anime"; // Track the current calendar being displayed
+// ===== CONFIGURATION =====
+const NUM_PREVIOUS_WEEKS = 2; // Nombre de semaines affichées avant la semaine actuelle
+const NUM_NEXT_WEEKS = 10;     // Nombre de semaines affichées après la semaine actuelle
+const TOTAL_WEEKS = NUM_PREVIOUS_WEEKS + 1 + NUM_NEXT_WEEKS; // Total semaines à fetcher
 
+let currentCalendar = "anime"; // Track the current calendar being displayed
+let animeList = []; // Global anime list
 let personalAnimeList = []; // List of anime in user's list
 
 document.addEventListener("DOMContentLoaded", async () => {
-  let animeList = [];
   let currentFilter = "popularité";
   let currentDate = new Date();
   let currentNoteFilter = { min: 0, max: 100 };
 
   try {
+    // Calculate start date (NUM_PREVIOUS_WEEKS semaines en arrière)
+    const fetchStartDate = new Date(currentDate);
+    fetchStartDate.setDate(fetchStartDate.getDate() - (NUM_PREVIOUS_WEEKS * 7));
+    
     animeList = await getAnimeScheduleWithCache();
+    // Fetch data at startup
+    try {
+      animeList = await fetchTwoWeeksSchedule(fetchStartDate, TOTAL_WEEKS);
+    } catch (err) {
+      console.error(`Erreur lors du chargement des ${TOTAL_WEEKS} semaines :`, err);
+    }
     renderScheduleAnimeCalendar(animeList, currentDate, currentFilter);
     renderSchedulePersonnalCalendar(personalAnimeList, currentDate, currentFilter);
     hideLoadingScreen();
@@ -127,34 +142,51 @@ document.addEventListener("DOMContentLoaded", async () => {
   startOfWeek.setDate(today.getDate() + diff);
   startOfWeek.setHours(0, 0, 0, 0);
 
-  document.getElementById("prev-week").addEventListener("click", () => {
-    if (currentDate <= startOfWeek) return; // Prevent going before current week
+  document.getElementById("prev-week").addEventListener("click", async () => {
+    const minDate = new Date(startOfWeek);
+    minDate.setDate(minDate.getDate() - (NUM_PREVIOUS_WEEKS * 7));
+
+    if (currentDate <= minDate) return;
 
     currentDate = new Date(currentDate);
     currentDate.setDate(currentDate.getDate() - 7);
+    
     if (currentCalendar === "personal") {
       renderSchedulePersonnalCalendar(personalAnimeList, currentDate, currentFilter);
     } else {
-      renderScheduleAnimeCalendar(animeList, currentDate, currentFilter); // Re-render schedule with new date
+      renderScheduleAnimeCalendar(animeList, currentDate, currentFilter);
     }
-    document.getElementById("prev-week").classList.add("inactive");
+    
+    // Update button states
+    if (currentDate <= minDate) {
+      document.getElementById("prev-week").classList.add("inactive");
+    } else {
+      document.getElementById("prev-week").classList.remove("inactive");
+    }
     document.getElementById("next-week").classList.remove("inactive");
   });
 
-  document.getElementById("next-week").addEventListener("click", () => {
-    const maxDate = new Date(startOfWeek); // Calculate max date (one week after start of the week)
-    maxDate.setDate(maxDate.getDate() + 7);
+  document.getElementById("next-week").addEventListener("click", async () => {
+    const maxDate = new Date(startOfWeek);
+    maxDate.setDate(maxDate.getDate() + (NUM_NEXT_WEEKS * 7));
 
-    if (currentDate >= maxDate) return; // Prevent going beyond one week ahead
+    if (currentDate >= maxDate) return;
 
     currentDate = new Date(currentDate);
     currentDate.setDate(currentDate.getDate() + 7);
+    
     if (currentCalendar === "personal") {
       renderSchedulePersonnalCalendar(personalAnimeList, currentDate, currentFilter);
     } else {
-      renderScheduleAnimeCalendar(animeList, currentDate, currentFilter); // Re-render schedule with new date
+      renderScheduleAnimeCalendar(animeList, currentDate, currentFilter);
     }
-    document.getElementById("next-week").classList.add("inactive");
+    
+    // Update button states
+    if (currentDate >= maxDate) {
+      document.getElementById("next-week").classList.add("inactive");
+    } else {
+      document.getElementById("next-week").classList.remove("inactive");
+    }
     document.getElementById("prev-week").classList.remove("inactive");
   });
 

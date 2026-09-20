@@ -1,5 +1,5 @@
-export async function fetchTwoWeeksSchedule() {
-  const now = new Date();
+export async function fetchTwoWeeksSchedule(dateToFetch = null, numWeeks = 10) {
+  const now = dateToFetch ? new Date(dateToFetch) : new Date();
   const day = now.getDay();
   const diff = day === 0 ? -6 : 1 - day;
   const monday = new Date(now);
@@ -7,7 +7,7 @@ export async function fetchTwoWeeksSchedule() {
   monday.setDate(now.getDate() + diff);
 
   const sundayNext = new Date(monday);
-  sundayNext.setDate(monday.getDate() + 13);
+  sundayNext.setDate(monday.getDate() + (numWeeks * 7 - 1));
   sundayNext.setHours(23, 59, 59, 999);
 
   const startOfWeek = Math.floor(monday.getTime() / 1000);
@@ -37,7 +37,7 @@ export async function fetchTwoWeeksSchedule() {
   `;
 
   let allSchedules = [];
-  let page = 1;
+  let page = 5;
   let hasNextPage = true;
 
   while (hasNextPage) {

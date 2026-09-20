@@ -9,11 +9,18 @@ export function renderScheduleAnimeCalendar(animeList, currentDate, currentFilte
   const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 
   const weekDates = getWeekDates(currentDate);
+  
+  // Filter animes for the current week only
+  const weekAnimes = animeList.filter((anime) => {
+    const animeDate = new Date(anime.date);
+    return weekDates.some((day) => day.toLocaleDateString("fr-CA") === anime.date);
+  });
+  
   scheduleEl.innerHTML = "";
 
   let displayHours;
   if (hideEmptyHours) {
-    displayHours = getActiveHours(animeList, weekDates);
+    displayHours = getActiveHours(weekAnimes, weekDates);
   } else {
     // Afficher toutes les heures de 0 à 23
     displayHours = Array.from({ length: 24 }, (_, i) => i);
@@ -70,7 +77,7 @@ export function renderScheduleAnimeCalendar(animeList, currentDate, currentFilte
   // Events part
   weekDates.forEach((date, dayIndex) => {
     const dateStr = date.toLocaleDateString("fr-CA");
-    const todaysEvents = animeList.filter((e) => e.date === dateStr);
+    const todaysEvents = weekAnimes.filter((e) => e.date === dateStr);
 
     // Sort and place animes based on current filter + creation of "card" divs
     if (currentFilter === "heure") {

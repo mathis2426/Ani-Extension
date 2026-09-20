@@ -9,6 +9,12 @@ export function renderSchedulePersonnalCalendar(personalAnimeList, currentDate, 
   const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 
   const weekDates = getWeekDates(currentDate);
+  
+  // Filter animes for the current week only
+  const weekPersonalAnimes = personalAnimeList.filter((anime) => {
+    return weekDates.some((day) => day.toLocaleDateString("fr-CA") === anime.date);
+  });
+  
   scheduleEl.innerHTML = "";
 
   // Check if personalAnimeList is empty
@@ -29,7 +35,7 @@ export function renderSchedulePersonnalCalendar(personalAnimeList, currentDate, 
 
   let displayHours;
   if (hideEmptyHours) {
-    displayHours = getActiveHours(personalAnimeList, weekDates);
+    displayHours = getActiveHours(weekPersonalAnimes, weekDates);
   } else {
     // Afficher toutes les heures de 0 à 23
     displayHours = Array.from({ length: 24 }, (_, i) => i);
@@ -86,7 +92,7 @@ export function renderSchedulePersonnalCalendar(personalAnimeList, currentDate, 
   // Events part
   weekDates.forEach((date, dayIndex) => {
     const dateStr = date.toLocaleDateString("fr-CA");
-    const todaysEvents = personalAnimeList.filter((e) => e.date === dateStr);
+    const todaysEvents = weekPersonalAnimes.filter((e) => e.date === dateStr);
 
     // Sort and place animes based on current filter + creation of "card" divs
     if (currentFilter === "heure") {
