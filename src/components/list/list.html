@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AniX • Liste</title>
+  <title>AniX • Mes listes</title>
   <link rel="stylesheet" href="../../../public/assets/assets.css" />
   <link rel="stylesheet" href="styles/base.css" />
   <script type="module" src="list.js" defer></script>
@@ -14,13 +14,12 @@
   <div class="layout">
     <aside class="sidebar" aria-label="Listes">
       <div class="logo" aria-label="Application title">
-        <span class="app-mark" aria-hidden="true">⬣</span>
+        <img class="app-mark" src="../../../public/logo/logo-48.png" alt="" aria-hidden="true">
         <span class="app-name">AniX</span>
       </div>
 
       <nav class="lists-nav" id="lists-nav">
-        <button class="nav-item active" data-list="home" aria-label="Home">Home</button>
-        <br>
+        <button class="nav-item active" data-list="home" aria-label="Accueil">Accueil</button>
         <div class="list-header">
           <h2 class="sidebar-title">Listes</h2> 
           <button class="add-btn" id="add-list-btn" aria-label="Ajouter une liste">+</button>
@@ -49,94 +48,95 @@
           </div>
           <p id="current-list-sub" class="subtitle">Animés à regarder plus tard</p>
         </div>
-        <div class="search-wrap">
-          <input id="search" class="search" type="search" placeholder="Rechercher…" />
-        </div>
-      </header>
-      
-      <!-- AniList Search Bar (only for wishlist and finished) - OUTSIDE list-section for sticky behavior -->
-      <div id="anilist-search-bar" class="anilist-search-bar" hidden>
-        <div class="anilist-search-container">
-          <input 
-            id="anilist-search" 
-            class="anilist-search-input" 
-            type="search" 
-            placeholder="Rechercher sur AniList..." 
-            autocomplete="off"
-          />
-          <button id="anilist-search-clear" class="anilist-search-clear" aria-label="Effacer la recherche" hidden>×</button>
-          <button id="anilist-search-filters-btn" class="anilist-search-filters-btn" title="Filtres de recherche" aria-label="Filtres de recherche">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z" fill="currentColor"/>
-            </svg>
-          </button>
-          <div id="anilist-search-results" class="anilist-search-results" hidden></div>
-          <div id="anilist-search-filters-panel" class="anilist-search-filters-panel" hidden>
-            <div class="filters-panel-header">
-              <h3>Filtres de recherche</h3>
-            </div>
-            <div class="filters-panel-content">
-              <div class="filter-group">
-                <label class="filter-label">Format</label>
-                <div class="filter-checkboxes">
-                  <label class="filter-checkbox">
-                    <input type="checkbox" name="format" value="TV" checked>
-                    <span>TV</span>
-                  </label>
-                  <label class="filter-checkbox">
-                    <input type="checkbox" name="format" value="MOVIE">
-                    <span>Film</span>
-                  </label>
-                  <label class="filter-checkbox">
-                    <input type="checkbox" name="format" value="OVA">
-                    <span>OVA</span>
-                  </label>
-                  <label class="filter-checkbox">
-                    <input type="checkbox" name="format" value="ONA">
-                    <span>ONA</span>
-                  </label>
-                  <label class="filter-checkbox">
-                    <input type="checkbox" name="format" value="SPECIAL">
-                    <span>Spécial</span>
-                  </label>
+        <div class="header-actions">
+          <!-- AniList search: add an anime to the current list (hidden on Home / En cours) -->
+          <div id="anilist-search-bar" class="anilist-search-bar" hidden>
+            <div class="anilist-search-container">
+              <input 
+                id="anilist-search" 
+                class="anilist-search-input" 
+                type="search" 
+                placeholder="Ajouter un anime depuis AniList…"
+                aria-label="Ajouter un anime depuis AniList" 
+                autocomplete="off"
+              />
+              <button id="anilist-search-clear" class="anilist-search-clear" aria-label="Effacer la recherche" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+              <button id="anilist-search-filters-btn" class="anilist-search-filters-btn" title="Filtres de recherche" aria-label="Filtres de recherche">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z" fill="currentColor"/>
+                </svg>
+              </button>
+              <div id="anilist-search-results" class="anilist-search-results" hidden></div>
+              <div id="anilist-search-filters-panel" class="anilist-search-filters-panel" hidden>
+                <div class="filters-panel-header">
+                  <h3>Filtres de recherche</h3>
                 </div>
-              </div>
-              <div class="filter-group">
-                <label class="filter-label">Statut</label>
-                <div class="filter-checkboxes">
-                  <label class="filter-checkbox">
-                    <input type="checkbox" name="status" value="FINISHED" checked>
-                    <span>Terminé</span>
-                  </label>
-                  <label class="filter-checkbox">
-                    <input type="checkbox" name="status" value="RELEASING" checked>
-                    <span>En cours</span>
-                  </label>
-                  <label class="filter-checkbox">
-                    <input type="checkbox" name="status" value="NOT_YET_RELEASED">
-                    <span>À venir</span>
-                  </label>
-                  <label class="filter-checkbox">
-                    <input type="checkbox" name="status" value="CANCELLED">
-                    <span>Annulé</span>
-                  </label>
+                <div class="filters-panel-content">
+                  <div class="filter-group">
+                    <label class="filter-label">Format</label>
+                    <div class="filter-checkboxes">
+                      <label class="filter-checkbox">
+                        <input type="checkbox" name="format" value="TV" checked>
+                        <span>TV</span>
+                      </label>
+                      <label class="filter-checkbox">
+                        <input type="checkbox" name="format" value="MOVIE">
+                        <span>Film</span>
+                      </label>
+                      <label class="filter-checkbox">
+                        <input type="checkbox" name="format" value="OVA">
+                        <span>OVA</span>
+                      </label>
+                      <label class="filter-checkbox">
+                        <input type="checkbox" name="format" value="ONA">
+                        <span>ONA</span>
+                      </label>
+                      <label class="filter-checkbox">
+                        <input type="checkbox" name="format" value="SPECIAL">
+                        <span>Spécial</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="filter-group">
+                    <label class="filter-label">Statut</label>
+                    <div class="filter-checkboxes">
+                      <label class="filter-checkbox">
+                        <input type="checkbox" name="status" value="FINISHED" checked>
+                        <span>Terminé</span>
+                      </label>
+                      <label class="filter-checkbox">
+                        <input type="checkbox" name="status" value="RELEASING" checked>
+                        <span>En diffusion</span>
+                      </label>
+                      <label class="filter-checkbox">
+                        <input type="checkbox" name="status" value="NOT_YET_RELEASED">
+                        <span>À venir</span>
+                      </label>
+                      <label class="filter-checkbox">
+                        <input type="checkbox" name="status" value="CANCELLED">
+                        <span>Annulé</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div class="filter-group">
+                    <label class="filter-label">Trier par</label>
+                    <select id="anilist-sort" class="filter-select">
+                      <option value="SEARCH_MATCH">Pertinence</option>
+                      <option value="POPULARITY_DESC">Popularité</option>
+                      <option value="SCORE_DESC">Note</option>
+                      <option value="START_DATE_DESC">Date (récent)</option>
+                      <option value="START_DATE">Date (ancien)</option>
+                      <option value="TITLE_ROMAJI">Titre A-Z</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
-              <div class="filter-group">
-                <label class="filter-label">Trier par</label>
-                <select id="anilist-sort" class="filter-select">
-                  <option value="SEARCH_MATCH">Pertinence</option>
-                  <option value="POPULARITY_DESC">Popularité</option>
-                  <option value="SCORE_DESC">Note</option>
-                  <option value="START_DATE_DESC">Date (récent)</option>
-                  <option value="START_DATE">Date (ancien)</option>
-                  <option value="TITLE_ROMAJI">Titre A-Z</option>
-                </select>
               </div>
             </div>
           </div>
+      
+          <input id="search" class="search" type="search" placeholder="Filtrer la liste…" aria-label="Filtrer la liste" />
         </div>
-      </div>
+      </header>
       
       <!-- List toolbar (only visible when not on Home) -->
       <section id="list-section" class="list-section" hidden>
@@ -186,9 +186,9 @@
       <!-- Home section (widgets only visible here) -->
       <section id="home-section" class="home-section">
         <div class="wg-tools-row">
-          <div id="wg-toolbar" class="wg-toolbar" aria-label="Widgets outils" aria-hidden="true">
+          <div id="wg-toolbar" class="wg-toolbar" aria-label="Outils des widgets" aria-hidden="true">
             <button id="wg-toggle-edit" class="wg-btn" aria-pressed="false">Mode édition</button>
-            <button id="wg-add-widget" class="wg-btn">+ Ajouter Widget</button>
+            <button id="wg-add-widget" class="wg-btn">+ Ajouter un widget</button>
             <div class="wg-spacer"></div>
             <button id="wg-export" class="wg-btn">Exporter</button>
             <label class="wg-btn wg-import-label">Importer<input type="file" id="wg-import" accept="application/json" hidden /></label>
@@ -201,7 +201,8 @@
       </section>
       <div id="list" class="list"></div>
       <div id="empty" class="empty" hidden>
-        <p>Aucun élément dans cette liste.</p>
+        <p>Aucun anime dans cette liste.</p>
+        <p class="empty-hint">Utilise la recherche AniList en haut pour en ajouter.</p>
       </div>
     </section>
   </div>
@@ -223,7 +224,7 @@
     <div class="modal-container">
       <div class="modal-header">
         <h2 id="edit-list-modal-title" class="modal-title">Modifier la liste</h2>
-        <button id="edit-list-cancel" class="modal-close" aria-label="Fermer" type="button">×</button>
+        <button id="edit-list-cancel" class="modal-close" aria-label="Fermer" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </div>
       <form id="edit-list-form" class="modal-form">
         <div class="form-field">

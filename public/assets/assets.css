@@ -3,10 +3,16 @@
 
     /* Colors */
     --color-primary-purple: #A48EE5;
+    --color-primary-purple-hover: #7b5ac2;
 
     --color-primary-dark: #1a1a1a;
     --color-secondary-dark: #2c2c2c;
-    
+    --color-card-dark: #323232;
+    --color-control-dark: #3a3a3a;
+    --color-border-dark: #505050;
+
+    --color-text-muted: #9F9F9F;
+
     --color-primary-light: #F5F6FA;
     --color-secondary-light: #FFFFFF;
 

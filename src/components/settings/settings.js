@@ -7,7 +7,8 @@
  */
 
 import { getOrCreateSettings, saveSettings } from "../../interfaces/Settings.js";
-import { OpenSubtitlesAPIKey } from "../../../temp-key-do-not-push.js";
+// Clé injectée au build par Vite depuis le fichier .env (voir .env.example)
+const OpenSubtitlesAPIKey = import.meta.env.VITE_OPENSUBTITLES_API_KEY;
 import { OpenSubtitlesService } from "../../services/OpenSubtitlesService.js";
 
 let settings;

@@ -40,7 +40,7 @@ function renderInProgressWidget(w) {
   if (isVeryCompact) {
     return `<div style="display:flex;flex-direction:column;height:100%;width:100%;padding:8px;justify-content:space-between;">
       <div style="display:flex;align-items:center;gap:6px;font-size:11px;opacity:.7;font-weight:600;justify-content:flex-end;">
-        <span style="background:#7b5ac2;padding:2px 6px;border-radius:4px;font-size:10px;">${inProgress.length}</span>
+        <span style="background:var(--color-primary-purple);padding:2px 6px;border-radius:4px;font-size:10px;">${inProgress.length}</span>
       </div>
       <div style="display:flex;align-items:center;font-size:13px;font-weight:600;line-height:1.3;">
         En cours
@@ -53,7 +53,7 @@ function renderInProgressWidget(w) {
     const limit = w.w >= 4 ? 2 : 1;
     const items = inProgress.slice(0, limit);
     return `<div style="display:flex;height:100%;padding:8px;gap:6px;align-items:center;overflow:hidden;">
-      <div style="background:#7b5ac2;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;">
+      <div style="background:var(--color-primary-purple);padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap;">
         ${inProgress.length}
       </div>
       ${items.map(anime => `
@@ -72,7 +72,7 @@ function renderInProgressWidget(w) {
     const items = inProgress.slice(0, limit);
     return `<div style="display:flex;flex-direction:column;height:100%;padding:10px;gap:8px;overflow:hidden;">
       <div style="display:flex;align-items:center;gap:6px;font-size:11px;opacity:.7;font-weight:600;">
-        <span style="background:#7b5ac2;padding:2px 6px;border-radius:4px;font-size:10px;">${inProgress.length}</span>
+        <span style="background:var(--color-primary-purple);padding:2px 6px;border-radius:4px;font-size:10px;">${inProgress.length}</span>
       </div>
       <div style="flex:1;display:flex;flex-direction:column;gap:6px;overflow-y:auto;">
         ${items.map(anime => {
@@ -86,7 +86,7 @@ function renderInProgressWidget(w) {
                 ${anime.episode || 0}/${anime.totalEp || '?'}
               </div>
               <div style="background:rgba(255,255,255,.1);height:3px;border-radius:2px;overflow:hidden;">
-                <div style="background:#7b5ac2;height:100%;width:${progress}%;"></div>
+                <div style="background:var(--color-primary-purple);height:100%;width:${progress}%;"></div>
               </div>
             </div>
           `;
@@ -114,7 +114,7 @@ function renderInProgressWidget(w) {
                 ${anime.episode || 0}/${anime.totalEp || '?'} épisodes
               </div>
               <div style="background:rgba(255,255,255,.1);height:4px;border-radius:2px;overflow:hidden;margin-top:2px;">
-                <div style="background:#7b5ac2;height:100%;width:${progress}%;transition:width .3s;"></div>
+                <div style="background:var(--color-primary-purple);height:100%;width:${progress}%;transition:width .3s;"></div>
               </div>
             </div>
           `;
@@ -132,7 +132,7 @@ function renderInProgressWidget(w) {
         <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;">
           <span>En cours</span>
         </div>
-        <div style="background:#7b5ac2;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;">
+        <div style="background:var(--color-primary-purple);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;">
           ${inProgress.length}
         </div>
       </div>
@@ -148,7 +148,7 @@ function renderInProgressWidget(w) {
                 ${anime.episode || 0} / ${anime.totalEp || '?'}
               </div>
               <div style="background:rgba(255,255,255,.1);height:4px;border-radius:2px;overflow:hidden;margin-top:auto;">
-                <div style="background:#7b5ac2;height:100%;width:${progress}%;transition:width .3s;"></div>
+                <div style="background:var(--color-primary-purple);height:100%;width:${progress}%;transition:width .3s;"></div>
               </div>
             </div>
           `;
@@ -165,7 +165,7 @@ function renderInProgressWidget(w) {
         <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;">
           <span>Animés en cours</span>
         </div>
-        <div style="background:#7b5ac2;padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600;">
+        <div style="background:var(--color-primary-purple);padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600;">
           ${inProgress.length}
         </div>
       </div>
@@ -182,7 +182,7 @@ function renderInProgressWidget(w) {
                 <span style="font-weight:600;">${anime.episode || 0}/${anime.totalEp || '?'}</span>
               </div>
               <div style="background:rgba(255,255,255,.1);height:5px;border-radius:3px;overflow:hidden;margin-top:auto;">
-                <div style="background:#7b5ac2;height:100%;width:${progress}%;transition:width .3s;"></div>
+                <div style="background:var(--color-primary-purple);height:100%;width:${progress}%;transition:width .3s;"></div>
               </div>
             </div>
           `;
@@ -199,7 +199,7 @@ function renderInProgressWidget(w) {
       <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;">
         <span>Animés en cours</span>
       </div>
-      <div style="background:#7b5ac2;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;">
+      <div style="background:var(--color-primary-purple);padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;">
         ${inProgress.length}
       </div>
     </div>
@@ -215,7 +215,7 @@ function renderInProgressWidget(w) {
               ${anime.episode || 0} / ${anime.totalEp || '?'}
             </div>
             <div style="background:rgba(255,255,255,.1);height:4px;border-radius:2px;overflow:hidden;margin-top:2px;">
-              <div style="background:#7b5ac2;height:100%;width:${progress}%;transition:width .3s;"></div>
+              <div style="background:var(--color-primary-purple);height:100%;width:${progress}%;transition:width .3s;"></div>
             </div>
           </div>
         `;

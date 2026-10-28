@@ -12,6 +12,7 @@ import { addAnilistAnimeToList, removeAnimeFromList } from './lists/listActions.
 import { hydrateInProgressChronologies, loadInProgressItems } from './lists/inProgressService.js';
 import {
   closeChronologyModal,
+  formatStatus,
   getVisibleItems,
   renderChronologyModal,
   renderListItems,
@@ -19,16 +20,16 @@ import {
 
 const BUILT_IN_LISTS = ['wishlist', 'inprogress', 'finished'];
 const LIST_LABELS = {
-  home: 'Home',
+  home: 'Accueil',
   wishlist: 'Wishlist',
   inprogress: 'En cours',
-  finished: 'Termines',
+  finished: 'Terminés',
 };
 const LIST_SUBTITLES = {
   home: 'Tableau de bord',
-  wishlist: 'Animes a regarder plus tard',
-  inprogress: 'Animes en cours de visionnage',
-  finished: 'Animes termines',
+  wishlist: 'Animés à regarder plus tard',
+  inprogress: 'Animés en cours de visionnage',
+  finished: 'Animés terminés',
 };
 
 const state = {
@@ -165,6 +166,7 @@ async function selectList(listName) {
   els.list.hidden = isHome;
   els.empty.hidden = true;
   els.anilistBar.hidden = isHome || listName === 'inprogress';
+  els.search.hidden = isHome;
   els.editBtn.hidden = isHome || BUILT_IN_LISTS.includes(listName);
 
   setActiveNavItem(listName);
@@ -196,7 +198,8 @@ function setActiveNavItem(listName) {
 function updateHeader() {
   const label = getListLabel(state.currentList);
   els.title.textContent = label;
-  els.subtitle.textContent = LIST_SUBTITLES[state.currentList] || `${state.items.length} element(s)`;
+  const count = state.items.length;
+  els.subtitle.textContent = LIST_SUBTITLES[state.currentList] || (count ? `${count} anime${count > 1 ? 's' : ''}` : 'Liste vide');
 }
 
 function renderListsNav() {
@@ -230,6 +233,19 @@ function renderItems() {
     onRemoveClick: removeRenderedItem,
     canRemove: state.currentList !== 'inprogress',
   });
+  updateEmptyHint();
+}
+
+function updateEmptyHint() {
+  const hint = els.empty?.querySelector('.empty-hint');
+  if (!hint) return;
+  if (state.query) {
+    hint.textContent = 'Aucun résultat pour ce filtre.';
+  } else if (state.currentList === 'inprogress') {
+    hint.textContent = 'Les animés que tu regardes apparaîtront ici automatiquement.';
+  } else {
+    hint.textContent = 'Utilise la recherche AniList en haut pour en ajouter.';
+  }
 }
 
 async function hydrateCurrentInProgressChronologies() {
@@ -266,12 +282,12 @@ function openCreateListPopup() {
   overlay.innerHTML = `
     <form class="popup-content" id="create-list-form">
       <div class="popup-header">
-        <h2>Creer une nouvelle liste</h2>
-        <button id="close-popup-btn" class="close-button" type="button" aria-label="Fermer">x</button>
+        <h2>Créer une nouvelle liste</h2>
+        <button id="close-popup-btn" class="close-button" type="button" aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </div>
       <input type="text" id="new-list-name" class="inputs" placeholder="Nom de la liste" aria-label="Nom de la liste" maxlength="30" required>
       <div class="popup-buttons">
-        <button id="create-list-confirm-btn" class="button" type="submit">Creer</button>
+        <button id="create-list-confirm-btn" class="button" type="submit">Créer</button>
       </div>
     </form>
   `;
@@ -347,12 +363,12 @@ function handleAnilistSearchInput() {
 
 async function searchAnilist(query) {
   els.anilistResults.hidden = false;
-  els.anilistResults.innerHTML = '<div class="anilist-search-loading">Recherche...</div>';
+  els.anilistResults.innerHTML = '<div class="anilist-search-loading">Recherche…</div>';
 
   try {
     const results = await AnilistService.searchAnimes(query, 8, getAnilistFilters());
     if (!results.length) {
-      els.anilistResults.innerHTML = '<div class="anilist-search-empty">Aucun resultat</div>';
+      els.anilistResults.innerHTML = '<div class="anilist-search-empty">Aucun résultat</div>';
       return;
     }
 
@@ -361,7 +377,7 @@ async function searchAnilist(query) {
         ${anime.cover ? `<img class="anilist-search-result-cover" src="${escapeAttribute(anime.cover)}" alt="">` : ''}
         <span class="anilist-search-result-info">
           <strong class="anilist-search-result-title">${escapeHtml(anime.title || 'Sans titre')}</strong>
-          <span class="anilist-search-result-meta">${escapeHtml([anime.status, getYear(anime.startDate)].filter(Boolean).join(' - '))}</span>
+          <span class="anilist-search-result-meta">${escapeHtml([formatStatus(anime.status), getYear(anime.startDate)].filter(Boolean).join(' · '))}</span>
         </span>
       </button>
     `).join('');
@@ -376,7 +392,7 @@ async function handleAnilistResultClick(event) {
   if (!button) return;
   const id = button.dataset.anilistId;
   button.disabled = true;
-  els.anilistResults.innerHTML = '<div class="anilist-search-loading">Creation de la chronologie...</div>';
+  els.anilistResults.innerHTML = '<div class="anilist-search-loading">Création de la chronologie…</div>';
 
   try {
     state.items = await addAnilistAnimeToList(state.currentList, id);
@@ -384,7 +400,7 @@ async function handleAnilistResultClick(event) {
     clearAnilistSearch();
   } catch (error) {
     console.warn('Unable to add AniList item', error);
-    els.anilistResults.innerHTML = '<div class="anilist-search-empty">Impossible de creer la chronologie</div>';
+    els.anilistResults.innerHTML = '<div class="anilist-search-empty">Impossible de créer la chronologie</div>';
   }
 }
 

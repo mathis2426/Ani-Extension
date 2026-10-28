@@ -53,7 +53,7 @@ export function renderChronologyModal(item) {
           <h2 id="chronology-title" class="chronology-title">${escapeHtml(getItemTitle(item))}</h2>
           <p class="chronology-subtitle">${escapeHtml(getChronologySubtitle(item))}</p>
         </div>
-        <button class="chronology-close" type="button" aria-label="Fermer">x</button>
+        <button class="chronology-close" type="button" aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </header>
       <div class="chronology-content">
         ${nodes.length ? nodes.map((node, index) => renderChronologyNode(item, node, index, nodes)).join('') : renderEmptyChronology()}
@@ -88,7 +88,58 @@ export function getItemTitle(item) {
 }
 
 export function getItemMeta(item) {
-  return [item.format, item.genres?.slice?.(0, 2)?.join(', '), item.status].filter(Boolean).join(' - ');
+  return [formatFormat(item.format), item.genres?.slice?.(0, 2)?.join(', ')].filter(Boolean).join(' · ');
+}
+
+const STATUS_LABELS = {
+  FINISHED: { label: 'Terminé', tone: 'finished' },
+  RELEASING: { label: 'En diffusion', tone: 'releasing' },
+  NOT_YET_RELEASED: { label: 'À venir', tone: 'upcoming' },
+  CANCELLED: { label: 'Annulé', tone: 'cancelled' },
+  HIATUS: { label: 'En pause', tone: 'cancelled' },
+};
+
+const FORMAT_LABELS = {
+  TV: 'Série TV',
+  TV_SHORT: 'Format court',
+  MOVIE: 'Film',
+  SPECIAL: 'Spécial',
+  OVA: 'OVA',
+  ONA: 'ONA',
+  MUSIC: 'Clip',
+};
+
+const RELATION_LABELS = {
+  SEQUEL: 'Suite',
+  PREQUEL: 'Préquelle',
+  SIDE_STORY: 'Histoire parallèle',
+  SPIN_OFF: 'Spin-off',
+  ALTERNATIVE: 'Version alternative',
+  SUMMARY: 'Résumé',
+  PARENT: 'Œuvre principale',
+  CHARACTER: 'Personnages communs',
+  OTHER: 'Autre',
+};
+
+export function formatStatus(status) {
+  return STATUS_LABELS[status]?.label || status || '';
+}
+
+export function formatFormat(format) {
+  return FORMAT_LABELS[format] || format || '';
+}
+
+function renderStatusPill(status) {
+  const entry = STATUS_LABELS[status];
+  if (!entry) return '';
+  return `<span class="item-status is-${entry.tone}">${escapeHtml(entry.label)}</span>`;
+}
+
+function getWatchPercent(item) {
+  const duration = Number(item?.progress?.duration || 0);
+  const currentTime = Number(item?.progress?.currentTime || 0);
+  if (!duration || !currentTime) return 0;
+  return Math.max(0, Math.min(100, Math.round((currentTime / duration) * 100)));
 }
 
 function renderMixedItems(container, items, onItemClick, onRemoveClick, canRemove) {
@@ -121,7 +172,8 @@ function createItemNode(item, { compact, onItemClick, onRemoveClick, canRemove }
   article.setAttribute('role', 'button');
   article.setAttribute('aria-label', `Afficher la chronologie de ${getItemTitle(item)}`);
 
-  const image = getItemImage(item);
+  const image = getItemImage(item, compact);
+  const watchPercent = getWatchPercent(item);
   const title = getItemTitle(item);
   const meta = getItemMeta(item);
   const progressSummary = getProgressSummary(item);
@@ -136,18 +188,18 @@ function createItemNode(item, { compact, onItemClick, onRemoveClick, canRemove }
         <div class="item-top">
           <div>
             <h2 class="item-title">${escapeHtml(title)}</h2>
-            <div class="item-info">${escapeHtml(meta)}</div>
+            <div class="item-info">${escapeHtml(meta)}${renderStatusPill(item.status)}</div>
           </div>
         </div>
-        <div class="item-meta">
-          <span>${escapeHtml(progressSummary || getChronologySubtitle(item))}</span>
-          <span>Chronologie AniList</span>
-        </div>
+        <div class="item-meta">${escapeHtml(progressSummary || getChronologySubtitle(item))}</div>
+        ${watchPercent ? `
+          <div class="item-progress" aria-label="${watchPercent}% vu"><span style="width: ${watchPercent}%"></span></div>
+        ` : ''}
       </div>
     </div>
     ${canRemove ? `
       <div class="item-top-actions">
-        <button class="item-action-btn danger" data-action="remove" type="button" title="Retirer" aria-label="Retirer">x</button>
+        <button class="item-action-btn danger" data-action="remove" type="button" title="Retirer de la liste" aria-label="Retirer de la liste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </div>
     ` : ''}
   `;
@@ -226,17 +278,20 @@ function sortItems(a, b, sortMode) {
   return getItemTitle(a).localeCompare(getItemTitle(b));
 }
 
-function getItemImage(item) {
-  return item.banner || item.cover || item.anilistBanner || item.anilistImage || item.image || item.thumbnail || '';
+function getItemImage(item, compact = false) {
+  // Compact cards show the poster, wide rows show the banner
+  const poster = item.cover || item.anilistImage || item.image;
+  const banner = item.banner || item.anilistBanner;
+  return (compact ? poster || banner : banner || poster) || item.thumbnail || '';
 }
 
 function getNodeMeta(node) {
   return [
     node.format,
     node.seasonYear,
-    Number.isFinite(Number(node.episodes)) ? `${node.episodes} episode${Number(node.episodes) > 1 ? 's' : ''}` : '',
-    node.relationType,
-  ].filter(Boolean).join(' - ');
+    Number(node.episodes) > 0 ? `${node.episodes} épisode${Number(node.episodes) > 1 ? 's' : ''}` : '',
+    RELATION_LABELS[node.relationType] || node.relationType,
+  ].filter(Boolean).map(formatFormat).join(' · ');
 }
 
 function escapeHtml(value) {

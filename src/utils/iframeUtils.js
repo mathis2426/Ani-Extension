@@ -92,19 +92,12 @@ export async function sendRequestFindAnime() {
       );
     });
 
-    const TIME_TO_DETECT = 180; // Time in seconds to trigger the fetch
-    let hasTriggered = false;
-    
     video.addEventListener("timeupdate", () => {
-      let currentTime = Math.floor(video.currentTime);
+      const currentTime = Math.floor(video.currentTime);
       window.top.postMessage(
         { type: "Time", data: currentTime },
         "*"
       );
-      
-      if (!hasTriggered && currentTime >= TIME_TO_DETECT && animeNameFromParent) {
-        hasTriggered = true;
-      }
     });
   }
 }

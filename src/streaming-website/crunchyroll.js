@@ -39,7 +39,13 @@ export function crunchyroll(animeClass, location, callback) {
 
   // Check if the current page is a Crunchyroll page
   if (location.hostname === "www.crunchyroll.com") {
-    let targetNode = document.getElementById("content");
+    // The content script also runs in every iframe hosted on www.crunchyroll.com
+    // (e.g. /games/index.html): only the main page holds the episode info.
+    if (window !== window.top) return;
+
+    // #content does not exist on every page: fall back to <body>
+    const targetNode = document.getElementById("content") || document.body;
+    if (!targetNode) return;
     let config = { childList: true, subtree: true };
 
     // Observer to watch for changes in the DOM
@@ -71,22 +77,8 @@ export function crunchyroll(animeClass, location, callback) {
     let observer = new MutationObserver(observerCallback);
     observer.observe(targetNode, config);
   } else if (location.hostname == "static.crunchyroll.com") { // If the page is an iframe
-
-    let video = document.querySelector("video");
-    video.addEventListener("loadedmetadata", () => {
-      window.parent.postMessage(
-        { type: "Duration", data: video.duration }, // Total duration of the video
-        "*"
-      );
-    });
-
-    video.addEventListener("timeupdate", () => {
-      window.parent.postMessage(
-        { type: "Time", data: Math.floor(video.currentTime) }, // Current time of the video
-        "*"
-      );
-    });
-    
+    // sendRequestFindAnime waits for the <video> (it may not exist yet) and
+    // forwards Duration / Time to the parent page.
     sendRequestFindAnime();
   } else {
     console.log("Hôte non pris en charge");

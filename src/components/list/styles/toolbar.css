@@ -1,20 +1,15 @@
-/* List toolbar and controls */
+/* List toolbar: display mode switch + sort */
 .list-toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   margin: 0 0 16px;
-  padding: 10px 12px;
-  background: rgba(20, 23, 32, 0.68);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 8px;
+  padding: 6px 0;
+  background: var(--color-primary-dark);
   position: sticky;
-  top: 0;
+  top: -22px;
   z-index: 40;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18), inset 0 1px rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(22px) saturate(140%);
-  -webkit-backdrop-filter: blur(22px) saturate(140%);
 }
 
 .lt-group {
@@ -23,57 +18,78 @@
   align-items: center;
 }
 
+/* Segmented control */
+.lt-group[role="group"] {
+  gap: 2px;
+  padding: 3px;
+  background: var(--color-secondary-dark);
+  border-radius: var(--radius-control);
+}
+
 .lt-spacer {
   flex: 1;
 }
 
 .lt-label {
-  font-size: 11px;
-  opacity: .6;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-muted);
 }
 
 .lt-btn {
-  background: rgba(255, 255, 255, 0.055);
-  color: #eaeaea;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 8px 12px;
+  background: transparent;
+  color: var(--color-text-muted);
+  border: none;
+  padding: 7px 12px;
   font-size: 12px;
-  border-radius: 8px;
+  font-weight: 500;
+  border-radius: 7px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   line-height: 1;
-  transition: background .18s, border-color .18s, transform .18s;
 }
 
 .lt-btn svg {
+  width: 16px;
+  height: 16px;
   pointer-events: none;
 }
 
+.lt-btn svg rect {
+  fill: currentColor;
+}
+
 .lt-btn:hover {
-  background: rgba(255, 255, 255, 0.095);
+  color: #fff;
 }
 
 .lt-btn[aria-pressed="true"] {
-  background: rgba(164, 142, 229, 0.24);
-  border-color: rgba(164, 142, 229, 0.5);
+  background: var(--color-control-dark);
+  color: #fff;
+}
+
+.lt-btn[aria-pressed="true"] svg rect {
+  fill: var(--color-primary-purple);
 }
 
 .lt-select {
-  background: rgba(255, 255, 255, 0.055);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--color-secondary-dark);
+  border: 1px solid transparent;
   color: #fff;
   font-size: 12px;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   outline: none;
-  min-width: 160px;
+  min-width: 150px;
+  cursor: pointer;
+}
+
+.lt-select:hover {
+  background: var(--color-control-dark);
 }
 
 .lt-select:focus {
-  border-color: rgba(164, 142, 229, 0.72);
+  border-color: var(--color-primary-purple);
 }

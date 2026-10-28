@@ -6,27 +6,19 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(5, 7, 12, 0.72);
-  backdrop-filter: blur(18px) saturate(130%);
-  -webkit-backdrop-filter: blur(18px) saturate(130%);
+  background: rgba(0, 0, 0, 0.75);
+  animation: overlay-in .15s ease;
 }
 
 .chronology-modal {
-  width: min(920px, 100%);
+  width: min(760px, 100%);
   max-height: min(86vh, 860px);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background:
-    linear-gradient(145deg, rgba(27, 31, 42, 0.92), rgba(13, 16, 24, 0.86)),
-    rgba(18, 21, 30, 0.88);
-  box-shadow:
-    0 28px 90px rgba(0, 0, 0, 0.55),
-    inset 0 1px rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(28px) saturate(150%);
-  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  border-radius: var(--radius-panel);
+  background: var(--color-secondary-dark);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
 }
 
 .chronology-header {
@@ -34,14 +26,12 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
-  padding: 22px 24px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.025);
+  padding: 20px 20px 16px 24px;
 }
 
 .chronology-title {
   margin: 0;
-  color: rgba(255, 255, 255, 0.96);
+  color: #fff;
   font-size: 20px;
   font-weight: 700;
   line-height: 1.2;
@@ -49,141 +39,82 @@
 
 .chronology-subtitle {
   margin: 6px 0 0;
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--color-text-muted);
   font-size: 12px;
-  line-height: 1.4;
-}
-
-.chronology-close {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.82);
-  cursor: pointer;
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1;
-  transition: background .16s ease, border-color .16s ease, transform .16s ease;
-}
-
-.chronology-close:hover {
-  border-color: rgba(164, 142, 229, 0.48);
-  background: rgba(164, 142, 229, 0.18);
-  transform: translateY(-1px);
 }
 
 .chronology-content {
-  --timeline-x: 18px;
-  --marker-size: 36px;
+  --timeline-x: 14px;
+  --marker-size: 28px;
   position: relative;
   overflow-y: auto;
-  padding: 22px 24px 28px;
+  padding: 4px 24px 24px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
+/* Vertical timeline line */
 .chronology-content::before {
   content: '';
   position: absolute;
-  top: 34px;
-  bottom: 34px;
-  left: calc(24px + var(--timeline-x));
+  top: 24px;
+  bottom: 40px;
+  left: calc(24px + var(--timeline-x) - 1px);
   width: 2px;
-  border-radius: 999px;
-  background: linear-gradient(
-    to bottom,
-    rgba(164, 142, 229, 0.08),
-    rgba(164, 142, 229, 0.58) 18%,
-    rgba(255, 255, 255, 0.16) 82%,
-    rgba(255, 255, 255, 0.04)
-  );
+  border-radius: 2px;
+  background: var(--color-control-dark);
 }
 
 .chronology-entry {
   position: relative;
   display: grid;
-  grid-template-columns: calc(var(--timeline-x) + var(--marker-size) + 18px) minmax(0, 1fr);
+  grid-template-columns: calc(var(--timeline-x) * 2 + 14px) minmax(0, 1fr);
   align-items: start;
-  min-height: min-content;
-  isolation: isolate;
 }
 
 .chronology-index {
   position: relative;
   z-index: 1;
-  grid-column: 1;
   width: var(--marker-size);
   height: var(--marker-size);
+  margin-top: 12px;
   margin-left: calc(var(--timeline-x) - (var(--marker-size) / 2));
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
-  border: 1px solid rgba(221, 214, 254, 0.46);
-  background:
-    linear-gradient(145deg, rgba(178, 160, 238, 0.96), rgba(112, 89, 184, 0.92));
-  color: #fff;
-  font-size: 13px;
-  font-weight: 800;
-  box-shadow:
-    0 10px 22px rgba(72, 55, 134, 0.28),
-    inset 0 1px rgba(255, 255, 255, 0.25);
-}
-
-.chronology-body {
-  grid-column: 2;
-  min-width: 0;
-  min-height: 74px;
-  padding: 16px 18px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.035));
-  box-shadow:
-    0 14px 34px rgba(0, 0, 0, 0.16),
-    inset 0 1px rgba(255, 255, 255, 0.045);
-}
-
-.chronology-done .chronology-body {
-  border-color: rgba(52, 178, 52, 0.24);
-  background:
-    linear-gradient(145deg, rgba(52, 178, 52, 0.10), rgba(255, 255, 255, 0.035));
-}
-
-.chronology-current .chronology-body {
-  border-color: rgba(164, 142, 229, 0.44);
-  background:
-    linear-gradient(145deg, rgba(164, 142, 229, 0.16), rgba(255, 255, 255, 0.04));
-}
-
-.chronology-upcoming .chronology-body {
-  opacity: 0.74;
+  border-radius: 50%;
+  background: var(--color-control-dark);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  /* ring in page colour so the line looks "cut" around the marker */
+  box-shadow: 0 0 0 4px var(--color-secondary-dark);
 }
 
 .chronology-done .chronology-index {
-  border-color: rgba(100, 220, 120, 0.45);
-  background: linear-gradient(145deg, rgba(63, 185, 83, 0.94), rgba(29, 122, 53, 0.9));
+  background: var(--color-success);
+  color: #fff;
 }
 
 .chronology-current .chronology-index {
-  border-color: rgba(221, 214, 254, 0.64);
-  box-shadow:
-    0 12px 26px rgba(100, 72, 190, 0.34),
-    0 0 0 4px rgba(164, 142, 229, 0.12),
-    inset 0 1px rgba(255, 255, 255, 0.25);
+  background: var(--color-primary-purple);
+  color: #fff;
 }
 
-.chronology-upcoming .chronology-index {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.16);
-  color: rgba(255, 255, 255, 0.62);
+.chronology-body {
+  min-width: 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--color-card-dark);
+}
+
+.chronology-current .chronology-body {
+  box-shadow: inset 0 0 0 1px var(--color-primary-purple);
+}
+
+.chronology-upcoming .chronology-body {
+  opacity: 0.8;
 }
 
 .chronology-node-head {
@@ -195,146 +126,102 @@
 
 .chronology-node-title {
   margin: 0;
-  color: rgba(255, 255, 255, 0.94);
-  font-size: 15px;
+  color: #fff;
+  font-size: 14px;
   font-weight: 700;
-  line-height: 1.28;
+  line-height: 1.3;
   overflow-wrap: anywhere;
 }
 
 .chronology-state-badge {
   flex: 0 0 auto;
-  padding: 4px 8px;
+  padding: 3px 8px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.07);
-  color: rgba(255, 255, 255, 0.72);
+  background: var(--color-control-dark);
+  color: #cfcfcf;
   font-size: 10px;
-  font-weight: 700;
-  line-height: 1;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 .chronology-done .chronology-state-badge {
-  border-color: rgba(100, 220, 120, 0.32);
-  background: rgba(52, 178, 52, 0.14);
-  color: rgba(190, 255, 202, 0.88);
+  background: rgba(52, 178, 52, 0.15);
+  color: #7bd87b;
 }
 
 .chronology-current .chronology-state-badge {
-  border-color: rgba(164, 142, 229, 0.42);
   background: rgba(164, 142, 229, 0.18);
-  color: rgba(236, 231, 255, 0.92);
+  color: var(--color-primary-purple);
 }
 
 .chronology-meta {
-  margin: 7px 0 0;
-  color: rgba(255, 255, 255, 0.62);
+  margin: 5px 0 0;
+  color: var(--color-text-muted);
   font-size: 12px;
   line-height: 1.45;
 }
 
+/* Same progress bar as the popup */
 .chronology-progress {
-  height: 7px;
+  height: 5px;
   margin-top: 12px;
-  border-radius: 999px;
+  border-radius: 10px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--color-primary-dark);
 }
 
 .chronology-progress-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, rgba(164, 142, 229, 0.95), rgba(95, 211, 180, 0.86));
-  box-shadow: 0 0 18px rgba(164, 142, 229, 0.24);
+  background: var(--color-primary-purple);
 }
 
 .chronology-entry-group-special {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 8px;
-  margin-top: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 6px;
+  margin-top: 12px;
   max-height: 170px;
   overflow-y: auto;
-  padding-right: 4px;
 }
 
 .chronology-special-row {
   min-width: 0;
-  padding: 9px 10px;
+  padding: 8px 10px;
   border-radius: 8px;
-  border: 1px dashed rgba(255, 255, 255, 0.14);
-  background: rgba(0, 0, 0, 0.14);
+  background: var(--color-secondary-dark);
 }
 
 .chronology-special-title {
   margin: 0;
-  color: rgba(255, 255, 255, 0.8);
+  color: #e4e4e4;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
 
 .chronology-special-meta {
-  margin-top: 5px;
-  margin-bottom: 0;
+  margin: 3px 0 0;
   font-size: 11px;
-  line-height: 1.35;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.chronology-modal ::-webkit-scrollbar {
-  width: 8px;
-}
-
-.chronology-modal ::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.chronology-modal ::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-}
-
-.chronology-modal ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
+  color: var(--color-text-muted);
 }
 
 @media (max-width: 720px) {
   .chronology-overlay {
     padding: 12px;
-    place-items: stretch;
-  }
-
-  .chronology-modal {
-    max-height: calc(100vh - 24px);
   }
 
   .chronology-header {
-    padding: 18px 16px 14px;
-  }
-
-  .chronology-title {
-    font-size: 17px;
+    padding: 16px 14px 12px 16px;
   }
 
   .chronology-content {
-    --timeline-x: 14px;
-    --marker-size: 30px;
-    padding: 18px 14px 22px;
-    gap: 12px;
+    padding: 4px 14px 18px;
   }
 
   .chronology-content::before {
-    left: calc(14px + var(--timeline-x));
-  }
-
-  .chronology-entry {
-    grid-template-columns: calc(var(--timeline-x) + var(--marker-size) + 12px) minmax(0, 1fr);
-  }
-
-  .chronology-body {
-    padding: 13px 14px;
+    left: calc(14px + var(--timeline-x) - 1px);
   }
 
   .chronology-entry-group-special {

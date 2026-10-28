@@ -89,13 +89,13 @@ export function getChronologySubtitle(item) {
     total + (Number.isFinite(Number(node.episodes)) ? Number(node.episodes) : 0)
   ), 0);
 
-  const entryText = `${nodes.length} entree${nodes.length > 1 ? 's' : ''}`;
+  const entryText = `${nodes.length} entrée${nodes.length > 1 ? 's' : ''}`;
   const episodeText = totalEpisodes
-    ? `${totalEpisodes} episode${totalEpisodes > 1 ? 's' : ''}`
+    ? `${totalEpisodes} épisode${totalEpisodes > 1 ? 's' : ''}`
     : '';
   const progressText = getProgressSummary(item);
 
-  return [entryText, episodeText, progressText].filter(Boolean).join(' - ');
+  return [entryText, episodeText, progressText].filter(Boolean).join(' · ');
 }
 
 export function getProgressSummary(item) {
@@ -107,15 +107,15 @@ export function getProgressSummary(item) {
 
   const parts = [];
   if (saison) parts.push(`Saison ${saison}`);
-  if (episode) parts.push(`Episode ${episode}`);
+  if (episode) parts.push(`Épisode ${episode}`);
   if (timePercent > 0) parts.push(`${timePercent}% vu`);
 
-  return parts.join(' - ');
+  return parts.join(' · ');
 }
 
 export function getNodeProgressState(item, node, index, nodes) {
   const progress = item?.progress;
-  if (!progress) return { status: 'unknown', label: 'A voir', percent: 0 };
+  if (!progress) return { status: 'unknown', label: 'À voir', percent: 0 };
 
   const currentSaison = Number(progress.currentSaison || 0);
   const currentEpisode = Number(progress.currentEpisode || 0);
@@ -124,7 +124,7 @@ export function getNodeProgressState(item, node, index, nodes) {
   if (currentSaison > 0) {
     const nodePosition = index + 1;
     if (nodePosition < currentSaison) return { status: 'done', label: 'Vu', percent: 100 };
-    if (nodePosition > currentSaison) return { status: 'upcoming', label: 'A venir', percent: 0 };
+    if (nodePosition > currentSaison) return { status: 'upcoming', label: 'À venir', percent: 0 };
 
     const percent = nodeEpisodes > 0
       ? clampPercent(Math.round((currentEpisode / nodeEpisodes) * 100))
@@ -148,7 +148,7 @@ export function getNodeProgressState(item, node, index, nodes) {
     }
   }
 
-  return { status: 'upcoming', label: 'A venir', percent: 0 };
+  return { status: 'upcoming', label: 'À venir', percent: 0 };
 }
 
 function getWatchTimePercent(progress) {

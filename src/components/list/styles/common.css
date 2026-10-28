@@ -2,24 +2,26 @@
 .nav-item,
 .wg-btn,
 .add-btn,
+.lt-btn,
 .kebab {
-  transition: background .15s ease, border-color .15s ease, transform .15s ease, opacity .15s ease;
+  transition: background .15s ease, color .15s ease, border-color .15s ease, opacity .15s ease;
 }
 
-/* Global custom scrollbars (fallback for pages that import styles/base.css) */
+/* Scrollbars: same as the popup */
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-primary-dark, #1f1f1f);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #444;
-  border-radius: 4px;
+  background-color: var(--color-border-dark);
+  border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background-color: #6a6a6a;
 }

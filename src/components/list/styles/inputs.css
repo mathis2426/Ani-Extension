@@ -1,18 +1,63 @@
-.inputs {
-    background: rgba(255, 255, 255, 0.055);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: #fff;
-    border-radius: 8px;
-    padding: 10px 12px;
-    font-size: 13px;
-    outline: none;
-    min-width: 220px;
-    box-shadow: inset 0 1px rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+/* Shared text inputs (same look as the popup's modal inputs) */
+.inputs,
+.search,
+.form-field input,
+.field input {
+  background: var(--color-secondary-dark);
+  border: 1px solid transparent;
+  color: #fff;
+  border-radius: var(--radius-control);
+  padding: 10px 12px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color .15s ease, background .15s ease;
 }
 
-.inputs:focus {
-    border-color: rgba(164, 142, 229, 0.72);
-    box-shadow: 0 0 0 3px rgba(164, 142, 229, 0.15), inset 0 1px rgba(255, 255, 255, 0.07);
+.inputs::placeholder,
+.search::placeholder,
+.form-field input::placeholder,
+.field input::placeholder {
+  color: #8a8a8a;
+}
+
+.inputs:hover,
+.search:hover {
+  background: var(--color-control-dark);
+}
+
+.inputs:focus,
+.search:focus,
+.form-field input:focus,
+.field input:focus {
+  border-color: var(--color-primary-purple);
+  background: var(--color-secondary-dark);
+}
+
+/* Inside a dialog the surface is already #2c2c2c: inputs go one step darker */
+.popup-content .inputs,
+.list-modal .form-field input {
+  background: var(--color-primary-dark);
+  border-color: var(--color-border-dark);
+}
+
+.popup-content .inputs:focus,
+.list-modal .form-field input:focus {
+  border-color: var(--color-primary-purple);
+}
+
+.search {
+  width: 220px;
+  padding-left: 34px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239F9F9F' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 12px center;
+}
+
+.search::-webkit-search-cancel-button {
+  filter: grayscale(1) brightness(1.6);
+  cursor: pointer;
+}
+
+.search[hidden] {
+  display: none;
 }

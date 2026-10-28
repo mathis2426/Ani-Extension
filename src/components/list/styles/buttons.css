@@ -1,17 +1,116 @@
-.button{
-background: linear-gradient(135deg, rgba(164, 142, 229, 0.92), rgba(116, 92, 192, 0.86));
+/* Buttons, aligned on the popup (.btn-primary / .btn-secondary) */
+.button,
+.btn-primary,
+.modal-btn-primary {
+  background: var(--color-primary-purple);
   color: #fff;
-  border: 1px solid rgba(226, 220, 255, 0.28);
+  border: none;
   border-radius: 8px;
   cursor: pointer;
+  font-size: 13px;
   font-weight: 600;
-  transition: background .2s, transform .15s, box-shadow .2s;
-  padding: 9px 14px;
-  box-shadow: 0 10px 24px rgba(75, 55, 140, 0.24), inset 0 1px rgba(255, 255, 255, 0.22);
+  padding: 9px 16px;
+  transition: background .2s ease;
 }
 
+.button:hover,
+.btn-primary:hover,
+.modal-btn-primary:hover {
+  background: var(--color-primary-purple-hover);
+}
 
-.button:hover {
-  background: linear-gradient(135deg, rgba(180, 162, 239, 0.98), rgba(126, 101, 203, 0.92));
-  transform: translateY(-1px);
+.btn-secondary,
+.modal-btn-secondary {
+  background: var(--color-border-dark);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 16px;
+  transition: background .2s ease;
+}
+
+.btn-secondary:hover,
+.modal-btn-secondary:hover {
+  background: #6a6a6a;
+}
+
+.modal-btn-danger {
+  background: transparent;
+  color: #ff8a8a;
+  border: 1px solid rgba(201, 29, 29, 0.6);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 16px;
+  transition: background .2s ease, color .2s ease;
+}
+
+.modal-btn-danger:hover {
+  background: var(--color-alert);
+  border-color: var(--color-alert);
+  color: #fff;
+}
+
+.btn {
+  background: var(--color-control-dark);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn:hover {
+  background: #474747;
+}
+
+.btn-danger {
+  background: rgba(201, 29, 29, 0.25);
+}
+
+.btn-danger:hover {
+  background: var(--color-alert);
+}
+
+/* Square icon button used for every close / remove action */
+.icon-btn,
+.close-button,
+.modal-close,
+.chronology-close,
+.wg-panel-close {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s ease, color .15s ease;
+}
+
+.icon-btn:hover,
+.close-button:hover,
+.modal-close:hover,
+.chronology-close:hover,
+.wg-panel-close:hover {
+  background: var(--color-control-dark);
+  color: #fff;
+}
+
+.icon-btn svg,
+.close-button svg,
+.modal-close svg,
+.chronology-close svg {
+  width: 16px;
+  height: 16px;
 }
