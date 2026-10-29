@@ -31,6 +31,15 @@
           <div id="custom-lists-container" class="custom-lists-container"></div>
         </div>
       </nav>
+
+      <!-- Background AniList work (filled by list.js) -->
+      <div id="sync-activity" class="sync-activity" role="status" aria-live="polite" hidden>
+        <span class="spinner" aria-hidden="true"></span>
+        <div class="sync-activity-text">
+          <strong id="sync-activity-title">Recherche sur AniList</strong>
+          <span id="sync-activity-sub"></span>
+        </div>
+      </div>
     </aside>
 
 
@@ -206,6 +215,8 @@
       </div>
     </section>
   </div>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
 
   <!-- Widget Selection Panel -->
   <div id="wg-panel-overlay" class="wg-panel-overlay"></div>

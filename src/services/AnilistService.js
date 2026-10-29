@@ -7,18 +7,43 @@ export class AnilistService {
   static MIN_REQUEST_INTERVAL_MS = 2300;
   static RETRY_DELAY_MS = 5000;
   static MAX_RATE_LIMIT_WAIT_MS = 60000;
-  static queue = Promise.resolve();
   static nextRequestAt = 0;
 
-  /** Low-level GraphQL request */
-  static async request(query, variables = {}) {
-    return this.enqueueRequest(() => this.executeRequest(query, variables));
+  // Two waiting lines: what the user is actively waiting for (search as you type)
+  // always goes before background work (chronology fetching).
+  static highPriorityQueue = [];
+  static normalPriorityQueue = [];
+  static isProcessingQueue = false;
+
+  /**
+   * Low-level GraphQL request
+   * @param {string} query
+   * @param {object} variables
+   * @param {{ priority?: 'high' | 'normal' }} options
+   */
+  static request(query, variables = {}, { priority = 'normal' } = {}) {
+    return new Promise((resolve, reject) => {
+      const queue = priority === 'high' ? this.highPriorityQueue : this.normalPriorityQueue;
+      queue.push({ query, variables, resolve, reject });
+      this.processQueue();
+    });
   }
 
-  static enqueueRequest(task) {
-    const run = this.queue.then(task, task);
-    this.queue = run.catch(() => {});
-    return run;
+  static async processQueue() {
+    if (this.isProcessingQueue) return;
+    this.isProcessingQueue = true;
+    try {
+      while (this.highPriorityQueue.length || this.normalPriorityQueue.length) {
+        const job = this.highPriorityQueue.shift() || this.normalPriorityQueue.shift();
+        try {
+          job.resolve(await this.executeRequest(job.query, job.variables));
+        } catch (error) {
+          job.reject(error);
+        }
+      }
+    } finally {
+      this.isProcessingQueue = false;
+    }
   }
 
   static async waitForRateLimitSlot() {
@@ -159,7 +184,7 @@ export class AnilistService {
   }
 
   /** Search anime by title */
-  static async searchAnimes(title, perPage = 10, filters = {}) {
+  static async searchAnimes(title, perPage = 10, filters = {}, { priority = 'normal' } = {}) {
     const query = `
       query ($search: String, $perPage: Int, $format_in: [MediaFormat], $status_in: [MediaStatus], $sort: [MediaSort]) {
         Page(page: 1, perPage: $perPage) {
@@ -170,6 +195,7 @@ export class AnilistService {
             bannerImage
             status
             format
+            genres
             startDate { year month day }
           }
         }
@@ -182,7 +208,7 @@ export class AnilistService {
       status_in: filters.statuses?.length > 0 ? filters.statuses : undefined,
       sort: filters.sort ? [filters.sort] : ['SEARCH_MATCH']
     };
-    const data = await this.request(query, variables);
+    const data = await this.request(query, variables, { priority });
     const items = data?.Page?.media || [];
     return items.map(m => this.mapMediaBasic(m)).filter(Boolean);
   }
@@ -199,6 +225,7 @@ export class AnilistService {
           season
           seasonYear
           format
+          status
           genres
           averageScore
           coverImage { extraLarge large }
@@ -247,9 +274,12 @@ export class AnilistService {
   }
 
   /**
-   * Traverse PREQUEL/SEQUEL relations starting from a media id and aggregate TV entries.
-   * Returns an object with nodes info, seasonsCount and totalEpisodes.
-   * Uses a simple DFS/BFS with a maxDepth to avoid runaway recursion.
+   * Traverse PREQUEL/SEQUEL relations starting from a media id and aggregate entries.
+   * Returns { root, nodes, seasonsCount, totalEpisodes } where root holds the details
+   * of the starting media (cover, banner, genres, status...).
+   *
+   * Each request also asks for the relations of the direct relations, so a long
+   * franchise needs about one request every two seasons instead of one per season.
    * @param {number} id AniList media id
    * @param {number} maxDepth max recursion depth (default 6)
    */
@@ -257,37 +287,72 @@ static async getFranchiseInfoById(id, maxDepth = 6, options = {}) {
   if (!id) return null;
   const seen = new Set();
   const tvNodes = new Map();
+  // id -> media whose relations are already known (no request needed)
+  const knownMedia = new Map();
+  let root = null;
 
   // Ajoute les films dans la chronologie ou comme alternatives
   const allowedFormats = new Set(options.allowedFormats || ['TV']);
-  const query = `
+
+  const baseFields = `
+    id
+    type
+    format
+    episodes
+    season
+    seasonYear
+    siteUrl
+    title { romaji english native }
+  `;
+  const relationsOf = (inner) => `relations { edges { relationType node { ${baseFields} ${inner} } } }`;
+  const rootDetails = `
+    status
+    genres
+    coverImage { extraLarge large }
+    bannerImage
+  `;
+  const nestedQuery = (withDetails) => `
     query ($id: Int!) {
       Media(id: $id, type: ANIME) {
-        id
-        title { romaji english native }
-        format
-        episodes
-        season
-        seasonYear
-        siteUrl
-        relations { 
-          edges { 
-            relationType
-            node { 
-              id
-              type
-              format
-              episodes
-              season
-              seasonYear
-              title { romaji english native }
-              siteUrl
-            } 
-          } 
-        }
+        ${baseFields}
+        ${withDetails ? rootDetails : ''}
+        ${relationsOf(relationsOf(''))}
       }
     }
   `;
+  const flatQuery = (withDetails) => `
+    query ($id: Int!) {
+      Media(id: $id, type: ANIME) {
+        ${baseFields}
+        ${withDetails ? rootDetails : ''}
+        ${relationsOf('')}
+      }
+    }
+  `;
+  let useNested = true;
+
+  const rememberMedia = (media) => {
+    if (!media?.id || !media.relations) return;
+    if (!knownMedia.has(media.id)) knownMedia.set(media.id, media);
+    for (const edge of media.relations.edges || []) {
+      if (edge?.node?.relations) rememberMedia(edge.node);
+    }
+  };
+
+  const fetchMedia = async (mediaId, withDetails) => {
+    if (useNested) {
+      try {
+        const data = await this.request(nestedQuery(withDetails), { id: Number(mediaId) });
+        return data?.Media || null;
+      } catch (err) {
+        // Query too complex for AniList: fall back to one level of relations
+        console.warn('AniList nested relations query failed, falling back', err);
+        useNested = false;
+      }
+    }
+    const data = await this.request(flatQuery(withDetails), { id: Number(mediaId) });
+    return data?.Media || null;
+  };
 
   const stack = [{ id: Number(id), depth: 0 }];
 
@@ -296,16 +361,18 @@ static async getFranchiseInfoById(id, maxDepth = 6, options = {}) {
     if (!cur || seen.has(cur.id) || cur.depth > maxDepth) continue;
     seen.add(cur.id);
 
-    let res;
-    try {
-      res = await this.request(query, { id: Number(cur.id) });
-    } catch (err) {
-      console.warn('AniList franchise fetch error for id', cur.id, err);
-      continue;
+    let m = knownMedia.get(cur.id) || null;
+    if (!m) {
+      try {
+        m = await fetchMedia(cur.id, cur.id === Number(id));
+      } catch (err) {
+        console.warn('AniList franchise fetch error for id', cur.id, err);
+        continue;
+      }
+      if (!m) continue;
+      rememberMedia(m);
     }
-
-    const m = (res && res.data && res.data.Media) ? res.data.Media : (res && res.Media) ? res.Media : null;
-    if (!m) continue;
+    if (cur.id === Number(id)) root = m;
 
     // Ajoute le node TV
     if (allowedFormats.has(m.format)) {
@@ -395,7 +462,12 @@ static async getFranchiseInfoById(id, maxDepth = 6, options = {}) {
   }, 0);
   const totalEpisodes = knownEpisodeSum > 0 ? knownEpisodeSum : null;
 
-  return { nodes, seasonsCount, totalEpisodes };
+  return {
+    root: root ? this.mapMediaDetails(root) : null,
+    nodes,
+    seasonsCount,
+    totalEpisodes,
+  };
 }
 
 
@@ -434,6 +506,8 @@ static async getFranchiseInfoById(id, maxDepth = 6, options = {}) {
       cover: m?.coverImage?.large || null,
       banner: m?.bannerImage || null,
       status: m?.status || null,
+      format: m?.format || null,
+      genres: m?.genres || [],
       startDate: m?.startDate || null,
     };
   }
@@ -448,6 +522,7 @@ static async getFranchiseInfoById(id, maxDepth = 6, options = {}) {
       season: m?.season || null,
       seasonYear: m?.seasonYear || null,
       format: m?.format || null,
+      status: m?.status || null,
       genres: m?.genres || [],
       averageScore: m?.averageScore || null,
       cover: m?.coverImage?.extraLarge || m?.coverImage?.large || null,

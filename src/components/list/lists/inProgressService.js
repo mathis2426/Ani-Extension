@@ -5,6 +5,9 @@ import { createAnimeListItemFromTitle } from './chronologyService.js';
 import { normalizeTitle } from '../../../utils/subtitles/subtitleUtils.js';
 
 const CHRONOLOGY_CACHE_KEY = 'inprogressChronologyCache';
+// Titles AniList did not match: not searched again before this delay
+const CHRONOLOGY_MISSES_KEY = 'inprogressChronologyMisses';
+const MISS_RETRY_DELAY_MS = 24 * 60 * 60 * 1000;
 
 export async function loadInProgressItems() {
   const popupItems = await loadPopupData();
@@ -21,38 +24,60 @@ export async function loadInProgressItems() {
   ));
 }
 
-export async function hydrateInProgressChronologies(onUpdate) {
+/**
+ * Animes being watched that have no chronology yet (and were not looked up
+ * without success recently).
+ */
+export async function getInProgressItemsMissingChronology() {
   const popupItems = await loadPopupData();
   if (!popupItems.length) return [];
 
-  const storedChronologies = await getStoredChronologyItems();
   const cache = {
     ...(await StorageService.get(CHRONOLOGY_CACHE_KEY) || {}),
-    ...storedChronologies,
+    ...(await getStoredChronologyItems()),
   };
+  const misses = await StorageService.get(CHRONOLOGY_MISSES_KEY) || {};
+  const now = Date.now();
 
-  for (const popupItem of popupItems) {
-    if (findCachedChronologyItem(cache, popupItem.name)) continue;
+  return popupItems.filter((popupItem) => {
+    if (findCachedChronologyItem(cache, popupItem.name)) return false;
+    const missedAt = misses[normalizeCacheKey(popupItem.name)];
+    return !missedAt || now - missedAt > MISS_RETRY_DELAY_MS;
+  });
+}
 
-    const cleanTitle = normalizeTitle(popupItem.name);
-    const chronologyItem = await createAnimeListItemFromTitle(cleanTitle).catch((error) => {
-      console.warn('Unable to fetch in-progress chronology', popupItem.name, error);
-      return null;
-    });
+/** Key used to follow the background job of an "En cours" anime */
+export function getInProgressSyncKey(name) {
+  return `inprogress:${normalizeCacheKey(name)}`;
+}
 
-    if (!chronologyItem) continue;
+/**
+ * Look an "En cours" anime up on AniList and cache its chronology.
+ * Throws when nothing matches, so the UI can say so.
+ */
+export async function fetchInProgressChronology(popupItem) {
+  const cleanTitle = normalizeTitle(popupItem.name);
+  const chronologyItem = await createAnimeListItemFromTitle(cleanTitle);
+  const missKey = normalizeCacheKey(popupItem.name);
+  const misses = await StorageService.get(CHRONOLOGY_MISSES_KEY) || {};
 
-    addCacheEntry(cache, popupItem.name, chronologyItem);
-    addCacheEntry(cache, chronologyItem.name, chronologyItem);
-    addCacheEntry(cache, chronologyItem.title, chronologyItem);
-    await StorageService.set(CHRONOLOGY_CACHE_KEY, cache);
-
-    if (typeof onUpdate === 'function') {
-      onUpdate(await loadInProgressItems());
-    }
+  if (!chronologyItem) {
+    misses[missKey] = Date.now();
+    await StorageService.set(CHRONOLOGY_MISSES_KEY, misses);
+    throw new Error('Introuvable sur AniList');
   }
 
-  return loadInProgressItems();
+  if (misses[missKey]) {
+    delete misses[missKey];
+    await StorageService.set(CHRONOLOGY_MISSES_KEY, misses);
+  }
+
+  const cache = await StorageService.get(CHRONOLOGY_CACHE_KEY) || {};
+  addCacheEntry(cache, popupItem.name, chronologyItem);
+  addCacheEntry(cache, chronologyItem.name, chronologyItem);
+  addCacheEntry(cache, chronologyItem.title, chronologyItem);
+  await StorageService.set(CHRONOLOGY_CACHE_KEY, cache);
+  return chronologyItem;
 }
 
 function createInProgressItem(popupItem, chronologyItem) {
@@ -68,6 +93,8 @@ function createInProgressItem(popupItem, chronologyItem) {
   return {
     ...(chronologyItem || {}),
     id: chronologyItem?.id || `inprogress-${normalizeCacheKey(popupItem.name)}`,
+    // Lets the page show the AniList lookup state of this card
+    syncKey: chronologyItem ? null : getInProgressSyncKey(popupItem.name),
     name: chronologyItem?.name || popupItem.name,
     title: chronologyItem?.title || popupItem.name,
     link: popupItem.link || chronologyItem?.link || '',

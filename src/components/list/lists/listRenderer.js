@@ -13,6 +13,8 @@ export function renderListItems({
   currentList,
   onItemClick,
   onRemoveClick,
+  onRetryClick,
+  getSyncState = () => null,
   canRemove = true,
 }) {
   container.className = `list ${displayMode}-mode`;
@@ -26,7 +28,7 @@ export function renderListItems({
   empty.hidden = true;
 
   if (displayMode === 'mixte') {
-    renderMixedItems(container, items, onItemClick, onRemoveClick, canRemove);
+    renderMixedItems(container, items, { onItemClick, onRemoveClick, onRetryClick, getSyncState, canRemove });
     return;
   }
 
@@ -35,12 +37,14 @@ export function renderListItems({
     compact: displayMode === 'grid',
     onItemClick,
     onRemoveClick,
+    onRetryClick,
+    getSyncState,
     canRemove,
   })));
   container.appendChild(fragment);
 }
 
-export function renderChronologyModal(item) {
+export function renderChronologyModal(item, syncState = null) {
   closeChronologyModal();
 
   const nodes = getChronologyNodes(item);
@@ -56,7 +60,9 @@ export function renderChronologyModal(item) {
         <button class="chronology-close" type="button" aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </header>
       <div class="chronology-content">
-        ${nodes.length ? nodes.map((node, index) => renderChronologyNode(item, node, index, nodes)).join('') : renderEmptyChronology()}
+        ${nodes.length && !item.chronologyPending
+          ? nodes.map((node, index) => renderChronologyNode(item, node, index, nodes)).join('')
+          : renderEmptyChronology(syncState || (item.chronologyPending ? { state: 'queued' } : null))}
       </div>
     </section>
   `;
@@ -142,29 +148,19 @@ function getWatchPercent(item) {
   return Math.max(0, Math.min(100, Math.round((currentTime / duration) * 100)));
 }
 
-function renderMixedItems(container, items, onItemClick, onRemoveClick, canRemove) {
+function renderMixedItems(container, items, handlers) {
   const recentItems = items.slice(0, 3);
   const otherItems = items.slice(3);
   const grid = document.createElement('div');
   grid.className = 'mixte-grid-container';
 
-  recentItems.forEach((item) => grid.appendChild(createItemNode(item, {
-    compact: true,
-    onItemClick,
-    onRemoveClick,
-    canRemove,
-  })));
+  recentItems.forEach((item) => grid.appendChild(createItemNode(item, { ...handlers, compact: true })));
   container.appendChild(grid);
 
-  otherItems.forEach((item) => container.appendChild(createItemNode(item, {
-    compact: false,
-    onItemClick,
-    onRemoveClick,
-    canRemove,
-  })));
+  otherItems.forEach((item) => container.appendChild(createItemNode(item, { ...handlers, compact: false })));
 }
 
-function createItemNode(item, { compact, onItemClick, onRemoveClick, canRemove }) {
+function createItemNode(item, { compact, onItemClick, onRemoveClick, onRetryClick, getSyncState, canRemove }) {
   const article = document.createElement('article');
   article.className = 'item';
   article.dataset.itemId = item.id;
@@ -173,6 +169,8 @@ function createItemNode(item, { compact, onItemClick, onRemoveClick, canRemove }
   article.setAttribute('aria-label', `Afficher la chronologie de ${getItemTitle(item)}`);
 
   const image = getItemImage(item, compact);
+  const syncState = getSyncState(item) || (item.chronologyPending ? { state: 'queued' } : null);
+  if (syncState) article.classList.add(`is-sync-${syncState.state}`);
   const watchPercent = getWatchPercent(item);
   const title = getItemTitle(item);
   const meta = getItemMeta(item);
@@ -191,7 +189,9 @@ function createItemNode(item, { compact, onItemClick, onRemoveClick, canRemove }
             <div class="item-info">${escapeHtml(meta)}${renderStatusPill(item.status)}</div>
           </div>
         </div>
-        <div class="item-meta">${escapeHtml(progressSummary || getChronologySubtitle(item))}</div>
+        ${syncState
+          ? renderSyncStatus(syncState, item)
+          : `<div class="item-meta">${escapeHtml(progressSummary || getChronologySubtitle(item))}</div>`}
         ${watchPercent ? `
           <div class="item-progress" aria-label="${watchPercent}% vu"><span style="width: ${watchPercent}%"></span></div>
         ` : ''}
@@ -210,6 +210,10 @@ function createItemNode(item, { compact, onItemClick, onRemoveClick, canRemove }
       event.preventDefault();
       onItemClick(item);
     }
+  });
+  article.querySelector('[data-action="retry"]')?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    onRetryClick?.(item);
   });
   if (canRemove) {
     article.querySelector('[data-action="remove"]')?.addEventListener('click', (event) => {
@@ -259,16 +263,45 @@ function renderAlternativeNode(node) {
   `;
 }
 
-function renderEmptyChronology() {
+function renderEmptyChronology(syncState) {
+  const isLoading = syncState?.state === 'queued' || syncState?.state === 'running';
+  const title = isLoading ? 'Chronologie en cours de récupération' : 'Chronologie indisponible';
+  const text = isLoading
+    ? 'La récupération continue en arrière-plan, tu peux fermer cette fenêtre : la carte se mettra à jour toute seule.'
+    : 'AniList ne renvoie pas encore de relation exploitable pour cet anime.';
   return `
     <article class="chronology-entry no-connector">
-      <span class="chronology-index">1</span>
+      <span class="chronology-index">${isLoading ? '<span class="spinner" aria-hidden="true"></span>' : '1'}</span>
       <div class="chronology-body">
-        <h3 class="chronology-node-title">Chronologie indisponible</h3>
-        <p class="chronology-meta">AniList ne renvoie pas encore de relation exploitable pour cet anime.</p>
+        <h3 class="chronology-node-title">${title}</h3>
+        <p class="chronology-meta">${text}</p>
       </div>
     </article>
   `;
+}
+
+/** Status line shown on a card while AniList is working on it */
+function renderSyncStatus(syncState, item) {
+  const isInProgress = Boolean(item.isInProgress);
+  if (syncState.state === 'running') {
+    return `<div class="item-sync is-running" role="status">
+      <span class="spinner" aria-hidden="true"></span>
+      ${isInProgress ? 'Recherche sur AniList…' : 'Récupération de la chronologie…'}
+    </div>`;
+  }
+  if (syncState.state === 'queued') {
+    return `<div class="item-sync is-queued" role="status">
+      <span class="sync-dot" aria-hidden="true"></span>
+      En attente de recherche AniList
+    </div>`;
+  }
+  const message = syncState.error?.message === 'Introuvable sur AniList'
+    ? 'Introuvable sur AniList'
+    : 'Échec de la récupération';
+  return `<div class="item-sync is-error" role="status">
+    ${message}
+    <button class="item-sync-retry" data-action="retry" type="button">Réessayer</button>
+  </div>`;
 }
 
 function sortItems(a, b, sortMode) {

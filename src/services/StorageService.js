@@ -10,8 +10,14 @@ export const StorageService = {
   },
 
   async set(key, value) {
-    return new Promise((resolve) => {
-      chrome.storage.local.set({ [key]: value }, resolve);
+    return new Promise((resolve, reject) => {
+      chrome.storage.local.set({ [key]: value }, () => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(`chrome.storage.local "${key}": ${chrome.runtime.lastError.message}`));
+          return;
+        }
+        resolve();
+      });
     });
   },
 
@@ -27,9 +33,19 @@ export const StorageService = {
     });
   },
 
+  /**
+   * chrome.storage.sync is small: 8 KB per key, 100 KB in total.
+   * Rejects (instead of failing silently) when a quota is exceeded.
+   */
   async setsync(key, value) {
-    return new Promise((resolve) => {
-      chrome.storage.sync.set({ [key]: value }, resolve);
+    return new Promise((resolve, reject) => {
+      chrome.storage.sync.set({ [key]: value }, () => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(`chrome.storage.sync "${key}": ${chrome.runtime.lastError.message}`));
+          return;
+        }
+        resolve();
+      });
     });
   }
 };

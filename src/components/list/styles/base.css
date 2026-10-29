@@ -7,6 +7,7 @@
 @import './chronology.css';
 @import './common.css';
 @import './custom-lists.css';
+@import './sync.css';
 
 /* Base styles component */
 @import './inputs.css';

@@ -58,12 +58,11 @@ export class OpenSubtitlesManager {
             if (username && password) {
                 await openSubtitlesService.login(username, password);
                 // Save new token back to sync settings
-                const settings = await StorageService.getsync("settings");
-                const s = settings.settings || {};
-                s.openSubtitlesSettings = s.openSubtitlesSettings || {};
-                s.openSubtitlesSettings.token = openSubtitlesService._token;
-                s.openSubtitlesSettings.tokenExpiration = openSubtitlesService._tokenExp;
-                await StorageService.setsync({ settings: s });
+                const settings = (await StorageService.getsync("settings")) || {};
+                settings.openSubtitlesSettings = settings.openSubtitlesSettings || {};
+                settings.openSubtitlesSettings.token = openSubtitlesService._token;
+                settings.openSubtitlesSettings.tokenExpiration = openSubtitlesService._tokenExp;
+                await StorageService.setsync("settings", settings);
                 return true;
             }
         } catch (e) {

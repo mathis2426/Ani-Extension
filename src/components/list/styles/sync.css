@@ -1,0 +1,163 @@
+/* Background AniList activity: sidebar indicator, card states, toasts */
+
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(164, 142, 229, 0.25);
+  border-top-color: var(--color-primary-purple);
+  animation: spin .8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+/* ===== Sidebar activity indicator ===== */
+.sync-activity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-control);
+  background: var(--color-card-dark);
+}
+
+.sync-activity[hidden] {
+  display: none;
+}
+
+.sync-activity-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sync-activity-text strong {
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.sync-activity-text span {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== Card states ===== */
+.item-sync {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.item-sync.is-running {
+  color: var(--color-primary-purple);
+}
+
+.item-sync.is-error {
+  color: #ff8a8a;
+}
+
+.sync-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  border: 2px solid var(--color-text-muted);
+}
+
+.item-sync-retry {
+  padding: 3px 9px;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-control-dark);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+.item-sync-retry:hover {
+  background: var(--color-primary-purple);
+}
+
+/* Cards still waiting for AniList: image slightly faded */
+.item.is-sync-queued .item-image-container,
+.item.is-sync-running .item-image-container {
+  opacity: 0.6;
+}
+
+.chronology-index .spinner {
+  width: 12px;
+  height: 12px;
+  flex-basis: 12px;
+  border-color: rgba(255, 255, 255, 0.25);
+  border-top-color: #fff;
+}
+
+/* ===== AniList search: already added ===== */
+.anilist-search-result-added {
+  flex: 0 0 auto;
+  align-self: center;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+/* ===== Toasts ===== */
+.toasts {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  max-width: 360px;
+  padding: 10px 14px;
+  border-radius: var(--radius-control);
+  background: var(--color-card-dark);
+  border-left: 3px solid var(--color-primary-purple);
+  color: #fff;
+  font-size: 13px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  animation: toast-in .2s ease;
+  transition: opacity .25s ease, transform .25s ease;
+}
+
+.toast.is-error {
+  border-left-color: var(--color-alert);
+}
+
+.toast.is-leaving {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}

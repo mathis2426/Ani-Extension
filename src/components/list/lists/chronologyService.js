@@ -3,10 +3,11 @@ import { AnilistService } from '../../../services/AnilistService.js';
 const CHRONOLOGY_FORMATS = ['TV', 'TV_SHORT', 'MOVIE', 'OVA', 'ONA', 'SPECIAL'];
 
 export async function createAnimeListItemFromAnilist(anilistId) {
-  const anime = await AnilistService.getAnimeById(anilistId);
+  // One traversal gives both the anime details (root) and its chronology
+  const franchiseInfo = await AnilistService.getFranchiseInfoById(anilistId, 6, { allowedFormats: CHRONOLOGY_FORMATS });
+  const anime = franchiseInfo?.root || await AnilistService.getAnimeById(anilistId);
   if (!anime) return null;
 
-  const franchiseInfo = await AnilistService.getFranchiseInfoById(anilistId, 6, { allowedFormats: CHRONOLOGY_FORMATS });
   const chronology = buildChronology(franchiseInfo);
   const chronologyStats = getChronologyStats(chronology);
 

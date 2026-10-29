@@ -8,8 +8,19 @@ import {
 import { initHomeWidgets } from './widgets/widgetManager.js';
 import { AnilistService } from '../../services/AnilistService.js';
 import { loadPopupData } from './core/state.js';
-import { addAnilistAnimeToList, removeAnimeFromList } from './lists/listActions.js';
-import { hydrateInProgressChronologies, loadInProgressItems } from './lists/inProgressService.js';
+import {
+  addAnilistAnimeToList,
+  getListItemSyncKey,
+  removeAnimeFromList,
+  resumePendingChronologies,
+} from './lists/listActions.js';
+import {
+  fetchInProgressChronology,
+  getInProgressItemsMissingChronology,
+  getInProgressSyncKey,
+  loadInProgressItems,
+} from './lists/inProgressService.js';
+import { enqueueJob, getActivity, getJobState, retryJob, subscribe } from './lists/syncQueue.js';
 import {
   closeChronologyModal,
   formatStatus,
@@ -40,7 +51,8 @@ const state = {
   query: '',
   items: [],
   anilistTimer: 0,
-  inProgressHydrationId: 0,
+  anilistResults: [],
+  anilistSearchId: 0,
 };
 
 const els = {};
@@ -57,6 +69,11 @@ async function init() {
   wireBuiltInListButtons();
   renderListsNav();
   await selectList('home');
+
+  // Background AniList work: starts right away, whatever list is displayed
+  subscribe(handleSyncEvent);
+  resumePendingChronologies();
+  queueInProgressHydration();
 }
 
 function cacheElements() {
@@ -86,6 +103,10 @@ function cacheElements() {
   els.anilistFiltersBtn = document.getElementById('anilist-search-filters-btn');
   els.anilistFiltersPanel = document.getElementById('anilist-search-filters-panel');
   els.anilistSort = document.getElementById('anilist-sort');
+  els.syncActivity = document.getElementById('sync-activity');
+  els.syncActivityTitle = document.getElementById('sync-activity-title');
+  els.syncActivitySub = document.getElementById('sync-activity-sub');
+  els.toasts = document.getElementById('toasts');
 }
 
 function bindStaticControls() {
@@ -132,7 +153,10 @@ function bindStaticControls() {
 
   if (typeof chrome !== 'undefined' && chrome.storage?.onChanged) {
     chrome.storage.onChanged.addListener(async (changes, area) => {
-      if (area !== 'sync' || !changes.popupDataList || state.currentList !== 'inprogress') return;
+      if (area !== 'sync' || !changes.popupDataList) return;
+      // A new anime may have started: look it up in the background
+      queueInProgressHydration();
+      if (state.currentList !== 'inprogress') return;
       state.items = await loadInProgressItems();
       renderItems();
     });
@@ -183,10 +207,6 @@ async function selectList(listName) {
     ? await loadInProgressItems()
     : await getListItems(listName);
   renderItems();
-
-  if (listName === 'inprogress') {
-    hydrateCurrentInProgressChronologies();
-  }
 }
 
 function setActiveNavItem(listName) {
@@ -229,8 +249,10 @@ function renderItems() {
     items,
     displayMode: state.displayMode,
     currentList: state.currentList,
-    onItemClick: renderChronologyModal,
+    onItemClick: (item) => renderChronologyModal(item, getItemSyncState(item)),
     onRemoveClick: removeRenderedItem,
+    onRetryClick: (item) => retryJob(getItemSyncKey(item)),
+    getSyncState: getItemSyncState,
     canRemove: state.currentList !== 'inprogress',
   });
   updateEmptyHint();
@@ -248,20 +270,96 @@ function updateEmptyHint() {
   }
 }
 
-async function hydrateCurrentInProgressChronologies() {
-  const hydrationId = Date.now();
-  state.inProgressHydrationId = hydrationId;
+// ===== Background AniList work =====
 
-  await hydrateInProgressChronologies((items) => {
-    if (state.currentList !== 'inprogress' || state.inProgressHydrationId !== hydrationId) return;
-    state.items = items;
-    renderItems();
+function getItemSyncKey(item) {
+  if (item.isInProgress) return item.syncKey || null;
+  return getListItemSyncKey(state.currentList, item.id);
+}
+
+function getItemSyncState(item) {
+  const key = getItemSyncKey(item);
+  return key ? getJobState(key) : null;
+}
+
+async function queueInProgressHydration() {
+  const missing = await getInProgressItemsMissingChronology();
+  missing.forEach((popupItem) => {
+    enqueueJob({
+      key: getInProgressSyncKey(popupItem.name),
+      kind: 'inprogress',
+      label: popupItem.name,
+      listName: 'inprogress',
+      run: () => fetchInProgressChronology(popupItem),
+    });
   });
+}
 
-  if (state.currentList === 'inprogress' && state.inProgressHydrationId === hydrationId) {
-    state.items = await loadInProgressItems();
-    renderItems();
+let syncRenderFrame = 0;
+
+async function handleSyncEvent(event) {
+  renderSyncActivity();
+
+  const { job } = event;
+  const concernsCurrentList = job.listName === state.currentList;
+
+  if (event.type === 'done' && job.kind === 'add') {
+    showToast(`« ${job.label} » : chronologie récupérée`);
   }
+  if (event.type === 'error' && job.kind === 'add') {
+    showToast(`Impossible de récupérer la chronologie de « ${job.label} »`, 'error');
+  }
+
+  if (!concernsCurrentList) return;
+
+  if (event.type === 'done') {
+    // The item changed in storage: reload the list
+    state.items = state.currentList === 'inprogress'
+      ? await loadInProgressItems()
+      : await getListItems(state.currentList);
+  }
+
+  // Several events can arrive at once: render once per frame
+  cancelAnimationFrame(syncRenderFrame);
+  syncRenderFrame = requestAnimationFrame(renderItems);
+}
+
+function renderSyncActivity() {
+  if (!els.syncActivity) return;
+  const { running, queuedCount } = getActivity();
+
+  if (!running && !queuedCount) {
+    els.syncActivity.hidden = true;
+    return;
+  }
+
+  els.syncActivity.hidden = false;
+  els.syncActivityTitle.textContent = running?.kind === 'inprogress'
+    ? 'Recherche sur AniList'
+    : 'Récupération des chronologies';
+  const parts = [];
+  if (running) parts.push(running.label);
+  if (queuedCount) parts.push(`${queuedCount} en attente`);
+  els.syncActivitySub.textContent = parts.join(' · ');
+}
+
+function getStorageErrorMessage(error) {
+  return /quota/i.test(error?.message || '')
+    ? 'Liste pleine : la synchronisation Chrome est limitée, retire quelques animés'
+    : "Impossible d'enregistrer la liste";
+}
+
+function showToast(message, tone = 'info') {
+  if (!els.toasts) return;
+  const toast = document.createElement('div');
+  toast.className = `toast is-${tone}`;
+  toast.setAttribute('role', 'status');
+  toast.textContent = message;
+  els.toasts.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('is-leaving');
+    setTimeout(() => toast.remove(), 250);
+  }, 3500);
 }
 
 function setDisplayMode(mode) {
@@ -362,11 +460,16 @@ function handleAnilistSearchInput() {
 }
 
 async function searchAnilist(query) {
+  const searchId = ++state.anilistSearchId;
   els.anilistResults.hidden = false;
   els.anilistResults.innerHTML = '<div class="anilist-search-loading">Recherche…</div>';
 
   try {
-    const results = await AnilistService.searchAnimes(query, 8, getAnilistFilters());
+    // High priority: goes before the background chronology requests
+    const results = await AnilistService.searchAnimes(query, 8, getAnilistFilters(), { priority: 'high' });
+    // An older search finishing late must not overwrite a newer one
+    if (searchId !== state.anilistSearchId || els.anilistResults.hidden) return;
+    state.anilistResults = results;
     if (!results.length) {
       els.anilistResults.innerHTML = '<div class="anilist-search-empty">Aucun résultat</div>';
       return;
@@ -379,6 +482,9 @@ async function searchAnilist(query) {
           <strong class="anilist-search-result-title">${escapeHtml(anime.title || 'Sans titre')}</strong>
           <span class="anilist-search-result-meta">${escapeHtml([formatStatus(anime.status), getYear(anime.startDate)].filter(Boolean).join(' · '))}</span>
         </span>
+        ${state.items.some((item) => String(item.id) === String(anime.id))
+          ? '<span class="anilist-search-result-added">Déjà dans la liste</span>'
+          : ''}
       </button>
     `).join('');
   } catch (error) {
@@ -390,17 +496,28 @@ async function searchAnilist(query) {
 async function handleAnilistResultClick(event) {
   const button = event.target.closest('[data-anilist-id]');
   if (!button) return;
-  const id = button.dataset.anilistId;
-  button.disabled = true;
-  els.anilistResults.innerHTML = '<div class="anilist-search-loading">Création de la chronologie…</div>';
+  const anime = state.anilistResults.find((result) => String(result.id) === button.dataset.anilistId);
+  if (!anime) return;
 
+  const listName = state.currentList;
+  clearAnilistSearch();
+
+  // Added immediately; the chronology arrives in the background
+  let result;
   try {
-    state.items = await addAnilistAnimeToList(state.currentList, id);
-    renderItems();
-    clearAnilistSearch();
+    result = await addAnilistAnimeToList(listName, anime);
   } catch (error) {
-    console.warn('Unable to add AniList item', error);
-    els.anilistResults.innerHTML = '<div class="anilist-search-empty">Impossible de créer la chronologie</div>';
+    console.error('Unable to save list item', error);
+    showToast(getStorageErrorMessage(error), 'error');
+    return;
+  }
+  const { items, added } = result;
+  if (!added) {
+    showToast(`« ${anime.title} » est déjà dans cette liste`);
+  }
+  if (state.currentList === listName) {
+    state.items = items;
+    renderItems();
   }
 }
 
@@ -419,6 +536,9 @@ function getAnilistFilters() {
 }
 
 function clearAnilistSearch() {
+  state.anilistSearchId += 1;
+  state.anilistResults = [];
+  clearTimeout(state.anilistTimer);
   if (els.anilistSearch) els.anilistSearch.value = '';
   if (els.anilistClear) els.anilistClear.hidden = true;
   hideAnilistResults();
